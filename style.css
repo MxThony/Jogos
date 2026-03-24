@@ -1,39 +1,37 @@
-/* style.css - Identidade Visual Óticas Arcoverde */
+/* style.css - Identidade Visual Copa saminina */
 
 /* =========================================
-   1. VARIÁVEIS DE CORES GERAIS
+   1. VARIÁVEIS DE CORES GERAIS (Paleta Brasil + Azul Contraste)
    ========================================= */
 :root {
-    --cor-primaria: #006735;      /* Verde escuro oficial da logo */
-    --cor-secundaria: #95c13d;    /* Verde limão vibrante para destaques/hover */
-    --cor-fundo: #006735;         /* Verde escuro para o fundo geral (body) */
-    --cor-texto: #006735;         /* Cinza escuro para texto (leitura mais confortável) */
-    --cor-branco: #ffffff;
-    --sombra: 0 4px 15px rgba(0,0,0,0.2);
+    --color-green: #006735;      /* Verde Escuro Brasil (Fundo Geral) */
+    --color-yellow: #FDD017;     /* Amarelo Saminina (Etiquetas/Hover) */
+    --color-blue: #003399;       /* Azul Brasil (Timer/Detalhes para Contraste) */
+    --color-white: #FFFFFF;      /* Branco (Card Principal/Texto) */
+    --color-text-dark: #333333;  /* Cinza Escuro (LeituraSuave) */
+    --color-correct: #28a745;    /* Verde Vibrante para Acerto */
+    --color-wrong: #dc3545;      /* Vermelho Vibrante para Erro */
+    --shadow: 0 4px 15px rgba(0,0,0,0.3);
 }
 
 /* =========================================
-   2. CONFIGURAÇÕES GERAIS E TIPOGRAFIA
+   2. CONFIGURAÇÕES GERAIS E TIPOGRAFIA (Só Montserrat)
    ========================================= */
 body {
-    /* Aplicando Montserrat no texto corrido (perguntas, parágrafos, etc) */
+    /* Padronizado: Montserrat para tudo */
     font-family: 'Montserrat', sans-serif;
-    background-color: var(--cor-fundo);
-    color: var(--cor-texto);
+    background-color: var(--color-green);
+    color: var(--color-text-dark);
     margin: 0;
     display: flex;
-    justify-content: center;
+    flex-direction: column;
     align-items: center;
     min-height: 100vh;
 }
 
-/* Aplicando a fonte Unbounded apenas nos destaques */
-h2, h3, button, .turno-destaque, #titulo-vencedor {
-    font-family: 'Unbounded', sans-serif;
-}
-
 /* Estilo padronizado para os parágrafos */
 p {
+    font-family: 'Montserrat', sans-serif;
     font-size: 16px; 
     line-height: 1.6; 
     color: #555555; 
@@ -49,7 +47,7 @@ p {
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 20px;
+    padding: 20px 20px 10px 20px; /* Padding bottom menor para o timer encostar */
     box-sizing: border-box;
 }
 
@@ -65,28 +63,32 @@ p {
 .logo-marca {
     max-width: 250px; /* Largura ideal para a marca respirar na tela */
     height: auto;
+    padding-top: 20%;
 }
 
 /* =========================================
-   5. CAIXA DO QUIZ (O CARD BRANCO)
+   5. CAIXA DO QUIZ (O CARD BRANCO PRINCIPAL)
    ========================================= */
 .quiz-container {
-    background: var(--cor-branco);
+    background: var(--color-white);
     padding: 40px 30px;
     border-radius: 15px;
-    box-shadow: var(--sombra);
+    box-shadow: var(--shadow);
     width: 100%;
     text-align: center;
     box-sizing: border-box; 
+    position: relative; /* Para feedback text absoluto */
 }
 
 h2 {
-    color: var(--cor-primaria);
+    font-family: 'Montserrat', sans-serif;
+    color: var(--color-green);
     margin-top: 0;
     font-size: 22px;
 }
 
 h3 {
+    font-family: 'Montserrat', sans-serif;
     font-size: 18px;
     margin-bottom: 25px;
     font-weight: 600;
@@ -108,13 +110,15 @@ input[type="text"] {
 }
 
 input[type="text"]:focus {
-    border-color: var(--cor-secundaria);
+    /* Contraste em Azul no foco do input */
+    border-color: var(--color-blue);
     outline: none;
 }
 
 button {
-    background-color: var(--cor-primaria);
-    color: var(--cor-branco);
+    font-family: 'Montserrat', sans-serif;
+    background-color: var(--color-green);
+    color: var(--color-white);
     border: none;
     padding: 15px 25px;
     border-radius: 8px;
@@ -127,8 +131,9 @@ button {
 }
 
 button:hover {
-    background-color: var(--cor-secundaria);
-    color: var(--cor-primaria); /* Texto verde escuro para dar contraste com o verde limão */
+    /* Hover em Amarelo Saminina */
+    background-color: var(--color-yellow);
+    color: var(--color-green); /* Texto verde escuro para dar contraste com o verde limão */
 }
 
 button:active {
@@ -147,25 +152,27 @@ button:active {
     font-weight: bold;
 }
 
-/* Etiqueta que avisa de quem é a vez de jogar */
+/* Etiqueta que avisa de quem é a vez de jogar - Amarelo vibrante */
 .turno-destaque {
-    color: var(--cor-primaria);
-    background-color: #f0f7e6; /* Verde bem clarinho ao fundo */
-    border: 1px solid var(--cor-secundaria);
-    padding: 6px 12px;
+    font-family: 'Montserrat', sans-serif;
+    color: var(--color-green);
+    background-color: var(--color-yellow); /* Amarelo da logo */
+    padding: 8px 15px;
     border-radius: 20px;
     display: inline-block;
     margin-bottom: 15px;
     font-size: 13px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    font-weight: bold;
 }
 
-/* Botões das alternativas de resposta */
+/* Botões das alternativas de resposta - Borda Verde padrão */
 .btn-resposta {
-    background-color: var(--cor-branco);
-    color: var(--cor-primaria); 
-    border: 2px solid var(--cor-primaria);
+    font-family: 'Montserrat', sans-serif;
+    background-color: var(--color-white);
+    color: var(--color-green); 
+    border: 2px solid var(--color-green);
     margin-bottom: 12px;
     margin-top: 0;
     text-align: left; 
@@ -179,9 +186,88 @@ button:active {
 }
 
 .btn-resposta:hover {
-    background-color: var(--cor-primaria);
-    color: var(--cor-branco);
-    border-color: var(--cor-primaria);
+    /* Hover em Amarelo para destacar */
+    background-color: var(--color-yellow);
+    color: var(--color-green);
+    border-color: var(--color-yellow);
+}
+
+/* =========================================
+   10. FEEDBACK DE RESPOSTAS (ACERTO/ERRO VISUAL)
+   ========================================= */
+
+/* Quando a resposta for certa (Verde Gramado Vibrante) */
+.btn-resposta.correta {
+    background-color: var(--color-correct) !important;
+    color: var(--color-white) !important;
+    border-color: var(--color-correct) !important;
+}
+
+/* Quando a resposta for errada (Vermelho Cartão) */
+.btn-resposta.errada {
+    background-color: var(--color-wrong) !important;
+    color: var(--color-white) !important;
+    border-color: var(--color-wrong) !important;
+}
+
+/* Tira o efeitinho de hover quando os botões estão bloqueados durante a pausa */
+.btn-resposta:disabled {
+    cursor: not-allowed;
+    opacity: 0.9;
+}
+
+/* =========================================
+   11. FEEDBACK DE MENSAGEM (NOVO MECÂNICA)
+   ========================================= */
+
+/* Estilo para as mensagens gigantes Montserrat de Gool/Para Fora */
+.feedback-text {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 32px;
+    font-weight: 900;
+    color: var(--color-green);
+    letter-spacing: -1px;
+    margin: 20px 0;
+    text-transform: uppercase;
+}
+
+/* Gool em Verde vibrante */
+#feedback-acerto {
+    color: var(--color-correct);
+}
+
+/* Para Fora/Trave em Vermelho vibrante */
+#feedback-erro {
+    color: var(--color-wrong);
+}
+
+/* =========================================
+   12. CRONÔMETRO (Abaixo do box principal)
+   ========================================= */
+.timer-container {
+    width: 100%;
+    max-width: 450px;
+    display: flex;
+    justify-content: center;
+    margin-top: -5px; /* Para grudar ligeiramente abaixo do box branco */
+    margin-bottom: 20px;
+    padding: 0 20px;
+    box-sizing: border-box;
+}
+
+.timer-display {
+    font-family: 'Montserrat', sans-serif;
+    /* Destaque Azul para Contraste */
+    background-color: var(--color-white);
+    color: var(--color-blue);
+    font-size: 20px;
+    font-weight: 900;
+    padding: 10px 20px;
+    border-radius: 0 0 10px 10px; /* Cantos arredondados só embaixo */
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    display: inline-block;
+    border: 2px solid var(--color-blue);
+    border-top: none; /* Gruda visualmente na caixa branca */
 }
 
 /* =========================================
@@ -191,24 +277,25 @@ button:active {
     font-size: 50px;
     display: block;
     margin-bottom: 15px;
+    color: var(--color-yellow); /* Troféu Amarelo Saminina */
 }
 
 #mensagem-final {
     font-size: 18px;
     white-space: pre-line; /* Respeita as quebras de linha que colocamos no JavaScript */
-    color: var(--cor-texto);
+    color: var(--color-text-dark);
     margin: 25px 0;
 }
 
-/* Botão de jogar novamente */
+/* Botão de jogar novamente - Amarelo vibrante */
 .btn-reiniciar {
-    background-color: var(--cor-secundaria); 
-    color: var(--cor-primaria); 
+    background-color: var(--color-yellow); 
+    color: var(--color-green); 
 }
 
 .btn-reiniciar:hover { 
-    background-color: #7da530; /* Um verde limão um pouco mais fechado no hover */
-    color: var(--cor-branco);
+    background-color: #f7bb00; /* Um amarelo um pouco mais fechado no hover */
+    color: var(--color-green);
 }
 
 .rodape-cliente {
@@ -223,52 +310,4 @@ button:active {
    ========================================= */
 .escondido {
     display: none !important;
-}
-
-/* =========================================
-   10. FEEDBACK DE RESPOSTAS (ACERTO/ERRO)
-   ========================================= */
-
-/* Quando a resposta for certa (Verde Sucesso) */
-.btn-resposta.correta {
-    background-color: #28a745 !important;
-    color: var(--cor-branco) !important;
-    border-color: #28a745 !important;
-}
-
-/* Quando a resposta for errada (Vermelho Alerta) */
-.btn-resposta.errada {
-    background-color: #dc3545 !important;
-    color: var(--cor-branco) !important;
-    border-color: #dc3545 !important;
-}
-
-/* Tira o efeitinho de hover quando os botões estão bloqueados durante a pausa */
-.btn-resposta:disabled {
-    cursor: not-allowed;
-    opacity: 0.9;
-}
-
-/* Estilo para a tela de passagem de celular */
-.nome-gigante {
-    font-family: 'Unbounded', sans-serif;
-    color: var(--cor-secundaria); /* Usa o verde limão vibrante para dar destaque */
-    font-size: 32px;
-    margin: 20px 0 30px 0;
-    text-transform: uppercase;
-}
-
-/* =========================================
-   11. CRONÔMETRO DE TEMPO
-   ========================================= */
-.cronometro-destaque {
-    font-family: 'Unbounded', sans-serif;
-    font-size: 18px;
-    font-weight: bold;
-    color: var(--cor-primaria);
-    margin-bottom: 10px;
-    background-color: #f4f7f6; /* Fundo cinza clarinho */
-    padding: 10px;
-    border-radius: 8px;
-    display: inline-block;
 }

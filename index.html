@@ -3,25 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Desafio Visual - Óticas Arcoverde</title>
+    <title>Copa saminina - O Conhecimento é Campeão</title>
     <link rel="stylesheet" href="style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@200..900&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&family=Unbounded:wght@200..900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
 </head>
 <body>
 
     <div class="main-wrapper">
         <div class="logo-container">
-            <img src="svg/logo-slogan.svg" alt="Logo Óticas Arcoverde" class="logo-marca">
+            <img src="logo/samininacopa.svg" alt="Logo Saminina - Copa saminina" class="logo-marca">
         </div>
 
         <div class="quiz-container">
             
             <div id="tela-inicial">
-                <h2>Desafio em Dupla!</h2>
-                <p>Registrem-se e descubram quem sabe mais sobre a saúde dos olhos.</p>
+                <h2>Copa saminina!</h2>
+                <p>Registrem-se e descubram quem é o craque de conhecimento de Copa.</p>
                 <input type="text" id="input-nome1" placeholder="Nome do Jogador 1" autocomplete="name" autocapitalize="words">
                 <input type="text" id="input-nome2" placeholder="Nome do Jogador 2" autocomplete="name" autocapitalize="words">
                 <button onclick="comecarJogo()">Iniciar Batalha</button>
@@ -30,19 +29,19 @@
             <div id="tela-passagem" class="escondido">
                 <h2>Prepare-se!</h2>
                 <p>Passe o celular. A próxima pergunta é para:</p>
-                <h1 id="nome-destaque" class="nome-gigante">Nome</h1>
-                <p style="color: #dc3545; font-weight: bold;">Você terá 30 segundos!</p>
+                <h1 id="nome-destaque" style="font-family: 'Montserrat', sans-serif; color: var(--color-yellow); font-size: 32px; margin: 20px 0; text-transform: uppercase;">Nome</h1>
+                <p style="color: var(--color-wrong); font-weight: bold;">Você terá 30 segundos!</p>
                 <button onclick="iniciarTurno()">Estou Pronto!</button>
             </div>
 
             <div id="tela-quiz" class="escondido">
                 <div id="aviso-turno" class="turno-destaque"></div> 
-                
-                <div id="cronometro" class="cronometro-destaque">Tempo: 30s</div>
-                
                 <div class="progresso" id="barra-progresso">Rodada 1 de 5</div>
                 
                 <h3 id="texto-pergunta">Carregando pergunta...</h3>
+                <div id="feedback-acerto" class="escondido feedback-text">Goooooooool!!!</div>
+                <div id="feedback-erro" class="escondido feedback-text">Para fooora!</div>
+                
                 <div id="area-botoes">
                     </div>
             </div>
@@ -52,58 +51,65 @@
                 <h2 id="titulo-vencedor">Fim de Jogo!</h2>
                 <p id="mensagem-final"></p>
                 <button class="btn-reiniciar" onclick="location.reload()">Jogar Novamente</button>
-                <p class="rodape-cliente">Você vê e confia.</p>
+                <p class="rodape-cliente">Copa saminina - Onde o conhecimento é campeão.</p>
             </div>
 
         </div>
     </div>
 
+    <div id="timer-container" class="timer-container escondido">
+        <div id="timer-display" class="timer-display">Tempo: 30s</div>
+    </div>
+
     <script>
+        // Variáveis do Jogo
         let j1Nome = "";
         let j2Nome = "";
         let j1Pontos = 0;
         let j2Pontos = 0;
-        let perguntaAtual = 0; 
-        let jogadorAtual = 1;  
-        let perguntasDaRodada = []; 
-        
-        // VARIÁVEIS DO CRONÔMETRO
+        let perguntaAtual = 0; // Vai de 0 a 9 (Total de 10 perguntas)
+        let jogadorAtual = 1;  // Começa com o Jogador 1
+        let perguntasDaRodada = []; // Vai guardar as 10 perguntas sorteadas
+
+        // Cronômetro
         let tempoRestante = 30;
         let controleCronometro;
 
+        // --- BANCO DE DADOS: 30 PERGUNTAS DE COPA/BRASIL (FÁCEIS) ---
         const bancoDePerguntas = [
-            { pergunta: "Qual é o principal sintoma da Miopia?", respostas: ["Dificuldade para ler de perto", "Visão embaçada para longe", "Dificuldade em enxergar cores"], respostaCerta: 1 },
-            { pergunta: "Qual problema de visão dificulta o foco de PERTO?", respostas: ["Hipermetropia", "Miopia", "Daltonismo"], respostaCerta: 0 },
-            { pergunta: "Para que serve o tratamento Antirreflexo nas lentes?", respostas: ["Escurecer os óculos", "Deixar a lente colorida", "Reduzir reflexos e aumentar o conforto"], respostaCerta: 2 },
-            { pergunta: "Lentes de Policarbonato são indicadas principalmente porque:", respostas: ["São mais baratas", "São muito resistentes a impactos", "Ficam limpas sozinhas"], respostaCerta: 1 },
-            { pergunta: "A Presbiopia é uma condição conhecida como:", respostas: ["Vista cansada (após os 40 anos)", "Olho preguiçoso", "Aversão à luz"], respostaCerta: 0 },
-            { pergunta: "Qual tipo de lente possui três campos de visão (longe, intermediário e perto)?", respostas: ["Visão Simples", "Bifocal", "Multifocal"], respostaCerta: 2 },
-            { pergunta: "As lentes Fotossensíveis são famosas por:", respostas: ["Clarear no escuro e escurecer no sol", "Brilhar no escuro", "Não arranhar nunca"], respostaCerta: 0 },
-            { pergunta: "Qual é o maior perigo da exposição à Luz Azul das telas?", respostas: ["Muda a cor dos olhos", "Causa fadiga ocular e altera o sono", "Derrete a armação dos óculos"], respostaCerta: 1 },
-            { pergunta: "O Astigmatismo causa qual sintoma?", respostas: ["Visão distorcida em todas as distâncias", "Apenas dor de cabeça", "Cegueira noturna"], respostaCerta: 0 },
-            { pergunta: "Por que óculos de sol sem proteção UV são perigosos?", respostas: ["Porque desbotam", "A pupila dilata no escuro e entra mais radiação", "Eles não são perigosos"], respostaCerta: 1 },
-            { pergunta: "O que significa a sigla 'OD' e 'OE' na sua receita oftálmica?", respostas: ["Óculos Direto / Óculos Esquerdo", "Olho Direito / Olho Esquerdo", "Oftalmo Dia / Oftalmo Especial"], respostaCerta: 1 },
-            { pergunta: "Lentes Polarizadas são ideais para:", respostas: ["Ler no escuro", "Reduzir o reflexo do sol no asfalto e na água", "Usar no computador"], respostaCerta: 1 },
-            { pergunta: "Qual vitamina é famosa por ser essencial para a boa visão?", respostas: ["Vitamina A", "Vitamina C", "Vitamina D"], respostaCerta: 0 },
-            { pergunta: "Como se chama a parte colorida do olho?", respostas: ["Pupila", "Córnea", "Íris"], respostaCerta: 2 },
-            { pergunta: "O daltonismo afeta principalmente a percepção de quais cores?", respostas: ["Verde e Vermelho", "Azul e Amarelo", "Preto e Branco"], respostaCerta: 0 },
-            { pergunta: "Qual é a função da lágrima?", respostas: ["Apenas para o choro", "Lubrificar, limpar e proteger o olho", "Mudar a cor do olho"], respostaCerta: 1 },
-            { pergunta: "Com que frequência é recomendado ir ao oftalmologista?", respostas: ["Anualmente", "A cada 5 anos", "Só quando sentir dor"], respostaCerta: 0 },
-            { pergunta: "O que é Catarata?", respostas: ["Pressão alta no olho", "Opacidade do cristalino (visão nublada)", "Alergia a gatos"], respostaCerta: 1 },
-            { pergunta: "Lentes de Alto Índice servem para:", respostas: ["Aumentar o grau", "Deixar as lentes mais finas e leves", "Fazer as lentes brilharem"], respostaCerta: 1 },
-            { pergunta: "Lentes de contato podem ser limpas com água da torneira?", respostas: ["Sim, a água é limpa", "Não, apenas com solução específica", "Apenas se a água for fervida"], respostaCerta: 1 },
-            { pergunta: "Coçar os olhos com frequência pode causar qual problema?", respostas: ["Miopia", "Ceratocone (deformação da córnea)", "Ficar estrábico"], respostaCerta: 1 },
-            { pergunta: "O Glaucoma é uma doença perigosa porque:", respostas: ["É silenciosa e causa danos irreversíveis", "Faz o olho mudar de cor", "Causa muita dor imediatamente"], respostaCerta: 0 },
-            { pergunta: "Dormir com lentes de contato que não são feitas para isso:", respostas: ["Descansa os olhos", "Aumenta muito o risco de infecções graves", "Hidrata a lente"], respostaCerta: 1 },
-            { pergunta: "O que são 'moscas volantes'?", respostas: ["Insetos reais no ambiente", "Manchinhas que parecem flutuar na visão", "Um tipo de armação antiga"], respostaCerta: 1 },
-            { pergunta: "A armação ideal para o seu rosto não deve:", respostas: ["Apoiar-se nas bochechas ao sorrir", "Cobrir as sobrancelhas", "Ter cores fortes"], respostaCerta: 0 },
-            { pergunta: "Armações de material 'Acetato' são famosas por:", respostas: ["Serem muito fáceis de quebrar", "Serem resistentes, hipoalergênicas e confortáveis", "Pesarem muito no nariz"], respostaCerta: 1 },
-            { pergunta: "Para limpar seus óculos corretamente, o ideal é usar:", respostas: ["A barra da camiseta", "Papel higiênico", "Spray limpa-lentes e flanela de microfibra"], respostaCerta: 2 },
-            { pergunta: "Estrabismo é a condição popularmente conhecida como:", respostas: ["Olho vesgo (desalinhamento)", "Olho seco", "Vista cansada"], respostaCerta: 0 },
-            { pergunta: "O uso excessivo de colírios sem receita pode:", respostas: ["Curar qualquer doença", "Clarear os olhos para sempre", "Mascarar problemas e piorar a visão"], respostaCerta: 2 },
-            { pergunta: "A retina é a parte do olho responsável por:", respostas: ["Dar a cor ao olho", "Captar a luz e enviar as imagens ao cérebro", "Produzir lágrimas"], respostaCerta: 1 }
+            { pergunta: "Quantas Copas o Brasil ganhou?", respostas: ["3", "4", "5"], respostaCerta: 2 },
+            { pergunta: "Quem é o maior artilheiro da história das Copas?", respostas: ["Pelé", "Ronaldo", "Miroslav Klose"], respostaCerta: 2 },
+            { pergunta: "Onde foi a primeira Copa do Mundo em 1930?", respostas: ["Argentina", "Brasil", "Uruguai"], respostaCerta: 2 },
+            { pergunta: "Qual jogador famoso é conhecido como 'Rei do Futebol'?", respostas: ["Garrincha", "Maradona", "Pelé"], respostaCerta: 2 },
+            { pergunta: "Quantas vezes o Brasil sediou a Copa?", respostas: ["1", "2", "3"], respostaCerta: 1 },
+            { pergunta: "Em qual Copa o Brasil sofreu o 7x1?", respostas: ["2010", "2014", "2018"], respostaCerta: 1 },
+            { pergunta: "Quem foi o capitão do tetra em 1994?", respostas: ["Romário", "Bebeto", "Dunga"], respostaCerta: 2 },
+            { pergunta: "Qual mascote da Copa de 2014 no Brasil?", respostas: ["Zé Carioca", "Fuleco", "Canarinho Pistola"], respostaCerta: 1 },
+            { pergunta: "Qual país venceu a Copa de 2022?", respostas: ["Brasil", "França", "Argentina"], respostaCerta: 2 },
+            { pergunta: "Qual dessas NÃO é uma comemoração de gol famosa?", respostas: ["Dancinha do robô", "Tirar a camisa", "Tapar um olho"], respostaCerta: 2 },
+            { pergunta: "Quantas substituições são permitidas hoje na Copa?", respostas: ["3", "4", "5"], respostaCerta: 2 },
+            { pergunta: "Qual prêmio é dado ao melhor jogador do torneio?", respostas: ["Chuteira de Ouro", "Bola de Ouro", "Luva de Ouro"], respostaCerta: 1 },
+            { pergunta: "Qual é a cor da camisa principal da seleção brasileira?", respostas: ["Branca", "Azul", "Amarela"], respostaCerta: 2 },
+            { pergunta: "Quantos minutos dura o tempo regulamentar de um jogo (sem prorrogação)?", respostas: ["80", "90", "100"], respostaCerta: 1 },
+            { pergunta: "O que acontece se o jogo terminar empatado em uma final (após prorrogação)?", respostas: ["Jogo é repetido", "Ganhador é sorteado", "Disputa de pênaltis"], respostaCerta: 2 },
+            { pergunta: "Qual técnico levou o Brasil ao penta em 2002?", respostas: ["Parreira", "Zagallo", "Felipão"], respostaCerta: 2 },
+            { pergunta: "Quantos times participam da Copa hoje (formato atual)?", respostas: ["16", "24", "32"], respostaCerta: 2 },
+            { pergunta: "Em qual Copa o Brasil conquistou o tri?", respostas: ["1966", "1970", "1974"], respostaCerta: 1 },
+            { pergunta: "Qual animal é o mascote da seleção brasileira?", respostas: ["Arara", "Canarinho", "Papagaio"], respostaCerta: 1 },
+            { pergunta: "Com que frequência é realizada a Copa do Mundo?", respostas: ["A cada 2 anos", "A cada 4 anos", "A cada 5 anos"], respostaCerta: 1 },
+            { pergunta: "Em qual ano o Brasil ganhou sua última Copa?", respostas: ["2002", "1998", "2010"], respostaCerta: 0 },
+            { pergunta: "Qual é o país conhecido por sediar a 'Copa das Copas' em 2014?", respostas: ["França", "Brasil", "Alemanha"], respostaCerta: 1 },
+            { pergunta: "Quantos jogadores formam uma equipe de futebol em campo?", respostas: ["10", "11", "12"], respostaCerta: 1 },
+            { pergunta: "Qual estádio lendário do Rio de Janeiro sediou a final de 2014?", respostas: ["Mineirão", "Morumbi", "Maracanã"], respostaCerta: 2 },
+            { pergunta: "Qual país tem a seleção conhecida como 'Azzurra'?", respostas: ["França", "Itália", "Espanha"], respostaCerta: 1 },
+            { pergunta: "Qual país tem 4 títulos mundiais?", respostas: ["Brasil", "Alemanha", "França"], respostaCerta: 1 },
+            { pergunta: "Qual cor de camisa o Brasil usou na final de 1950?", respostas: ["Amarela", "Branca", "Azul"], respostaCerta: 1 },
+            { pergunta: "Quem é o famoso jogador português conhecido por 'CR7'?", respostas: ["Cristiano Ronaldo", "Figo", "Eusébio"], respostaCerta: 0 },
+            { pergunta: "Onde foi a Copa de 2018?", respostas: ["África do Sul", "Brasil", "Rússia"], respostaCerta: 2 },
+            { pergunta: "Qual desses jogadores nunca ganhou uma Copa?", respostas: ["Romário", "Neymar", "Ronaldo"], respostaCerta: 1 }
         ];
 
+        // Função de embaralhamento Fisher-Yates (NÃO MEXER)
         function embaralharPerguntas(array) {
             let arrayEmbaralhado = [...array]; 
             for (let i = arrayEmbaralhado.length - 1; i > 0; i--) {
@@ -118,18 +124,24 @@
             j2Nome = document.getElementById("input-nome2").value;
 
             if (j1Nome.trim() === "" || j2Nome.trim() === "") {
-                alert("Por favor, preencham os nomes dos dois jogadores!");
+                alert("Por favor, preencham os nomes dos dois craques!");
                 return;
             }
 
+            // MÁGICA ACONTECENDO AQUI: Embaralha as 30 e pega só as 10 primeiras!
             perguntasDaRodada = embaralharPerguntas(bancoDePerguntas).slice(0, 10);
+
             document.getElementById("tela-inicial").classList.add("escondido");
             prepararTurno(); 
         }
 
         function prepararTurno() {
+            clearInterval(controleCronometro); // Para o relógio se estiver rodando
+            document.getElementById("timer-container").classList.add("escondido"); // Esconde o cronômetro
+
             const nomeNaTela = jogadorAtual === 1 ? j1Nome : j2Nome;
             document.getElementById("nome-destaque").innerText = nomeNaTela;
+
             document.getElementById("tela-quiz").classList.add("escondido");
             document.getElementById("tela-passagem").classList.remove("escondido");
         }
@@ -137,26 +149,22 @@
         function iniciarTurno() {
             document.getElementById("tela-passagem").classList.add("escondido");
             document.getElementById("tela-quiz").classList.remove("escondido");
+            document.getElementById("timer-container").classList.remove("escondido"); // Mostra o cronômetro azul
+            
             mostrarPergunta();
             iniciarCronometro(); // COMEÇA O RELÓGIO AQUI!
         }
 
         function iniciarCronometro() {
             tempoRestante = 30;
-            const elementoCronometro = document.getElementById("cronometro");
+            const elementoCronometro = document.getElementById("timer-display");
             elementoCronometro.innerText = `Tempo: ${tempoRestante}s`;
-            elementoCronometro.style.color = "var(--cor-primaria)"; // Cor original
             
             clearInterval(controleCronometro); // Limpa qualquer timer antigo
             
             controleCronometro = setInterval(() => {
                 tempoRestante--;
                 elementoCronometro.innerText = `Tempo: ${tempoRestante}s`;
-                
-                // Se faltar 5 segundos, o tempo fica vermelho para dar desespero!
-                if (tempoRestante <= 5) {
-                    elementoCronometro.style.color = "#dc3545";
-                }
 
                 // Quando o tempo acaba...
                 if (tempoRestante <= 0) {
@@ -167,34 +175,23 @@
         }
 
         function tempoEsgotado() {
-            document.getElementById("cronometro").innerText = "TEMPO ESGOTADO!";
-            
-            // Bloqueia os botões para ele não tentar responder
-            const todosBotoes = document.querySelectorAll('.btn-resposta');
-            todosBotoes.forEach(botao => botao.disabled = true);
-            
-            // Pinta a resposta que era certa de verde, para a pessoa aprender
-            const respostaCorreta = perguntasDaRodada[perguntaAtual].respostaCerta;
-            todosBotoes[respostaCorreta].classList.add('correta'); 
-            
-            // Espera 2 segundos para o choro e passa de vez
-            setTimeout(() => {
-                perguntaAtual++; 
-                if (perguntaAtual >= perguntasDaRodada.length) {
-                    mostrarResultadoFinal();
-                    return; 
-                }
-                jogadorAtual = (jogadorAtual === 1) ? 2 : 1;
-                prepararTurno(); 
-            }, 2000); 
+            // Feedback instantâneo na tela (Para fora)
+            verificarResposta(-1, null); // -1 indica erro por tempo
         }
 
         function mostrarPergunta() {
+            // Agora usa as 10 perguntas sorteadas
             const dadosDaPergunta = perguntasDaRodada[perguntaAtual];
             const nomeNaTela = jogadorAtual === 1 ? j1Nome : j2Nome;
             
             document.getElementById("aviso-turno").innerText = `Vez de: ${nomeNaTela}`;
             
+            // Garante que o texto da pergunta esteja visível e os feedbacks escondidos
+            document.getElementById("texto-pergunta").classList.remove("escondido");
+            document.getElementById("feedback-acerto").classList.add("escondido");
+            document.getElementById("feedback-erro").classList.add("escondido");
+            
+            // Calcula em qual "Rodada" estamos (cada rodada tem 2 perguntas, uma para cada)
             let numeroRodada = Math.floor(perguntaAtual / 2) + 1;
             document.getElementById("barra-progresso").innerText = `Rodada ${numeroRodada} de 5`;
             
@@ -213,26 +210,60 @@
         }
 
         function verificarResposta(indiceEscolhido, botaoClicado) {
-            // A pessoa clicou! Para o relógio na hora!
+            // Clicou ou acabou o tempo? Para o relógio instantaneamente!
             clearInterval(controleCronometro);
 
+            // Pega as divs de feedback
+            const divTextoPergunta = document.getElementById("texto-pergunta");
+            const divFeedbackAcerto = document.getElementById("feedback-acerto");
+            const divFeedbackErro = document.getElementById("feedback-erro");
+            
+            // Bloqueia todos os botões para a pessoa não clicar duas vezes
             const todosBotoes = document.querySelectorAll('.btn-resposta');
             todosBotoes.forEach(botao => botao.disabled = true);
 
+            // Verifica a resposta baseada no array sorteado
             const respostaCorreta = perguntasDaRodada[perguntaAtual].respostaCerta;
 
             if (indiceEscolhido === respostaCorreta) {
+                // ACERTOU!
                 botaoClicado.classList.add('correta'); 
+                
+                // MÁGICA DO FEEDBACK DE TEXTO GIGANTE (Gooooool!!!)
+                divTextoPergunta.classList.add("escondido");
+                divFeedbackAcerto.innerText = "Gooooooool!!!";
+                divFeedbackAcerto.classList.remove("escondido");
+                
                 if (jogadorAtual === 1) j1Pontos++;
                 else j2Pontos++;
             } else {
-                botaoClicado.classList.add('errada'); 
-                todosBotoes[respostaCorreta].classList.add('correta'); 
+                // ERROU (OU ACABOU O TEMPO)!
+                if (botaoClicado) {
+                    botaoClicado.classList.add('errada'); 
+                }
+                todosBotoes[respostaCorreta].classList.add('correta'); // Mostra qual era a certa
+                
+                // MÁGICA DO FEEDBACK DE TEXTO GIGANTE (Erro Sorteado)
+                divTextoPergunta.classList.add("escondido");
+                
+                // Sorteia entre "Para fooora!" e "Na traaaave!"
+                const mensagensErro = ["Para fooora!", "Na traaaave!"];
+                const mensagemSorteada = mensagensErro[Math.floor(Math.random() * mensagensErro.length)];
+                
+                // Se foi por tempo esgotado, a mensagem é específica
+                if (indiceEscolhido === -1) {
+                    divFeedbackErro.innerText = "TEMPO ESGOTADO!";
+                } else {
+                    divFeedbackErro.innerText = mensagemSorteada;
+                }
+                divFeedbackErro.classList.remove("escondido");
             }
 
+            // DELAY AUMENTADO PARA 2,5 SEGUNDOS (2500ms) PARA ELES LEREM O GOOL
             setTimeout(() => {
                 perguntaAtual++; 
 
+                // Verifica se chegou em 10 (tamanho do array sorteado)
                 if (perguntaAtual >= perguntasDaRodada.length) {
                     mostrarResultadoFinal();
                     return; 
@@ -240,16 +271,20 @@
 
                 jogadorAtual = (jogadorAtual === 1) ? 2 : 1;
                 prepararTurno(); 
-            }, 1500); 
+            }, 2500); 
         }
 
         function mostrarResultadoFinal() {
+            clearInterval(controleCronometro); // Garante que parou
+            document.getElementById("timer-container").classList.add("escondido"); // Esconde cronômetro azul
+
             document.getElementById("tela-quiz").classList.add("escondido");
             document.getElementById("tela-passagem").classList.add("escondido");
             document.getElementById("tela-resultado").classList.remove("escondido");
             
             let titulo = "";
             
+            // Verifica quem ganhou
             if (j1Pontos > j2Pontos) {
                 titulo = `${j1Nome} VENCEU! 🎉`;
             } else if (j2Pontos > j1Pontos) {
