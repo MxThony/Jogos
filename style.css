@@ -224,3 +224,51 @@ button:active {
 .escondido {
     display: none !important;
 }
+
+/* =========================================
+   10. FEEDBACK DE RESPOSTAS (ACERTO/ERRO)
+   ========================================= */
+
+/* Quando a resposta for certa (Verde Sucesso) */
+.btn-resposta.correta {
+    background-color: #28a745 !important;
+    color: var(--cor-branco) !important;
+    border-color: #28a745 !important;
+}
+
+/* Quando a resposta for errada (Vermelho Alerta) */
+.btn-resposta.errada {
+    background-color: #dc3545 !important;
+    color: var(--cor-branco) !important;
+    border-color: #dc3545 !important;
+}
+
+/* Tira o efeitinho de hover quando os botões estão bloqueados durante a pausa */
+.btn-resposta:disabled {
+    cursor: not-allowed;
+    opacity: 0.9;
+}
+
+/* Estilo para a tela de passagem de celular */
+.nome-gigante {
+    font-family: 'Unbounded', sans-serif;
+    color: var(--cor-secundaria); /* Usa o verde limão vibrante para dar destaque */
+    font-size: 32px;
+    margin: 20px 0 30px 0;
+    text-transform: uppercase;
+}
+
+/* =========================================
+   11. CRONÔMETRO DE TEMPO
+   ========================================= */
+.cronometro-destaque {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 18px;
+    font-weight: bold;
+    color: var(--cor-primaria);
+    margin-bottom: 10px;
+    background-color: #f4f7f6; /* Fundo cinza clarinho */
+    padding: 10px;
+    border-radius: 8px;
+    display: inline-block;
+}

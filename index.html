@@ -27,8 +27,19 @@
                 <button onclick="comecarJogo()">Iniciar Batalha</button>
             </div>
 
+            <div id="tela-passagem" class="escondido">
+                <h2>Prepare-se!</h2>
+                <p>Passe o celular. A próxima pergunta é para:</p>
+                <h1 id="nome-destaque" class="nome-gigante">Nome</h1>
+                <p style="color: #dc3545; font-weight: bold;">Você terá 30 segundos!</p>
+                <button onclick="iniciarTurno()">Estou Pronto!</button>
+            </div>
+
             <div id="tela-quiz" class="escondido">
                 <div id="aviso-turno" class="turno-destaque"></div> 
+                
+                <div id="cronometro" class="cronometro-destaque">Tempo: 30s</div>
+                
                 <div class="progresso" id="barra-progresso">Rodada 1 de 5</div>
                 
                 <h3 id="texto-pergunta">Carregando pergunta...</h3>
@@ -48,27 +59,59 @@
     </div>
 
     <script>
-        // Variáveis do Jogo
         let j1Nome = "";
         let j2Nome = "";
         let j1Pontos = 0;
         let j2Pontos = 0;
-        let perguntaAtual = 0; // Vai de 0 a 9 (Total de 10 perguntas)
-        let jogadorAtual = 1;  // Começa com o Jogador 1
+        let perguntaAtual = 0; 
+        let jogadorAtual = 1;  
+        let perguntasDaRodada = []; 
+        
+        // VARIÁVEIS DO CRONÔMETRO
+        let tempoRestante = 30;
+        let controleCronometro;
 
-        // --- 10 PERGUNTAS MISTURADAS ---
-        const perguntas = [
-            { pergunta: "Qual é o principal sintoma da Miopia?", respostas: ["Dificuldade para ler de perto", "Visão embaçada para objetos distantes", "Dificuldade em enxergar cores"], respostaCerta: 1 },
+        const bancoDePerguntas = [
+            { pergunta: "Qual é o principal sintoma da Miopia?", respostas: ["Dificuldade para ler de perto", "Visão embaçada para longe", "Dificuldade em enxergar cores"], respostaCerta: 1 },
             { pergunta: "Qual problema de visão dificulta o foco de PERTO?", respostas: ["Hipermetropia", "Miopia", "Daltonismo"], respostaCerta: 0 },
-            { pergunta: "Para que serve o tratamento Antirreflexo nas lentes?", respostas: ["Para escurecer os óculos", "Deixar a lente colorida", "Reduzir reflexos e aumentar o conforto"], respostaCerta: 2 },
-            { pergunta: "Lentes de Policarbonato são indicadas principalmente porque:", respostas: ["São mais baratas", "São altamente resistentes a impactos", "Ficam limpas sozinhas"], respostaCerta: 1 },
+            { pergunta: "Para que serve o tratamento Antirreflexo nas lentes?", respostas: ["Escurecer os óculos", "Deixar a lente colorida", "Reduzir reflexos e aumentar o conforto"], respostaCerta: 2 },
+            { pergunta: "Lentes de Policarbonato são indicadas principalmente porque:", respostas: ["São mais baratas", "São muito resistentes a impactos", "Ficam limpas sozinhas"], respostaCerta: 1 },
             { pergunta: "A Presbiopia é uma condição conhecida como:", respostas: ["Vista cansada (após os 40 anos)", "Olho preguiçoso", "Aversão à luz"], respostaCerta: 0 },
             { pergunta: "Qual tipo de lente possui três campos de visão (longe, intermediário e perto)?", respostas: ["Visão Simples", "Bifocal", "Multifocal"], respostaCerta: 2 },
             { pergunta: "As lentes Fotossensíveis são famosas por:", respostas: ["Clarear no escuro e escurecer no sol", "Brilhar no escuro", "Não arranhar nunca"], respostaCerta: 0 },
             { pergunta: "Qual é o maior perigo da exposição à Luz Azul das telas?", respostas: ["Muda a cor dos olhos", "Causa fadiga ocular e altera o sono", "Derrete a armação dos óculos"], respostaCerta: 1 },
             { pergunta: "O Astigmatismo causa qual sintoma?", respostas: ["Visão distorcida em todas as distâncias", "Apenas dor de cabeça", "Cegueira noturna"], respostaCerta: 0 },
-            { pergunta: "Por que óculos de sol sem proteção UV são perigosos?", respostas: ["Porque desbotam rápido", "A pupila dilata no escuro da lente e entra mais radiação no olho", "Eles não são perigosos"], respostaCerta: 1 }
+            { pergunta: "Por que óculos de sol sem proteção UV são perigosos?", respostas: ["Porque desbotam", "A pupila dilata no escuro e entra mais radiação", "Eles não são perigosos"], respostaCerta: 1 },
+            { pergunta: "O que significa a sigla 'OD' e 'OE' na sua receita oftálmica?", respostas: ["Óculos Direto / Óculos Esquerdo", "Olho Direito / Olho Esquerdo", "Oftalmo Dia / Oftalmo Especial"], respostaCerta: 1 },
+            { pergunta: "Lentes Polarizadas são ideais para:", respostas: ["Ler no escuro", "Reduzir o reflexo do sol no asfalto e na água", "Usar no computador"], respostaCerta: 1 },
+            { pergunta: "Qual vitamina é famosa por ser essencial para a boa visão?", respostas: ["Vitamina A", "Vitamina C", "Vitamina D"], respostaCerta: 0 },
+            { pergunta: "Como se chama a parte colorida do olho?", respostas: ["Pupila", "Córnea", "Íris"], respostaCerta: 2 },
+            { pergunta: "O daltonismo afeta principalmente a percepção de quais cores?", respostas: ["Verde e Vermelho", "Azul e Amarelo", "Preto e Branco"], respostaCerta: 0 },
+            { pergunta: "Qual é a função da lágrima?", respostas: ["Apenas para o choro", "Lubrificar, limpar e proteger o olho", "Mudar a cor do olho"], respostaCerta: 1 },
+            { pergunta: "Com que frequência é recomendado ir ao oftalmologista?", respostas: ["Anualmente", "A cada 5 anos", "Só quando sentir dor"], respostaCerta: 0 },
+            { pergunta: "O que é Catarata?", respostas: ["Pressão alta no olho", "Opacidade do cristalino (visão nublada)", "Alergia a gatos"], respostaCerta: 1 },
+            { pergunta: "Lentes de Alto Índice servem para:", respostas: ["Aumentar o grau", "Deixar as lentes mais finas e leves", "Fazer as lentes brilharem"], respostaCerta: 1 },
+            { pergunta: "Lentes de contato podem ser limpas com água da torneira?", respostas: ["Sim, a água é limpa", "Não, apenas com solução específica", "Apenas se a água for fervida"], respostaCerta: 1 },
+            { pergunta: "Coçar os olhos com frequência pode causar qual problema?", respostas: ["Miopia", "Ceratocone (deformação da córnea)", "Ficar estrábico"], respostaCerta: 1 },
+            { pergunta: "O Glaucoma é uma doença perigosa porque:", respostas: ["É silenciosa e causa danos irreversíveis", "Faz o olho mudar de cor", "Causa muita dor imediatamente"], respostaCerta: 0 },
+            { pergunta: "Dormir com lentes de contato que não são feitas para isso:", respostas: ["Descansa os olhos", "Aumenta muito o risco de infecções graves", "Hidrata a lente"], respostaCerta: 1 },
+            { pergunta: "O que são 'moscas volantes'?", respostas: ["Insetos reais no ambiente", "Manchinhas que parecem flutuar na visão", "Um tipo de armação antiga"], respostaCerta: 1 },
+            { pergunta: "A armação ideal para o seu rosto não deve:", respostas: ["Apoiar-se nas bochechas ao sorrir", "Cobrir as sobrancelhas", "Ter cores fortes"], respostaCerta: 0 },
+            { pergunta: "Armações de material 'Acetato' são famosas por:", respostas: ["Serem muito fáceis de quebrar", "Serem resistentes, hipoalergênicas e confortáveis", "Pesarem muito no nariz"], respostaCerta: 1 },
+            { pergunta: "Para limpar seus óculos corretamente, o ideal é usar:", respostas: ["A barra da camiseta", "Papel higiênico", "Spray limpa-lentes e flanela de microfibra"], respostaCerta: 2 },
+            { pergunta: "Estrabismo é a condição popularmente conhecida como:", respostas: ["Olho vesgo (desalinhamento)", "Olho seco", "Vista cansada"], respostaCerta: 0 },
+            { pergunta: "O uso excessivo de colírios sem receita pode:", respostas: ["Curar qualquer doença", "Clarear os olhos para sempre", "Mascarar problemas e piorar a visão"], respostaCerta: 2 },
+            { pergunta: "A retina é a parte do olho responsável por:", respostas: ["Dar a cor ao olho", "Captar a luz e enviar as imagens ao cérebro", "Produzir lágrimas"], respostaCerta: 1 }
         ];
+
+        function embaralharPerguntas(array) {
+            let arrayEmbaralhado = [...array]; 
+            for (let i = arrayEmbaralhado.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arrayEmbaralhado[i], arrayEmbaralhado[j]] = [arrayEmbaralhado[j], arrayEmbaralhado[i]];
+            }
+            return arrayEmbaralhado;
+        }
 
         function comecarJogo() {
             j1Nome = document.getElementById("input-nome1").value;
@@ -79,19 +122,79 @@
                 return;
             }
 
+            perguntasDaRodada = embaralharPerguntas(bancoDePerguntas).slice(0, 10);
             document.getElementById("tela-inicial").classList.add("escondido");
+            prepararTurno(); 
+        }
+
+        function prepararTurno() {
+            const nomeNaTela = jogadorAtual === 1 ? j1Nome : j2Nome;
+            document.getElementById("nome-destaque").innerText = nomeNaTela;
+            document.getElementById("tela-quiz").classList.add("escondido");
+            document.getElementById("tela-passagem").classList.remove("escondido");
+        }
+
+        function iniciarTurno() {
+            document.getElementById("tela-passagem").classList.add("escondido");
             document.getElementById("tela-quiz").classList.remove("escondido");
             mostrarPergunta();
+            iniciarCronometro(); // COMEÇA O RELÓGIO AQUI!
+        }
+
+        function iniciarCronometro() {
+            tempoRestante = 30;
+            const elementoCronometro = document.getElementById("cronometro");
+            elementoCronometro.innerText = `Tempo: ${tempoRestante}s`;
+            elementoCronometro.style.color = "var(--cor-primaria)"; // Cor original
+            
+            clearInterval(controleCronometro); // Limpa qualquer timer antigo
+            
+            controleCronometro = setInterval(() => {
+                tempoRestante--;
+                elementoCronometro.innerText = `Tempo: ${tempoRestante}s`;
+                
+                // Se faltar 5 segundos, o tempo fica vermelho para dar desespero!
+                if (tempoRestante <= 5) {
+                    elementoCronometro.style.color = "#dc3545";
+                }
+
+                // Quando o tempo acaba...
+                if (tempoRestante <= 0) {
+                    clearInterval(controleCronometro);
+                    tempoEsgotado();
+                }
+            }, 1000);
+        }
+
+        function tempoEsgotado() {
+            document.getElementById("cronometro").innerText = "TEMPO ESGOTADO!";
+            
+            // Bloqueia os botões para ele não tentar responder
+            const todosBotoes = document.querySelectorAll('.btn-resposta');
+            todosBotoes.forEach(botao => botao.disabled = true);
+            
+            // Pinta a resposta que era certa de verde, para a pessoa aprender
+            const respostaCorreta = perguntasDaRodada[perguntaAtual].respostaCerta;
+            todosBotoes[respostaCorreta].classList.add('correta'); 
+            
+            // Espera 2 segundos para o choro e passa de vez
+            setTimeout(() => {
+                perguntaAtual++; 
+                if (perguntaAtual >= perguntasDaRodada.length) {
+                    mostrarResultadoFinal();
+                    return; 
+                }
+                jogadorAtual = (jogadorAtual === 1) ? 2 : 1;
+                prepararTurno(); 
+            }, 2000); 
         }
 
         function mostrarPergunta() {
-            const dadosDaPergunta = perguntas[perguntaAtual];
-            
-            // Define de quem é a vez na tela
+            const dadosDaPergunta = perguntasDaRodada[perguntaAtual];
             const nomeNaTela = jogadorAtual === 1 ? j1Nome : j2Nome;
+            
             document.getElementById("aviso-turno").innerText = `Vez de: ${nomeNaTela}`;
             
-            // Calcula em qual "Rodada" estamos (cada rodada tem 2 perguntas, uma para cada)
             let numeroRodada = Math.floor(perguntaAtual / 2) + 1;
             document.getElementById("barra-progresso").innerText = `Rodada ${numeroRodada} de 5`;
             
@@ -104,38 +207,49 @@
                 const botao = document.createElement("button");
                 botao.innerText = textoResposta;
                 botao.classList.add("btn-resposta"); 
-                botao.onclick = () => verificarResposta(index); 
+                botao.onclick = () => verificarResposta(index, botao); 
                 areaBotoes.appendChild(botao);
             });
         }
 
-        function verificarResposta(indiceEscolhido) {
-            // Conta os pontos para o jogador certo daquela rodada
-            if (indiceEscolhido === perguntas[perguntaAtual].respostaCerta) {
+        function verificarResposta(indiceEscolhido, botaoClicado) {
+            // A pessoa clicou! Para o relógio na hora!
+            clearInterval(controleCronometro);
+
+            const todosBotoes = document.querySelectorAll('.btn-resposta');
+            todosBotoes.forEach(botao => botao.disabled = true);
+
+            const respostaCorreta = perguntasDaRodada[perguntaAtual].respostaCerta;
+
+            if (indiceEscolhido === respostaCorreta) {
+                botaoClicado.classList.add('correta'); 
                 if (jogadorAtual === 1) j1Pontos++;
                 else j2Pontos++;
-            }
-            
-            perguntaAtual++; // Vai para a próxima pergunta geral
-
-            // Verifica se o jogo acabou
-            if (perguntaAtual >= perguntas.length) {
-                mostrarResultadoFinal();
-                return; // Para o código aqui
+            } else {
+                botaoClicado.classList.add('errada'); 
+                todosBotoes[respostaCorreta].classList.add('correta'); 
             }
 
-            // Inverte o jogador para a próxima pergunta e carrega a tela instantaneamente
-            jogadorAtual = (jogadorAtual === 1) ? 2 : 1;
-            mostrarPergunta();
+            setTimeout(() => {
+                perguntaAtual++; 
+
+                if (perguntaAtual >= perguntasDaRodada.length) {
+                    mostrarResultadoFinal();
+                    return; 
+                }
+
+                jogadorAtual = (jogadorAtual === 1) ? 2 : 1;
+                prepararTurno(); 
+            }, 1500); 
         }
 
         function mostrarResultadoFinal() {
             document.getElementById("tela-quiz").classList.add("escondido");
+            document.getElementById("tela-passagem").classList.add("escondido");
             document.getElementById("tela-resultado").classList.remove("escondido");
             
             let titulo = "";
             
-            // Verifica quem ganhou
             if (j1Pontos > j2Pontos) {
                 titulo = `${j1Nome} VENCEU! 🎉`;
             } else if (j2Pontos > j1Pontos) {
