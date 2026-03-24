@@ -18,15 +18,25 @@
    2. CONFIGURAÇÕES GERAIS E TIPOGRAFIA (Só Montserrat)
    ========================================= */
 body {
-    /* Padronizado: Montserrat para tudo */
+    /* Fontes e alinhamentos originais */
     font-family: 'Montserrat', sans-serif;
-    background-color: var(--color-green);
     color: var(--color-text-dark);
     margin: 0;
     display: flex;
     flex-direction: column;
     align-items: center;
     min-height: 100vh;
+
+    /* --- O NOVO BACKGROUND CONTÍNUO --- */
+    background-color: var(--color-green); /* O fundo verde continua por trás */
+    background-image: url('logo/bk_1.svg');  /* Puxando o seu arquivo */
+    background-repeat: repeat;            /* Faz o "azulejo" se multiplicar */
+    background-attachment: fixed;         /* O fundo fica parado se a tela rolar */
+    
+    /* Tamanho do padrão: 
+       Se achar que os losangos ficaram muito grandes no celular, diminua para 100px.
+       Se achar que ficaram muito miudinhos, aumente para 200px. */
+    background-size: 150px; 
 }
 
 /* Estilo padronizado para os parágrafos */
