@@ -63,7 +63,8 @@ p {
 .logo-marca {
     max-width: 250px; /* Largura ideal para a marca respirar na tela */
     height: auto;
-    padding-top: 20%;
+    padding-top: 30%;
+    padding-bottom: 5%;
 }
 
 /* =========================================
