@@ -61,243 +61,248 @@
         <div id="timer-display" class="timer-display">Tempo: 30s</div>
     </div>
 
-    <script>
-        // Variáveis do Jogo
-        let j1Nome = "";
-        let j2Nome = "";
-        let j1Pontos = 0;
-        let j2Pontos = 0;
-        let perguntaAtual = 0; // Vai de 0 a 9 (Total de 10 perguntas)
-        let jogadorAtual = 1;  // Começa com o Jogador 1
-        let perguntasDaRodada = []; // Vai guardar as 10 perguntas sorteadas
+ <script>
+    // =========================================
+    // 1. CONFIGURAÇÃO DE ÁUDIO
+    // =========================================
+    const somAcerto = new Audio('audio/acerto.mp3');
+    const somErro = new Audio('audio/erro.mp3');
+    const musicaFundo = new Audio('audio/fundo.mp3');
 
-        // Cronômetro
-        let tempoRestante = 30;
-        let controleCronometro;
+    // Configuração de Volumes (0.0 a 1.0)
+    somAcerto.volume = 0.5;
+    somErro.volume = 0.4;
+    musicaFundo.volume = 0.15; // Bem baixinho para não atrapalhar
+    musicaFundo.loop = true;   // Toca infinitamente
 
-        // --- BANCO DE DADOS: 30 PERGUNTAS DE COPA/BRASIL (FÁCEIS) ---
-        const bancoDePerguntas = [
-            { pergunta: "Quantas Copas o Brasil ganhou?", respostas: ["3", "4", "5"], respostaCerta: 2 },
-            { pergunta: "Quem é o maior artilheiro da história das Copas?", respostas: ["Pelé", "Ronaldo", "Miroslav Klose"], respostaCerta: 2 },
-            { pergunta: "Onde foi a primeira Copa do Mundo em 1930?", respostas: ["Argentina", "Brasil", "Uruguai"], respostaCerta: 2 },
-            { pergunta: "Qual jogador famoso é conhecido como 'Rei do Futebol'?", respostas: ["Garrincha", "Maradona", "Pelé"], respostaCerta: 2 },
-            { pergunta: "Quantas vezes o Brasil sediou a Copa?", respostas: ["1", "2", "3"], respostaCerta: 1 },
-            { pergunta: "Em qual Copa o Brasil sofreu o 7x1?", respostas: ["2010", "2014", "2018"], respostaCerta: 1 },
-            { pergunta: "Quem foi o capitão do tetra em 1994?", respostas: ["Romário", "Bebeto", "Dunga"], respostaCerta: 2 },
-            { pergunta: "Qual mascote da Copa de 2014 no Brasil?", respostas: ["Zé Carioca", "Fuleco", "Canarinho Pistola"], respostaCerta: 1 },
-            { pergunta: "Qual país venceu a Copa de 2022?", respostas: ["Brasil", "França", "Argentina"], respostaCerta: 2 },
-            { pergunta: "Qual dessas NÃO é uma comemoração de gol famosa?", respostas: ["Dancinha do robô", "Tirar a camisa", "Tapar um olho"], respostaCerta: 2 },
-            { pergunta: "Quantas substituições são permitidas hoje na Copa?", respostas: ["3", "4", "5"], respostaCerta: 2 },
-            { pergunta: "Qual prêmio é dado ao melhor jogador do torneio?", respostas: ["Chuteira de Ouro", "Bola de Ouro", "Luva de Ouro"], respostaCerta: 1 },
-            { pergunta: "Qual é a cor da camisa principal da seleção brasileira?", respostas: ["Branca", "Azul", "Amarela"], respostaCerta: 2 },
-            { pergunta: "Quantos minutos dura o tempo regulamentar de um jogo (sem prorrogação)?", respostas: ["80", "90", "100"], respostaCerta: 1 },
-            { pergunta: "O que acontece se o jogo terminar empatado em uma final (após prorrogação)?", respostas: ["Jogo é repetido", "Ganhador é sorteado", "Disputa de pênaltis"], respostaCerta: 2 },
-            { pergunta: "Qual técnico levou o Brasil ao penta em 2002?", respostas: ["Parreira", "Zagallo", "Felipão"], respostaCerta: 2 },
-            { pergunta: "Quantos times participam da Copa hoje (formato atual)?", respostas: ["16", "24", "32"], respostaCerta: 2 },
-            { pergunta: "Em qual Copa o Brasil conquistou o tri?", respostas: ["1966", "1970", "1974"], respostaCerta: 1 },
-            { pergunta: "Qual animal é o mascote da seleção brasileira?", respostas: ["Arara", "Canarinho", "Papagaio"], respostaCerta: 1 },
-            { pergunta: "Com que frequência é realizada a Copa do Mundo?", respostas: ["A cada 2 anos", "A cada 4 anos", "A cada 5 anos"], respostaCerta: 1 },
-            { pergunta: "Em qual ano o Brasil ganhou sua última Copa?", respostas: ["2002", "1998", "2010"], respostaCerta: 0 },
-            { pergunta: "Qual é o país conhecido por sediar a 'Copa das Copas' em 2014?", respostas: ["França", "Brasil", "Alemanha"], respostaCerta: 1 },
-            { pergunta: "Quantos jogadores formam uma equipe de futebol em campo?", respostas: ["10", "11", "12"], respostaCerta: 1 },
-            { pergunta: "Qual estádio lendário do Rio de Janeiro sediou a final de 2014?", respostas: ["Mineirão", "Morumbi", "Maracanã"], respostaCerta: 2 },
-            { pergunta: "Qual país tem a seleção conhecida como 'Azzurra'?", respostas: ["França", "Itália", "Espanha"], respostaCerta: 1 },
-            { pergunta: "Qual país tem 4 títulos mundiais?", respostas: ["Brasil", "Alemanha", "França"], respostaCerta: 1 },
-            { pergunta: "Qual cor de camisa o Brasil usou na final de 1950?", respostas: ["Amarela", "Branca", "Azul"], respostaCerta: 1 },
-            { pergunta: "Quem é o famoso jogador português conhecido por 'CR7'?", respostas: ["Cristiano Ronaldo", "Figo", "Eusébio"], respostaCerta: 0 },
-            { pergunta: "Onde foi a Copa de 2018?", respostas: ["África do Sul", "Brasil", "Rússia"], respostaCerta: 2 },
-            { pergunta: "Qual desses jogadores nunca ganhou uma Copa?", respostas: ["Romário", "Neymar", "Ronaldo"], respostaCerta: 1 }
-        ];
+    // =========================================
+    // 2. VARIÁVEIS GLOBAIS DO JOGO
+    // =========================================
+    let j1Nome = "";
+    let j2Nome = "";
+    let j1Pontos = 0;
+    let j2Pontos = 0;
+    let perguntaAtual = 0; 
+    let jogadorAtual = 1;  
+    let perguntasDaRodada = []; 
 
-        // Função de embaralhamento Fisher-Yates (NÃO MEXER)
-        function embaralharPerguntas(array) {
-            let arrayEmbaralhado = [...array]; 
-            for (let i = arrayEmbaralhado.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [arrayEmbaralhado[i], arrayEmbaralhado[j]] = [arrayEmbaralhado[j], arrayEmbaralhado[i]];
-            }
-            return arrayEmbaralhado;
+    let tempoRestante = 30;
+    let controleCronometro;
+
+    // =========================================
+    // 3. BANCO DE DADOS (40 PERGUNTAS)
+    // =========================================
+    const bancoDePerguntas = [
+        { pergunta: "Quantas Copas o Brasil ganhou?", respostas: ["3", "4", "5"], respostaCerta: 2 },
+        { pergunta: "Quem é o maior artilheiro da história das Copas?", respostas: ["Pelé", "Ronaldo", "Miroslav Klose"], respostaCerta: 2 },
+        { pergunta: "Onde foi a primeira Copa do Mundo em 1930?", respostas: ["Argentina", "Brasil", "Uruguai"], respostaCerta: 2 },
+        { pergunta: "Qual jogador famoso é conhecido como 'Rei do Futebol'?", respostas: ["Garrincha", "Maradona", "Pelé"], respostaCerta: 2 },
+        { pergunta: "Quantas vezes o Brasil sediou a Copa?", respostas: ["1", "2", "3"], respostaCerta: 1 },
+        { pergunta: "Em qual Copa o Brasil sofreu o 7x1?", respostas: ["2010", "2014", "2018"], respostaCerta: 1 },
+        { pergunta: "Quem foi o capitão do tetra em 1994?", respostas: ["Romário", "Bebeto", "Dunga"], respostaCerta: 2 },
+        { pergunta: "Qual mascote da Copa de 2014 no Brasil?", respostas: ["Zé Carioca", "Fuleco", "Canarinho Pistola"], respostaCerta: 1 },
+        { pergunta: "Qual país venceu a Copa de 2022?", respostas: ["Brasil", "França", "Argentina"], respostaCerta: 2 },
+        { pergunta: "Qual dessas NÃO é uma comemoração de gol famosa?", respostas: ["Dancinha do robô", "Tirar a camisa", "Tapar um olho"], respostaCerta: 2 },
+        { pergunta: "Quantas substituições são permitidas hoje na Copa (tempo normal)?", respostas: ["3", "4", "5"], respostaCerta: 2 },
+        { pergunta: "Qual prêmio é dado ao melhor jogador do torneio?", respostas: ["Chuteira de Ouro", "Bola de Ouro", "Luva de Ouro"], respostaCerta: 1 },
+        { pergunta: "Qual é a cor da camisa principal da seleção brasileira?", respostas: ["Branca", "Azul", "Amarela"], respostaCerta: 2 },
+        { pergunta: "Quantos minutos dura o tempo regulamentar de um jogo?", respostas: ["80", "90", "100"], respostaCerta: 1 },
+        { pergunta: "O que acontece se o jogo terminar empatado em uma final (após prorrogação)?", respostas: ["Jogo é repetido", "Ganhador é sorteado", "Disputa de pênaltis"], respostaCerta: 2 },
+        { pergunta: "Qual técnico levou o Brasil ao penta em 2002?", respostas: ["Parreira", "Zagallo", "Felipão"], respostaCerta: 2 },
+        { pergunta: "Quantos times participaram da Copa de 2022?", respostas: ["16", "24", "32"], respostaCerta: 2 },
+        { pergunta: "Em qual Copa o Brasil conquistou o tri?", respostas: ["1966", "1970", "1974"], respostaCerta: 1 },
+        { pergunta: "Qual animal é o mascote da seleção brasileira?", respostas: ["Arara", "Canarinho", "Papagaio"], respostaCerta: 1 },
+        { pergunta: "Com que frequência é realizada a Copa do Mundo?", respostas: ["A cada 2 anos", "A cada 4 anos", "A cada 5 anos"], respostaCerta: 1 },
+        { pergunta: "Em qual ano o Brasil ganhou sua última Copa?", respostas: ["2002", "1998", "2010"], respostaCerta: 0 },
+        { pergunta: "Qual é o país conhecido por sediar a 'Copa das Copas' em 2014?", respostas: ["França", "Brasil", "Alemanha"], respostaCerta: 1 },
+        { pergunta: "Quantos jogadores formam uma equipe de futebol em campo?", respostas: ["10", "11", "12"], respostaCerta: 1 },
+        { pergunta: "Qual estádio lendário do Rio de Janeiro sediou a final de 2014?", respostas: ["Mineirão", "Morumbi", "Maracanã"], respostaCerta: 2 },
+        { pergunta: "Qual país tem a seleção conhecida como 'Azzurra'?", respostas: ["França", "Itália", "Espanha"], respostaCerta: 1 },
+        { pergunta: "Qual país europeu tem 4 títulos mundiais?", respostas: ["Brasil", "Alemanha", "França"], respostaCerta: 1 },
+        { pergunta: "Qual cor de camisa o Brasil usou na final de 1950?", respostas: ["Amarela", "Branca", "Azul"], respostaCerta: 1 },
+        { pergunta: "Quem é o famoso jogador português conhecido por 'CR7'?", respostas: ["Cristiano Ronaldo", "Figo", "Eusébio"], respostaCerta: 0 },
+        { pergunta: "Onde foi a Copa de 2018?", respostas: ["África do Sul", "Brasil", "Rússia"], respostaCerta: 2 },
+        { pergunta: "Qual desses jogadores nunca ganhou uma Copa?", respostas: ["Romário", "Neymar", "Ronaldo"], respostaCerta: 1 },
+        { pergunta: "Qual cantor(a) imortalizou a música 'Waka Waka' na Copa de 2010?", respostas: ["Anitta", "Shakira", "Ricky Martin"], respostaCerta: 1 },
+        { pergunta: "Qual animal ficou famoso por 'prever' os resultados na Copa de 2010?", respostas: ["Cachorro caramelo", "Gato vidente", "Polvo Paul"], respostaCerta: 2 },
+        { pergunta: "O que o juiz usa no campo para marcar a distância da barreira?", respostas: ["Cuspe", "Giz branco", "Spray de espuma"], respostaCerta: 2 },
+        { pergunta: "Qual jogador brasileiro é mundialmente conhecido como 'Fenômeno'?", respostas: ["Ronaldinho Gaúcho", "Ronaldo", "Adriano"], respostaCerta: 1 },
+        { pergunta: "Qual foi o país sede onde o Brasil ganhou a Copa de 1994?", respostas: ["Estados Unidos", "Itália", "Japão"], respostaCerta: 0 },
+        { pergunta: "Qual jogador francês deu uma famosa 'cabeçada' na final de 2006?", respostas: ["Henry", "Mbappé", "Zidane"], respostaCerta: 2 },
+        { pergunta: "Quem foi o goleiro titular do Brasil no Penta (2002)?", respostas: ["Taffarel", "Marcos", "Alisson"], respostaCerta: 1 },
+        { pergunta: "Onde fica localizada a sede oficial da FIFA?", respostas: ["Suíça", "França", "Inglaterra"], respostaCerta: 0 },
+        { pergunta: "O que a taça atual da Copa representa?", respostas: ["Uma bola de ouro", "Duas pessoas segurando a Terra", "Um pássaro"], respostaCerta: 1 },
+        { pergunta: "Qual narrador imortalizou o bordão 'Haja coração!'?", respostas: ["Galvão Bueno", "Cléber Machado", "Luís Roberto"], respostaCerta: 0 }
+    ];
+
+    // =========================================
+    // 4. LÓGICA DO JOGO
+    // =========================================
+
+    function embaralharPerguntas(array) {
+        let arrayEmbaralhado = [...array]; 
+        for (let i = arrayEmbaralhado.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arrayEmbaralhado[i], arrayEmbaralhado[j]] = [arrayEmbaralhado[j], arrayEmbaralhado[i]];
+        }
+        return arrayEmbaralhado;
+    }
+
+    function comecarJogo() {
+        j1Nome = document.getElementById("input-nome1").value;
+        j2Nome = document.getElementById("input-nome2").value;
+
+        if (j1Nome.trim() === "" || j2Nome.trim() === "") {
+            alert("Por favor, preencham os nomes dos dois craques!");
+            return;
         }
 
-        function comecarJogo() {
-            j1Nome = document.getElementById("input-nome1").value;
-            j2Nome = document.getElementById("input-nome2").value;
+        // Inicia música de fundo
+        musicaFundo.play().catch(e => console.log("Interação necessária para áudio"));
 
-            if (j1Nome.trim() === "" || j2Nome.trim() === "") {
-                alert("Por favor, preencham os nomes dos dois craques!");
-                return;
-            }
+        perguntasDaRodada = embaralharPerguntas(bancoDePerguntas).slice(0, 10);
+        document.getElementById("tela-inicial").classList.add("escondido");
+        prepararTurno(); 
+    }
 
-            // MÁGICA ACONTECENDO AQUI: Embaralha as 30 e pega só as 10 primeiras!
-            perguntasDaRodada = embaralharPerguntas(bancoDePerguntas).slice(0, 10);
+    function prepararTurno() {
+        clearInterval(controleCronometro); 
+        document.getElementById("timer-container").classList.add("escondido"); 
 
-            document.getElementById("tela-inicial").classList.add("escondido");
-            prepararTurno(); 
-        }
+        const nomeNaTela = jogadorAtual === 1 ? j1Nome : j2Nome;
+        document.getElementById("nome-destaque").innerText = nomeNaTela;
 
-        function prepararTurno() {
-            clearInterval(controleCronometro); // Para o relógio se estiver rodando
-            document.getElementById("timer-container").classList.add("escondido"); // Esconde o cronômetro
+        document.getElementById("tela-quiz").classList.add("escondido");
+        document.getElementById("tela-passagem").classList.remove("escondido");
+    }
 
-            const nomeNaTela = jogadorAtual === 1 ? j1Nome : j2Nome;
-            document.getElementById("nome-destaque").innerText = nomeNaTela;
+    function iniciarTurno() {
+        document.getElementById("tela-passagem").classList.add("escondido");
+        document.getElementById("tela-quiz").classList.remove("escondido");
+        document.getElementById("timer-container").classList.remove("escondido"); 
+        
+        mostrarPergunta();
+        iniciarCronometro(); 
+    }
 
-            document.getElementById("tela-quiz").classList.add("escondido");
-            document.getElementById("tela-passagem").classList.remove("escondido");
-        }
-
-        function iniciarTurno() {
-            document.getElementById("tela-passagem").classList.add("escondido");
-            document.getElementById("tela-quiz").classList.remove("escondido");
-            document.getElementById("timer-container").classList.remove("escondido"); // Mostra o cronômetro azul
-            
-            mostrarPergunta();
-            iniciarCronometro(); // COMEÇA O RELÓGIO AQUI!
-        }
-
-        function iniciarCronometro() {
-            tempoRestante = 30;
-            const elementoCronometro = document.getElementById("timer-display");
+    function iniciarCronometro() {
+        tempoRestante = 30;
+        const elementoCronometro = document.getElementById("timer-display");
+        elementoCronometro.innerText = `Tempo: ${tempoRestante}s`;
+        
+        clearInterval(controleCronometro); 
+        
+        controleCronometro = setInterval(() => {
+            tempoRestante--;
             elementoCronometro.innerText = `Tempo: ${tempoRestante}s`;
-            
-            clearInterval(controleCronometro); // Limpa qualquer timer antigo
-            
-            controleCronometro = setInterval(() => {
-                tempoRestante--;
-                elementoCronometro.innerText = `Tempo: ${tempoRestante}s`;
 
-                // Quando o tempo acaba...
-                if (tempoRestante <= 0) {
-                    clearInterval(controleCronometro);
-                    tempoEsgotado();
-                }
-            }, 1000);
-        }
-
-        function tempoEsgotado() {
-            // Feedback instantâneo na tela (Para fora)
-            verificarResposta(-1, null); // -1 indica erro por tempo
-        }
-
-        function mostrarPergunta() {
-            // Agora usa as 10 perguntas sorteadas
-            const dadosDaPergunta = perguntasDaRodada[perguntaAtual];
-            const nomeNaTela = jogadorAtual === 1 ? j1Nome : j2Nome;
-            
-            document.getElementById("aviso-turno").innerText = `Vez de: ${nomeNaTela}`;
-            
-            // Garante que o texto da pergunta esteja visível e os feedbacks escondidos
-            document.getElementById("texto-pergunta").classList.remove("escondido");
-            document.getElementById("feedback-acerto").classList.add("escondido");
-            document.getElementById("feedback-erro").classList.add("escondido");
-            
-            // Calcula em qual "Rodada" estamos (cada rodada tem 2 perguntas, uma para cada)
-            let numeroRodada = Math.floor(perguntaAtual / 2) + 1;
-            document.getElementById("barra-progresso").innerText = `Rodada ${numeroRodada} de 5`;
-            
-            document.getElementById("texto-pergunta").innerText = dadosDaPergunta.pergunta;
-            
-            const areaBotoes = document.getElementById("area-botoes");
-            areaBotoes.innerHTML = ""; 
-
-            dadosDaPergunta.respostas.forEach((textoResposta, index) => {
-                const botao = document.createElement("button");
-                botao.innerText = textoResposta;
-                botao.classList.add("btn-resposta"); 
-                botao.onclick = () => verificarResposta(index, botao); 
-                areaBotoes.appendChild(botao);
-            });
-        }
-
-        function verificarResposta(indiceEscolhido, botaoClicado) {
-            // Clicou ou acabou o tempo? Para o relógio instantaneamente!
-            clearInterval(controleCronometro);
-
-            // Pega as divs de feedback
-            const divTextoPergunta = document.getElementById("texto-pergunta");
-            const divFeedbackAcerto = document.getElementById("feedback-acerto");
-            const divFeedbackErro = document.getElementById("feedback-erro");
-            
-            // Bloqueia todos os botões para a pessoa não clicar duas vezes
-            const todosBotoes = document.querySelectorAll('.btn-resposta');
-            todosBotoes.forEach(botao => botao.disabled = true);
-
-            // Verifica a resposta baseada no array sorteado
-            const respostaCorreta = perguntasDaRodada[perguntaAtual].respostaCerta;
-
-            if (indiceEscolhido === respostaCorreta) {
-                // ACERTOU!
-                botaoClicado.classList.add('correta'); 
-                
-                // MÁGICA DO FEEDBACK DE TEXTO GIGANTE (Gooooool!!!)
-                divTextoPergunta.classList.add("escondido");
-                divFeedbackAcerto.innerText = "Gooooooool!!!";
-                divFeedbackAcerto.classList.remove("escondido");
-                
-                if (jogadorAtual === 1) j1Pontos++;
-                else j2Pontos++;
-            } else {
-                // ERROU (OU ACABOU O TEMPO)!
-                if (botaoClicado) {
-                    botaoClicado.classList.add('errada'); 
-                }
-                todosBotoes[respostaCorreta].classList.add('correta'); // Mostra qual era a certa
-                
-                // MÁGICA DO FEEDBACK DE TEXTO GIGANTE (Erro Sorteado)
-                divTextoPergunta.classList.add("escondido");
-                
-                // Sorteia entre "Para fooora!" e "Na traaaave!"
-                const mensagensErro = ["Para fooora!", "Na traaaave!"];
-                const mensagemSorteada = mensagensErro[Math.floor(Math.random() * mensagensErro.length)];
-                
-                // Se foi por tempo esgotado, a mensagem é específica
-                if (indiceEscolhido === -1) {
-                    divFeedbackErro.innerText = "TEMPO ESGOTADO!";
-                } else {
-                    divFeedbackErro.innerText = mensagemSorteada;
-                }
-                divFeedbackErro.classList.remove("escondido");
+            if (tempoRestante <= 0) {
+                clearInterval(controleCronometro);
+                tempoEsgotado();
             }
+        }, 1000);
+    }
 
-            // DELAY AUMENTADO PARA 2,5 SEGUNDOS (2500ms) PARA ELES LEREM O GOOL
-            setTimeout(() => {
-                perguntaAtual++; 
+    function tempoEsgotado() {
+        verificarResposta(-1, null); 
+    }
 
-                // Verifica se chegou em 10 (tamanho do array sorteado)
-                if (perguntaAtual >= perguntasDaRodada.length) {
-                    mostrarResultadoFinal();
-                    return; 
-                }
+    function mostrarPergunta() {
+        const dadosDaPergunta = perguntasDaRodada[perguntaAtual];
+        const nomeNaTela = jogadorAtual === 1 ? j1Nome : j2Nome;
+        
+        document.getElementById("aviso-turno").innerText = `Vez de: ${nomeNaTela}`;
+        document.getElementById("texto-pergunta").classList.remove("escondido");
+        document.getElementById("feedback-acerto").classList.add("escondido");
+        document.getElementById("feedback-erro").classList.add("escondido");
+        
+        let numeroRodada = Math.floor(perguntaAtual / 2) + 1;
+        document.getElementById("barra-progresso").innerText = `Rodada ${numeroRodada} de 5`;
+        
+        document.getElementById("texto-pergunta").innerText = dadosDaPergunta.pergunta;
+        
+        const areaBotoes = document.getElementById("area-botoes");
+        areaBotoes.innerHTML = ""; 
 
-                jogadorAtual = (jogadorAtual === 1) ? 2 : 1;
-                prepararTurno(); 
-            }, 2500); 
+        dadosDaPergunta.respostas.forEach((textoResposta, index) => {
+            const botao = document.createElement("button");
+            botao.innerText = textoResposta;
+            botao.classList.add("btn-resposta"); 
+            botao.onclick = () => verificarResposta(index, botao); 
+            areaBotoes.appendChild(botao);
+        });
+    }
+
+    function verificarResposta(indiceEscolhido, botaoClicado) {
+        clearInterval(controleCronometro);
+
+        const divTextoPergunta = document.getElementById("texto-pergunta");
+        const divFeedbackAcerto = document.getElementById("feedback-acerto");
+        const divFeedbackErro = document.getElementById("feedback-erro");
+        const caixaQuiz = document.querySelector(".quiz-container"); 
+        
+        const todosBotoes = document.querySelectorAll('.btn-resposta');
+        todosBotoes.forEach(botao => botao.disabled = true);
+
+        const respostaCorreta = perguntasDaRodada[perguntaAtual].answerIndex ?? perguntasDaRodada[perguntaAtual].respostaCerta;
+
+        if (indiceEscolhido === respostaCorreta) {
+            // ACERTO
+            somAcerto.currentTime = 0;
+            somAcerto.play(); 
+
+            botaoClicado.classList.add('correta'); 
+            divTextoPergunta.classList.add("escondido");
+            divFeedbackAcerto.innerText = "Gooooooool!!!";
+            divFeedbackAcerto.classList.remove("escondido");
+
+            // ANIMAÇÃO DE PULO (REFLOW)
+            caixaQuiz.classList.remove("animacao-acerto");
+            void caixaQuiz.offsetWidth; 
+            caixaQuiz.classList.add("animacao-acerto");
+            
+            if (jogadorAtual === 1) j1Pontos++;
+            else j2Pontos++;
+        } else {
+            // ERRO
+            somErro.currentTime = 0;
+            somErro.play();
+
+            if (botaoClicado) botaoClicado.classList.add('errada'); 
+            todosBotoes[respostaCorreta].classList.add('correta'); 
+            
+            divTextoPergunta.classList.add("escondido");
+            const mensagensErro = ["Para fooora!", "Na traaaave!"];
+            const mensagemSorteada = mensagensErro[Math.floor(Math.random() * mensagensErro.length)];
+            
+            divFeedbackErro.innerText = (indiceEscolhido === -1) ? "TEMPO ESGOTADO!" : mensagemSorteada;
+            divFeedbackErro.classList.remove("escondido");
         }
 
-        function mostrarResultadoFinal() {
-            clearInterval(controleCronometro); // Garante que parou
-            document.getElementById("timer-container").classList.add("escondido"); // Esconde cronômetro azul
-
-            document.getElementById("tela-quiz").classList.add("escondido");
-            document.getElementById("tela-passagem").classList.add("escondido");
-            document.getElementById("tela-resultado").classList.remove("escondido");
-            
-            let titulo = "";
-            
-            // Verifica quem ganhou
-            if (j1Pontos > j2Pontos) {
-                titulo = `${j1Nome} VENCEU! 🎉`;
-            } else if (j2Pontos > j1Pontos) {
-                titulo = `${j2Nome} VENCEU! 🎉`;
-            } else {
-                titulo = "DEU EMPATE! 🤝";
+        setTimeout(() => {
+            perguntaAtual++; 
+            if (perguntaAtual >= perguntasDaRodada.length) {
+                mostrarResultadoFinal();
+                return; 
             }
+            jogadorAtual = (jogadorAtual === 1) ? 2 : 1;
+            prepararTurno(); 
+        }, 2500); 
+    }
 
-            document.getElementById("titulo-vencedor").innerText = titulo;
+    function mostrarResultadoFinal() {
+        clearInterval(controleCronometro); 
+        document.getElementById("timer-container").classList.add("escondido"); 
+        document.getElementById("tela-quiz").classList.add("escondido");
+        document.getElementById("tela-passagem").classList.add("escondido");
+        document.getElementById("tela-resultado").classList.remove("escondido");
+        
+        let titulo = (j1Pontos > j2Pontos) ? `${j1Nome} VENCEU! 🎉` : 
+                     (j2Pontos > j1Pontos) ? `${j2Nome} VENCEU! 🎉` : "DEU EMPATE! 🤝";
 
-            const placarFinal = `Placar Final:\n\n${j1Nome}: ${j1Pontos} acertos\n${j2Nome}: ${j2Pontos} acertos`;
-            document.getElementById("mensagem-final").innerText = placarFinal;
-        }
-    </script>
+        document.getElementById("titulo-vencedor").innerText = titulo;
+        document.getElementById("mensagem-final").innerText = `Placar Final:\n\n${j1Nome}: ${j1Pontos} acertos\n${j2Nome}: ${j2Pontos} acertos`;
+    }
+</script>
 </body>
 </html>
