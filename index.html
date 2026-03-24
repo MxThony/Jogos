@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Desafio Visual - Óticas Arcoverde</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@200..900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&family=Unbounded:wght@200..900&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <div class="main-wrapper">
+        <div class="logo-container">
+            <img src="svg/logo-slogan.svg" alt="Logo Óticas Arcoverde" class="logo-marca">
+        </div>
+
+        <div class="quiz-container">
+            
+            <div id="tela-inicial">
+                <h2>Desafio em Dupla!</h2>
+                <p>Registrem-se e descubram quem sabe mais sobre a saúde dos olhos.</p>
+                <input type="text" id="input-nome1" placeholder="Nome do Jogador 1" autocomplete="name" autocapitalize="words">
+                <input type="text" id="input-nome2" placeholder="Nome do Jogador 2" autocomplete="name" autocapitalize="words">
+                <button onclick="comecarJogo()">Iniciar Batalha</button>
+            </div>
+
+            <div id="tela-quiz" class="escondido">
+                <div id="aviso-turno" class="turno-destaque"></div> 
+                <div class="progresso" id="barra-progresso">Rodada 1 de 5</div>
+                
+                <h3 id="texto-pergunta">Carregando pergunta...</h3>
+                <div id="area-botoes">
+                    </div>
+            </div>
+
+            <div id="tela-resultado" class="escondido">
+                <span class="icone-trofeu">🏆</span>
+                <h2 id="titulo-vencedor">Fim de Jogo!</h2>
+                <p id="mensagem-final"></p>
+                <button class="btn-reiniciar" onclick="location.reload()">Jogar Novamente</button>
+                <p class="rodape-cliente">Você vê e confia.</p>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // Variáveis do Jogo
+        let j1Nome = "";
+        let j2Nome = "";
+        let j1Pontos = 0;
+        let j2Pontos = 0;
+        let perguntaAtual = 0; // Vai de 0 a 9 (Total de 10 perguntas)
+        let jogadorAtual = 1;  // Começa com o Jogador 1
+
+        // --- 10 PERGUNTAS MISTURADAS ---
+        const perguntas = [
+            { pergunta: "Qual é o principal sintoma da Miopia?", respostas: ["Dificuldade para ler de perto", "Visão embaçada para objetos distantes", "Dificuldade em enxergar cores"], respostaCerta: 1 },
+            { pergunta: "Qual problema de visão dificulta o foco de PERTO?", respostas: ["Hipermetropia", "Miopia", "Daltonismo"], respostaCerta: 0 },
+            { pergunta: "Para que serve o tratamento Antirreflexo nas lentes?", respostas: ["Para escurecer os óculos", "Deixar a lente colorida", "Reduzir reflexos e aumentar o conforto"], respostaCerta: 2 },
+            { pergunta: "Lentes de Policarbonato são indicadas principalmente porque:", respostas: ["São mais baratas", "São altamente resistentes a impactos", "Ficam limpas sozinhas"], respostaCerta: 1 },
+            { pergunta: "A Presbiopia é uma condição conhecida como:", respostas: ["Vista cansada (após os 40 anos)", "Olho preguiçoso", "Aversão à luz"], respostaCerta: 0 },
+            { pergunta: "Qual tipo de lente possui três campos de visão (longe, intermediário e perto)?", respostas: ["Visão Simples", "Bifocal", "Multifocal"], respostaCerta: 2 },
+            { pergunta: "As lentes Fotossensíveis são famosas por:", respostas: ["Clarear no escuro e escurecer no sol", "Brilhar no escuro", "Não arranhar nunca"], respostaCerta: 0 },
+            { pergunta: "Qual é o maior perigo da exposição à Luz Azul das telas?", respostas: ["Muda a cor dos olhos", "Causa fadiga ocular e altera o sono", "Derrete a armação dos óculos"], respostaCerta: 1 },
+            { pergunta: "O Astigmatismo causa qual sintoma?", respostas: ["Visão distorcida em todas as distâncias", "Apenas dor de cabeça", "Cegueira noturna"], respostaCerta: 0 },
+            { pergunta: "Por que óculos de sol sem proteção UV são perigosos?", respostas: ["Porque desbotam rápido", "A pupila dilata no escuro da lente e entra mais radiação no olho", "Eles não são perigosos"], respostaCerta: 1 }
+        ];
+
+        function comecarJogo() {
+            j1Nome = document.getElementById("input-nome1").value;
+            j2Nome = document.getElementById("input-nome2").value;
+
+            if (j1Nome.trim() === "" || j2Nome.trim() === "") {
+                alert("Por favor, preencham os nomes dos dois jogadores!");
+                return;
+            }
+
+            document.getElementById("tela-inicial").classList.add("escondido");
+            document.getElementById("tela-quiz").classList.remove("escondido");
+            mostrarPergunta();
+        }
+
+        function mostrarPergunta() {
+            const dadosDaPergunta = perguntas[perguntaAtual];
+            
+            // Define de quem é a vez na tela
+            const nomeNaTela = jogadorAtual === 1 ? j1Nome : j2Nome;
+            document.getElementById("aviso-turno").innerText = `Vez de: ${nomeNaTela}`;
+            
+            // Calcula em qual "Rodada" estamos (cada rodada tem 2 perguntas, uma para cada)
+            let numeroRodada = Math.floor(perguntaAtual / 2) + 1;
+            document.getElementById("barra-progresso").innerText = `Rodada ${numeroRodada} de 5`;
+            
+            document.getElementById("texto-pergunta").innerText = dadosDaPergunta.pergunta;
+            
+            const areaBotoes = document.getElementById("area-botoes");
+            areaBotoes.innerHTML = ""; 
+
+            dadosDaPergunta.respostas.forEach((textoResposta, index) => {
+                const botao = document.createElement("button");
+                botao.innerText = textoResposta;
+                botao.classList.add("btn-resposta"); 
+                botao.onclick = () => verificarResposta(index); 
+                areaBotoes.appendChild(botao);
+            });
+        }
+
+        function verificarResposta(indiceEscolhido) {
+            // Conta os pontos para o jogador certo daquela rodada
+            if (indiceEscolhido === perguntas[perguntaAtual].respostaCerta) {
+                if (jogadorAtual === 1) j1Pontos++;
+                else j2Pontos++;
+            }
+            
+            perguntaAtual++; // Vai para a próxima pergunta geral
+
+            // Verifica se o jogo acabou
+            if (perguntaAtual >= perguntas.length) {
+                mostrarResultadoFinal();
+                return; // Para o código aqui
+            }
+
+            // Inverte o jogador para a próxima pergunta e carrega a tela instantaneamente
+            jogadorAtual = (jogadorAtual === 1) ? 2 : 1;
+            mostrarPergunta();
+        }
+
+        function mostrarResultadoFinal() {
+            document.getElementById("tela-quiz").classList.add("escondido");
+            document.getElementById("tela-resultado").classList.remove("escondido");
+            
+            let titulo = "";
+            
+            // Verifica quem ganhou
+            if (j1Pontos > j2Pontos) {
+                titulo = `${j1Nome} VENCEU! 🎉`;
+            } else if (j2Pontos > j1Pontos) {
+                titulo = `${j2Nome} VENCEU! 🎉`;
+            } else {
+                titulo = "DEU EMPATE! 🤝";
+            }
+
+            document.getElementById("titulo-vencedor").innerText = titulo;
+
+            const placarFinal = `Placar Final:\n\n${j1Nome}: ${j1Pontos} acertos\n${j2Nome}: ${j2Pontos} acertos`;
+            document.getElementById("mensagem-final").innerText = placarFinal;
+        }
+    </script>
+</body>
+</html>
