@@ -50,7 +50,7 @@ const bancoDePerguntas = [
     { pergunta: "Qual narrador diz 'Haja coração!'?", respostas: ["Galvão Bueno", "Cléber Machado", "Tiago Leifert"], respostaCerta: 0 },
     { pergunta: "Qual o estádio da final de 2014?", respostas: ["Mineirão", "Arena Cora", "Maracanã"], respostaCerta: 2 },
     { pergunta: "Quantas estrelas tem o escudo do Brasil?", respostas: ["4", "5", "6"], respostaCerta: 1 },
-    { pergunta: "Em qual ano o Brasil ganhou o Tetra?", respostas: ["1990", "1994", "1998"], respostaCerta: 1 },
+    { pergunta: "Em ano o Brasil ganhou o Tetra?", respostas: ["1990", "1994", "1998"], respostaCerta: 1 },
     { pergunta: "Qual jogador francês deu uma cabeçada em 2006?", respostas: ["Henry", "Ribéry", "Zidane"], respostaCerta: 2 },
     { pergunta: "Qual seleção é chamada de 'Azzurra'?", respostas: ["França", "Itália", "Grécia"], respostaCerta: 1 },
     { pergunta: "De quantos em quantos anos tem Copa?", respostas: ["2", "4", "5"], respostaCerta: 1 },
@@ -102,7 +102,7 @@ function salvarHistoricoPartida(nome, avatar, pontos) {
 function gerarQRCode() {
     const container = document.getElementById("qrcode-container");
     if (!container) return;
-    container.innerHTML = ""; // Blindagem contra duplicatas
+    container.innerHTML = ""; // Limpa antes de gerar
 
     const urlComAtalho = window.location.origin + window.location.pathname + "?exibir=ranking";
 
@@ -187,15 +187,54 @@ function mostrarRanking(origem) {
 }
 
 // =========================================
-// 5. LÓGICA DO QUIZ
+// 5. LÓGICA DO QUIZ E DESISTÊNCIA
 // =========================================
+function confirmarDesistencia() {
+    const desistenteNome = (modoDeJogo === 'solo' ? j1Nome : (jogadorAtual === 1 ? j1Nome : j2Nome)).toUpperCase();
+    const querDesistir = confirm(`${desistenteNome}, tem certeza que deseja abandonar a partida?`);
+
+    if (querDesistir) {
+        clearInterval(controleCronometro);
+        musicaFundo.pause();
+        somErro.play();
+
+        let tit = ""; let msg = ""; let winAv = "";
+
+        if (modoDeJogo === 'solo') {
+            tit = "ABANDONOU O CAMPO! 🏳️";
+            msg = `${j1Nome.toUpperCase()} desistiu da partida.\nSeu título é: Perna de Pau 🪵`;
+            salvarHistoricoPartida(j1Nome, j1Avatar, 0); 
+        } else {
+            const vencedorNome = (jogadorAtual === 1 ? j2Nome : j1Nome);
+            const vencedorAvatar = (jogadorAtual === 1 ? j2Avatar : j1Avatar);
+            const perdedorAvatar = (jogadorAtual === 1 ? j1Avatar : j2Avatar);
+
+            tit = `${vencedorNome.toUpperCase()} VENCEU POR W.O.! 🏆`;
+            msg = `${desistenteNome} desistiu!\n${vencedorNome} ganha uma Copa automática.`;
+            winAv = vencedorAvatar;
+
+            salvarNoRankingCopa(vencedorNome, vencedorAvatar);
+            salvarHistoricoPartida(desistenteNome, perdedorAvatar, 0); 
+            salvarHistoricoPartida(vencedorNome, vencedorAvatar, 10); 
+        }
+
+        document.getElementById("titulo-vencedor").innerText = tit;
+        document.getElementById("mensagem-final").innerText = msg;
+        const imgV = document.getElementById("img-avatar-vencedor");
+        if (winAv) { imgV.src = winAv; imgV.style.display = "block"; } else { imgV.style.display = "none"; }
+
+        document.getElementById("tela-quiz").classList.add("escondido");
+        document.getElementById("timer-container").classList.add("escondido");
+        document.getElementById("tela-resultado").classList.remove("escondido");
+    }
+}
+
 function selecionarModo(m) { 
     modoDeJogo = m; 
     document.getElementById("tela-modo").classList.add("escondido");
     document.getElementById("tela-inicial").classList.remove("escondido");
     document.getElementById("container-avatar2").classList.toggle("escondido", m === 'solo');
     
-    // Reset da interface de pesquisa
     j1Pontos = 0; j2Pontos = 0; perguntaAtual = 0; jogadorAtual = 1;
     document.querySelector('.emoji-container')?.classList.remove('escondido');
     document.getElementById('feedback-agradecimento')?.classList.add('escondido');
@@ -315,7 +354,7 @@ function finalizarJogo() {
 }
 
 // =========================================
-// 6. INICIALIZAÇÃO
+// 6. INICIALIZAÇÃO E ATALHOS
 // =========================================
 function fecharRanking() { document.getElementById("tela-ranking").classList.add("escondido"); document.getElementById(telaAnteriorAoRanking).classList.remove("escondido"); }
 function toggleMusica() { musicaFundo.muted = !musicaFundo.muted; document.getElementById("musica-icone").innerText = musicaFundo.muted ? "🔇" : "🔊"; }
