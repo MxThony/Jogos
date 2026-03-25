@@ -177,14 +177,14 @@ function validarComeco() {
     iniciarCronometro();
 }
 
-/// =========================================
-// 6. LÓGICA DO QUIZ (COM PERGUNTA DE OURO E BUG RESOLVIDO)
+// =========================================
+// 6. LÓGICA DO QUIZ (COM PERGUNTA DE OURO E BÔNUS CORRIGIDOS)
 // =========================================
 function mostrarPergunta() {
     const d = perguntasDaRodada[perguntaAtual];
     const quizContainer = document.querySelector('.quiz-container');
     
-    // Checa se é Pergunta de Ouro
+    // Checa se é Pergunta de Ouro baseado nos erros anteriores
     const errosAtuais = (jogadorAtual === 1) ? errosSeguidosJ1 : errosSeguidosJ2;
     ePerguntaOuro = (errosAtuais >= 2);
 
@@ -200,11 +200,9 @@ function mostrarPergunta() {
     document.getElementById("aviso-turno-nome").innerText = jogadorAtual === 1 ? j1Nome : j2Nome;
     document.getElementById("barra-progresso").innerText = `Pergunta ${perguntaAtual + 1} de 10`;
 
-    // Esconde os feedbacks (Goooool / Para fora) da rodada anterior
     document.getElementById("feedback-acerto").classList.add("escondido");
     document.getElementById("feedback-erro").classList.add("escondido");
     
-    // BLINDAGEM: Garante que o texto da pergunta estará sempre visível!
     document.getElementById("texto-pergunta").classList.remove("escondido");
     document.getElementById("streak-popup").innerText = "";
     
@@ -249,15 +247,18 @@ function verificarResposta(idxSelecionado, botaoClicado) {
         if(botaoClicado) botaoClicado.classList.add("correta"); 
         document.getElementById("feedback-acerto").classList.remove("escondido");
 
+        // Calcula a Streak (Sequência)
         let streak = jogadorAtual === 1 ? ++j1Streak : ++j2Streak;
-        let bonus = getStreakData(streak).bonus;
+        let bonus = getStreakData(streak).bonus; // Retorna 1 se streak >= 3
         let ptsQuestao = ePerguntaOuro ? 2 : 1; 
         
+        let pontosGanhos = ptsQuestao + bonus;
+
         if (jogadorAtual === 1) {
-            j1Pontos += (ptsQuestao + bonus); 
-            errosSeguidosJ1 = 0; 
+            j1Pontos += pontosGanhos; 
+            errosSeguidosJ1 = 0; // Zera os erros APÓS o acerto
         } else {
-            j2Pontos += (ptsQuestao + bonus); 
+            j2Pontos += pontosGanhos; 
             errosSeguidosJ2 = 0;
         }
         
@@ -272,19 +273,18 @@ function verificarResposta(idxSelecionado, botaoClicado) {
         somErro.currentTime = 0; somErro.play();
         if(botaoClicado) botaoClicado.classList.add("errada"); 
         
-        botoes[correta].classList.add("correta"); // Mostra o Gabarito Verde
+        botoes[correta].classList.add("correta"); 
         document.getElementById("feedback-erro").classList.remove("escondido");
 
         if (jogadorAtual === 1) {
-            j1Streak = 0;
-            errosSeguidosJ1++; 
+            j1Streak = 0; // Perde a sequência
+            errosSeguidosJ1++; // Acumula erro
         } else {
             j2Streak = 0;
             errosSeguidosJ2++;
         }
     }
-    
-   // Substitua o setTimeout antigo por este:
+
     controleTimeout = setTimeout(() => {
         perguntaAtual++;
         if (perguntaAtual >= 10) finalizarJogo();
@@ -399,7 +399,7 @@ function salvarHistoricoPartida(nome, avatar, pontos) {
 }
 
 // =========================================
-// 8. TELA DE RANKING E SATISFAÇÃO
+// 8. TELA DE RANKING E SATISFAÇÃO (COM MEDALHAS)
 // =========================================
 function mostrarRanking() {
     document.getElementById("tela-modo").classList.add("escondido");
@@ -414,15 +414,25 @@ function mostrarRanking() {
     database.ref('samininaRanking').on('value', s => {
         let list = []; s.forEach(c => list.push(c.val()));
         
-        // Ordena apenas valores válidos (Blinda contra erros de testes antigos)
+        // Ordena: Primeiro quem tem mais Copas, em caso de empate, quem tem mais Pontos Totais
         list.sort((a,b) => (Number(b.copas) || 0) - (Number(a.copas) || 0) || (Number(b.pontosTotais) || 0) - (Number(a.pontosTotais) || 0));
         
-        document.getElementById("lista-ranking").innerHTML = list.slice(0,10).map((j,i) => `
+        document.getElementById("lista-ranking").innerHTML = list.slice(0,10).map((j,i) => {
+            // LÓGICA DAS MEDALHAS AQUI 👇
+            let posicao = `${i+1}º`;
+            let tamanhoFonte = '18px';
+            
+            if (i === 0) { posicao = "🥇"; tamanhoFonte = '28px'; }
+            else if (i === 1) { posicao = "🥈"; tamanhoFonte = '28px'; }
+            else if (i === 2) { posicao = "🥉"; tamanhoFonte = '28px'; }
+
+            return `
             <div class="ranking-item">
-                <div class="ranking-pos">${i+1}º</div>
+                <div class="ranking-pos" style="font-size: ${tamanhoFonte};">${posicao}</div>
                 <img src="${j.avatar || 'img/1.jpg'}" class="ranking-avatar">
                 <div class="ranking-info"><b>${j.nome}</b><br><span>${j.copas || 0} Copas | ${j.pontosTotais || 0} Pts</span></div>
-            </div>`).join("");
+            </div>`;
+        }).join("");
     });
 
     database.ref('historicoPartidas').orderByChild('timestamp').limitToLast(10).on('value', (s) => {
@@ -451,7 +461,6 @@ function enviarPesquisa(reacao) {
         document.getElementById('feedback-agradecimento').classList.remove('escondido');
     });
 }
-
 // =========================================
 // 9. ATALHOS E PAINEL SECRETO
 // =========================================
