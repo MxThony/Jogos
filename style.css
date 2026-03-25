@@ -29,6 +29,7 @@ body {
     position: relative;
     z-index: 0;
     padding-top: 20px;
+    padding-bottom: 100px; /* Garante o respiro no final da rolagem */
 }
 
 body::before {
