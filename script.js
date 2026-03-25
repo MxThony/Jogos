@@ -300,7 +300,7 @@ function verificarResposta(idxSelecionado, botaoClicado) {
 // 7. FINALIZAÇÃO, DESISTÊNCIA E SALVAMENTO
 // =========================================
 function finalizarJogo() {
-    document.querySelector('.quiz-container').classList.remove('ouro-active'); // Garante que a borda amarela suma
+    document.querySelector('.quiz-container').classList.remove('ouro-active'); 
     document.getElementById("tela-quiz").classList.add("escondido");
     document.getElementById("timer-container").classList.add("escondido");
     document.getElementById("tela-resultado").classList.remove("escondido");
@@ -336,24 +336,23 @@ function confirmarDesistencia() {
         clearTimeout(controleTimeout); 
         
         musicaFundo.pause(); 
-        somErro.currentTime = 0; // Zera o áudio pra não encavalar
+        somErro.currentTime = 0; 
         somErro.play();
-        clearInterval(controleCronometro); 
-        musicaFundo.pause(); somErro.play();
         
         let tit = "ABANDONOU! 🏳️"; let msg = ""; let winAv = "";
         
         if (modoDeJogo === 'solo') {
             msg = `${j1Nome} desistiu.\nTítulo: Perna de Pau 🪵`;
-            // CORREÇÃO: Agora o fujão vai pro Ranking Geral com 0 pontos!
-            salvarNoRanking(j1Nome, j1Avatar, 0, false);
+            // AGORA SIM: Título especial de desistência
+            salvarNoRanking(j1Nome, j1Avatar, 0, false, "Arregou 🏳️");
         } else {
             const vNome = (jogadorAtual === 1 ? j2Nome : j1Nome);
             const vAv = (jogadorAtual === 1 ? j2Avatar : j1Avatar);
             tit = `${vNome.toUpperCase()} VENCEU POR W.O.! 🏆`;
             msg = `${nome} desistiu!\n${vNome} ganha uma Copa automática.`;
             winAv = vAv;
-            salvarNoRanking(vNome, vAv, 10, true);
+            // AGORA SIM: Título especial de W.O.
+            salvarNoRanking(vNome, vAv, 10, true, "Venceu por W.O. 🏆");
         }
         
         document.getElementById("titulo-vencedor").innerText = tit;
@@ -372,14 +371,13 @@ function confirmarDesistencia() {
     }
 }
 
-function salvarNoRanking(nome, avatar, pontos, ganhouCopa) {
+function salvarNoRanking(nome, avatar, pontos, ganhouCopa, tituloEspecial = null) {
     const nomeLimpo = nome.trim().toUpperCase();
     const ref = database.ref('samininaRanking/' + nomeLimpo);
     
     ref.once('value').then(s => {
         let data = s.exists() ? s.val() : {};
         
-        // BLINDAGEM MÁXIMA: Garante que os pontos são números, senão vira 0
         data.nome = nomeLimpo;
         data.avatar = avatar; 
         data.pontosTotais = (Number(data.pontosTotais) || 0) + Number(pontos);
@@ -388,13 +386,17 @@ function salvarNoRanking(nome, avatar, pontos, ganhouCopa) {
         ref.set(data);
     });
     
-    salvarHistoricoPartida(nomeLimpo, avatar, pontos);
+    // Repassa o título especial pro histórico
+    salvarHistoricoPartida(nomeLimpo, avatar, pontos, tituloEspecial);
 }
 
-function salvarHistoricoPartida(nome, avatar, pontos) {
+function salvarHistoricoPartida(nome, avatar, pontos, tituloEspecial = null) {
     database.ref('historicoPartidas').push({ 
-        nome: nome.toUpperCase(), avatar: avatar, pontos: pontos, 
-        titulo: calcularTitulo(pontos), timestamp: firebase.database.ServerValue.TIMESTAMP 
+        nome: nome.toUpperCase(), 
+        avatar: avatar, 
+        pontos: pontos, 
+        titulo: tituloEspecial || calcularTitulo(pontos), 
+        timestamp: firebase.database.ServerValue.TIMESTAMP 
     });
 }
 
@@ -406,22 +408,17 @@ function mostrarRanking() {
     document.getElementById("tela-resultado").classList.add("escondido");
     document.getElementById("tela-ranking").classList.remove("escondido");
     
-    // Desliga ouvintes antigos para não dar conflito no ao vivo
     database.ref('samininaRanking').off();
     database.ref('historicoPartidas').off();
 
-    // Liga o ao vivo
     database.ref('samininaRanking').on('value', s => {
-        let list = []; s.forEach(c => list.push(c.val()));
+        let list = []; 
+        // BLINDAGEM: Só puxa pra tela se o dado for válido e tiver nome
+        s.forEach(c => { if(c.val() && c.val().nome) list.push(c.val()); });
         
-        // 👇 O RAIO-X ESTÁ AQUI, NO LUGAR CERTO! 👇
-        console.log("🔥 CHEGOU DO BANCO DE DADOS:", list);
-        
-        // Ordena: Primeiro quem tem mais Copas, em caso de empate, quem tem mais Pontos Totais
         list.sort((a,b) => (Number(b.copas) || 0) - (Number(a.copas) || 0) || (Number(b.pontosTotais) || 0) - (Number(a.pontosTotais) || 0));
         
         document.getElementById("lista-ranking").innerHTML = list.slice(0,10).map((j,i) => {
-            // LÓGICA DAS MEDALHAS AQUI 👇
             let posicao = `${i+1}º`;
             let tamanhoFonte = '18px';
             
@@ -439,7 +436,10 @@ function mostrarRanking() {
     });
 
     database.ref('historicoPartidas').orderByChild('timestamp').limitToLast(10).on('value', (s) => {
-        let list = []; s.forEach(c => list.push(c.val()));
+        let list = []; 
+        // BLINDAGEM: Só puxa pra tela se o dado for válido e tiver nome
+        s.forEach(c => { if(c.val() && c.val().nome) list.push(c.val()); });
+        
         document.getElementById("lista-titulos-recentes").innerHTML = list.reverse().map(p => `
             <div class="ranking-item">
                 <img src="${p.avatar || 'img/1.jpg'}" class="ranking-avatar">
