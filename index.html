@@ -5,12 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Copa Saminina - O Conhecimento é Campeão</title>
 
-    <!-- SDKs Firebase -->
     <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-database-compat.js"></script>
     
-    <!-- Biblioteca QR Code -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
     <link rel="stylesheet" href="style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -21,13 +20,11 @@
 
     <div class="main-wrapper">
         <div class="logo-container">
-            <!-- Botão secreto no logo para abrir o relatório/limpar banco -->
             <img src="logo/samininacopa.svg" alt="Logo Saminina" class="logo-marca" onclick="verificarSenhaReset()" style="cursor: pointer;">
         </div>
 
         <div class="quiz-container">
             
-            <!-- TELA: ESCOLHA DE MODO -->
             <div id="tela-modo">
                 <h2>Como quer jogar?</h2>
                 <p>Escolha o formato da sua partida:</p>
@@ -37,27 +34,21 @@
                     <button onclick="mostrarRanking('tela-modo')" class="btn-modo btn-ranking">🏆 Ranking e Títulos</button>
                 </div>
 
-                <!-- QR CODE AUTOMÁTICO -->
                 <div class="qrcode-wrapper">
                     <p>Acompanhe o ranking no seu celular:</p>
                     <div id="qrcode-container"></div>
                 </div>
             </div>
 
-            <!-- TELA: RANKING E HISTÓRICO -->
             <div id="tela-ranking" class="escondido">
                 <h2>Galeria de Campeões 🏆</h2>
                 <div id="lista-ranking" class="lista-ranking-container"></div>
-
                 <hr class="divisor">
-
                 <h3>Últimos Títulos 🏅</h3>
                 <div id="lista-titulos-recentes" class="lista-ranking-container list-p"></div>
-                
                 <button onclick="fecharRanking()">Voltar</button>
             </div>
 
-            <!-- TELA: CADASTRO JOGADORES -->
             <div id="tela-inicial" class="escondido">
                 <h2 id="titulo-cadastro">Registro dos Craques</h2>
                 <div class="campos-cadastro">
@@ -85,7 +76,6 @@
                 <button id="btn-comecar-jogo" onclick="validarComeco()">Iniciar Partida</button>
             </div>
 
-            <!-- TELA: PASSAGEM DE TURNO -->
             <div id="tela-passagem" class="escondido">
                 <h2>Prepare-se!</h2>
                 <img id="img-avatar-passagem" src="" alt="Avatar" class="avatar-circular size-m">
@@ -94,7 +84,6 @@
                 <button onclick="iniciarTurno()">Estou Pronto!</button>
             </div>
 
-            <!-- TELA: QUIZ -->
             <div id="tela-quiz" class="escondido">
                 <div id="btn-desistir" onclick="confirmarDesistencia()">✖</div>
                 <div class="aviso-turno-wrapper">
@@ -108,13 +97,11 @@
                 <div id="area-botoes"></div>
             </div>
 
-            <!-- TELA: RESULTADO FINAL -->
             <div id="tela-resultado" class="escondido">
                 <img id="img-avatar-vencedor" src="" alt="Campeão" class="avatar-circular size-g">
                 <h2 id="titulo-vencedor">Fim de Jogo!</h2>
                 <p id="mensagem-final" style="white-space: pre-line; font-weight: bold; margin: 15px 0;"></p>
                 
-                <!-- PESQUISA DE SATISFAÇÃO -->
                 <div id="secao-pesquisa">
                     <p style="margin-top: 10px; font-weight: 900; color: var(--color-blue);">O que achou da experiência?</p>
                     <div class="emoji-container">
@@ -126,18 +113,25 @@
                     <p id="feedback-agradecimento" class="escondido" style="color: var(--color-green); font-size: 14px; font-weight: bold;">Obrigado pelo feedback! 🙌</p>
                 </div>
 
-                <button onclick="mostrarRanking('tela-resultado')" class="btn-ranking" style="margin-top: 20px; margin-bottom: 10px;">🏆 Ranking Completo</button>
+                <button onclick="gerarDesafio()" class="btn-desafio" style="margin-top: 15px; margin-bottom: 10px; background-color: #25D366 !important; border: 2px solid #128C7E !important; color: white !important;">🔥 Desafiar Amigo</button>
+
+                <button onclick="mostrarRanking('tela-resultado')" class="btn-ranking" style="margin-bottom: 10px;">🏆 Ranking Completo</button>
                 <button onclick="location.reload()">Novo Jogo</button>
             </div>
 
+        </div> <div id="timer-container" class="timer-container escondido">
+            <div id="timer-display" class="timer-display">Tempo: 30s</div>
         </div>
 
-        <div id="timer-container" class="timer-container escondido">
-            <div id="timer-display" class="timer-display">Tempo: 30s</div>
+    </div> <div id="modal-desafio" class="escondido modal-overlay" onclick="fecharModalDesafio()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <span class="fechar-modal" onclick="fecharModalDesafio()">×</span>
+            <h3>Duvido bater meu recorde! ⚽</h3>
+            <p>Escanear para jogar no celular:</p>
+            <div id="qrcode-desafio"></div>
         </div>
     </div>
 
-    <!-- BOTÕES FIXOS FLUTUANTES -->
     <button id="btn-musica-toggle" onclick="toggleMusica()"><span id="musica-icone">🔊</span></button>
     <button id="btn-fullscreen" onclick="toggleFullscreen()"><span>↕️</span></button>
 
