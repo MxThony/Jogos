@@ -235,19 +235,25 @@ p { font-size: 15px; color: var(--color-blue); margin-bottom: 15px; font-weight:
     text-transform: uppercase;
 }
 /* =========================================
-   8. TEXTOS DE GOL E ERRO
+   8. TEXTOS DE GOL E ERRO (BLINDADO PARA MOBILE)
    ========================================= */
 .feedback-text {
     font-size: 32px !important;
     font-weight: 900 !important;
-    margin: 20px 0;
+    margin: 20px 0 !important; /* Removemos o 'auto' que confunde o iOS */
     text-transform: uppercase;
-    display: block;
+    
+    /* O SEGREDO MOBILE: Transformar o próprio texto em Flexbox */
+    display: flex !important; 
+    justify-content: center; /* Crava o conteúdo no meio horizontalmente */
+    align-items: center; 
+    
+    width: 100%; 
+    text-align: center;
 }
 
 #feedback-acerto { color: var(--color-correct); }
 #feedback-erro { color: var(--color-wrong); }
-
 /* =========================================
    9. INPUTS, BOTÕES E COMPONENTES
    ========================================= */
