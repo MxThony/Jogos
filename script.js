@@ -34,7 +34,7 @@ let errosSeguidosJ1 = 0, errosSeguidosJ2 = 0; // <-- Variáveis da Pergunta de O
 let ePerguntaOuro = false;
 
 let perguntaAtual = 0, jogadorAtual = 1, perguntasDaRodada = [];
-let tempoRestante = 30, controleCronometro, modoDeJogo = "", telaAnteriorAoRanking = "tela-modo";
+let tempoRestante = 30, controleCronometro, controleTimeout, modoDeJogo = "", telaAnteriorAoRanking = "tela-modo";
 
 // =========================================
 // 3. BANCO DE PERGUNTAS (70 QUESTÕES)
@@ -284,9 +284,8 @@ function verificarResposta(idxSelecionado, botaoClicado) {
         }
     }
     
-    // O BUG MORA AQUI: Eu deletei a linha que escondia a pergunta! Agora ela fica na tela.
-
-    setTimeout(() => {
+   // Substitua o setTimeout antigo por este:
+    controleTimeout = setTimeout(() => {
         perguntaAtual++;
         if (perguntaAtual >= 10) finalizarJogo();
         else {
@@ -294,7 +293,7 @@ function verificarResposta(idxSelecionado, botaoClicado) {
             mostrarPergunta();
             iniciarCronometro();
         }
-    }, 2500); // Aguarda 2,5 segundos e troca de tela
+    }, 2500);
 }
 
 // =========================================
@@ -333,6 +332,12 @@ function finalizarJogo() {
 function confirmarDesistencia() {
     const nome = (modoDeJogo === 'solo' ? j1Nome : (jogadorAtual === 1 ? j1Nome : j2Nome)).toUpperCase();
     if (confirm(`${nome}, deseja abandonar a partida?`)) {
+        clearInterval(controleCronometro); 
+        clearTimeout(controleTimeout); 
+        
+        musicaFundo.pause(); 
+        somErro.currentTime = 0; // Zera o áudio pra não encavalar
+        somErro.play();
         clearInterval(controleCronometro); 
         musicaFundo.pause(); somErro.play();
         
@@ -463,7 +468,32 @@ function toggleFullscreen() {
 function gerarDesafio() { 
     document.getElementById("modal-desafio").classList.remove("escondido"); 
     document.getElementById("qrcode-desafio").innerHTML = "";
-    new QRCode(document.getElementById("qrcode-desafio"), { text: window.location.origin + window.location.pathname, width: 150, height: 150 }); 
+
+    // Descobre quem ganhou e quantos pontos fez para montar a mensagem
+    let nomeDesafiante = "";
+    let pontosDesafiante = 0;
+
+    if (modoDeJogo === 'solo') {
+        nomeDesafiante = j1Nome;
+        pontosDesafiante = j1Pontos;
+    } else {
+        nomeDesafiante = (j1Pontos >= j2Pontos) ? j1Nome : j2Nome;
+        pontosDesafiante = Math.max(j1Pontos, j2Pontos);
+    }
+
+    // Monta o texto que vai pro WhatsApp
+    const linkJogo = window.location.origin + window.location.pathname;
+    const mensagem = `Fiz ${pontosDesafiante} pontos na Copa Saminina! Meu título é ${calcularTitulo(pontosDesafiante)}. 🏆⚽ Duvido você bater meu recorde! Jogue agora: ${linkJogo}`;
+    
+    // Cria o link oficial do WhatsApp com o texto codificado
+    const linkWhatsApp = `https://api.whatsapp.com/send?text=${encodeURIComponent(mensagem)}`;
+
+    // Gera o QR Code com o link do Zap
+    new QRCode(document.getElementById("qrcode-desafio"), { 
+        text: linkWhatsApp, 
+        width: 180, 
+        height: 180 
+    }); 
 }
 
 function fecharModalDesafio() { document.getElementById("modal-desafio").classList.add("escondido"); }
