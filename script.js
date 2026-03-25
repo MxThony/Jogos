@@ -125,7 +125,7 @@ function getStreakData(streak) {
 }
 
 function calcularTitulo(pts) {
-    if (pts <= 2) return "Perna de Pau 🪵";
+    if (pts <= 2) return "Perna de Pau 🦵";
     if (pts <= 5) return "Reserva de Luxo 🪑";
     if (pts <= 8) return "Titular Absoluto 🏃‍♂️";
     if (pts <= 11) return "Craque da Rodada 🌟";
