@@ -414,6 +414,9 @@ function mostrarRanking() {
     database.ref('samininaRanking').on('value', s => {
         let list = []; s.forEach(c => list.push(c.val()));
         
+        // 👇 O RAIO-X ESTÁ AQUI, NO LUGAR CERTO! 👇
+        console.log("🔥 CHEGOU DO BANCO DE DADOS:", list);
+        
         // Ordena: Primeiro quem tem mais Copas, em caso de empate, quem tem mais Pontos Totais
         list.sort((a,b) => (Number(b.copas) || 0) - (Number(a.copas) || 0) || (Number(b.pontosTotais) || 0) - (Number(a.pontosTotais) || 0));
         
