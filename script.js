@@ -177,8 +177,8 @@ function validarComeco() {
     iniciarCronometro();
 }
 
-// =========================================
-// 6. LÓGICA DO QUIZ (COM PERGUNTA DE OURO)
+/// =========================================
+// 6. LÓGICA DO QUIZ (COM PERGUNTA DE OURO E BUG RESOLVIDO)
 // =========================================
 function mostrarPergunta() {
     const d = perguntasDaRodada[perguntaAtual];
@@ -200,8 +200,11 @@ function mostrarPergunta() {
     document.getElementById("aviso-turno-nome").innerText = jogadorAtual === 1 ? j1Nome : j2Nome;
     document.getElementById("barra-progresso").innerText = `Pergunta ${perguntaAtual + 1} de 10`;
 
+    // Esconde os feedbacks (Goooool / Para fora) da rodada anterior
     document.getElementById("feedback-acerto").classList.add("escondido");
     document.getElementById("feedback-erro").classList.add("escondido");
+    
+    // BLINDAGEM: Garante que o texto da pergunta estará sempre visível!
     document.getElementById("texto-pergunta").classList.remove("escondido");
     document.getElementById("streak-popup").innerText = "";
     
@@ -248,17 +251,16 @@ function verificarResposta(idxSelecionado, botaoClicado) {
 
         let streak = jogadorAtual === 1 ? ++j1Streak : ++j2Streak;
         let bonus = getStreakData(streak).bonus;
-        let ptsQuestao = ePerguntaOuro ? 2 : 1; // Soma 2 se for Ouro
+        let ptsQuestao = ePerguntaOuro ? 2 : 1; 
         
         if (jogadorAtual === 1) {
             j1Pontos += (ptsQuestao + bonus); 
-            errosSeguidosJ1 = 0; // Zera os erros do cara
+            errosSeguidosJ1 = 0; 
         } else {
             j2Pontos += (ptsQuestao + bonus); 
             errosSeguidosJ2 = 0;
         }
         
-        // Confete Ouro vs Confete Streak
         if (ePerguntaOuro) {
             confetti({ particleCount: 200, spread: 90, origin: { y: 0.6 }, colors: ['#DAA520', '#FDD017'] });
         } else if (bonus > 0) {
@@ -270,19 +272,19 @@ function verificarResposta(idxSelecionado, botaoClicado) {
         somErro.currentTime = 0; somErro.play();
         if(botaoClicado) botaoClicado.classList.add("errada"); 
         
-        botoes[correta].classList.add("correta"); // Mostra Gabarito
+        botoes[correta].classList.add("correta"); // Mostra o Gabarito Verde
         document.getElementById("feedback-erro").classList.remove("escondido");
 
         if (jogadorAtual === 1) {
             j1Streak = 0;
-            errosSeguidosJ1++; // Soma nos erros pra ativar a ouro
+            errosSeguidosJ1++; 
         } else {
             j2Streak = 0;
             errosSeguidosJ2++;
         }
     }
     
-    document.getElementById("texto-pergunta").classList.add("escondido");
+    // O BUG MORA AQUI: Eu deletei a linha que escondia a pergunta! Agora ela fica na tela.
 
     setTimeout(() => {
         perguntaAtual++;
@@ -292,7 +294,7 @@ function verificarResposta(idxSelecionado, botaoClicado) {
             mostrarPergunta();
             iniciarCronometro();
         }
-    }, 2500); 
+    }, 2500); // Aguarda 2,5 segundos e troca de tela
 }
 
 // =========================================
