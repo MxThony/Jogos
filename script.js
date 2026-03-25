@@ -80,7 +80,7 @@ const bancoDePerguntas = [
 // 3. TÍTULOS E HISTÓRICO
 // =========================================
 function calcularTitulo(pontos) {
-    if (pontos <= 2) return "Perna de Pau 🪵";
+    if (pontos <= 2) return "Perna de Pau 🦵";
     if (pontos <= 5) return "Reserva de Luxo 🪑";
     if (pontos <= 8) return "Titular Absoluto 🏃‍♂️";
     return "Lenda do Penta 🏆";
