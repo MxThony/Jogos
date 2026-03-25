@@ -5,9 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Copa Saminina - O Conhecimento é Campeão</title>
 
-    <!-- SDKs do Firebase -->
+    <!-- SDKs Firebase -->
     <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-database-compat.js"></script>
+    
+    <!-- Biblioteca QR Code -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
     <link rel="stylesheet" href="style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -18,36 +21,49 @@
 
     <div class="main-wrapper">
         <div class="logo-container">
+            <!-- Botão secreto no logo para abrir o relatório/limpar banco -->
             <img src="logo/samininacopa.svg" alt="Logo Saminina" class="logo-marca" onclick="verificarSenhaReset()" style="cursor: pointer;">
         </div>
 
         <div class="quiz-container">
             
+            <!-- TELA: ESCOLHA DE MODO -->
             <div id="tela-modo">
                 <h2>Como quer jogar?</h2>
                 <p>Escolha o formato da sua partida:</p>
                 <div class="botoes-modo">
                     <button onclick="selecionarModo('solo')" class="btn-modo">Carreira Solo 🏃</button>
                     <button onclick="selecionarModo('batalha')" class="btn-modo">Batalha Multiplayer ⚔️</button>
-                    <button onclick="mostrarRanking('tela-modo')" class="btn-modo btn-ranking">🏆 Ver Top 10 Ranking</button>
+                    <button onclick="mostrarRanking('tela-modo')" class="btn-modo btn-ranking">🏆 Ranking e Títulos</button>
+                </div>
+
+                <!-- QR CODE AUTOMÁTICO -->
+                <div class="qrcode-wrapper">
+                    <p>Acompanhe o ranking no seu celular:</p>
+                    <div id="qrcode-container"></div>
                 </div>
             </div>
 
+            <!-- TELA: RANKING E HISTÓRICO -->
             <div id="tela-ranking" class="escondido">
                 <h2>Galeria de Campeões 🏆</h2>
-                <p>Os maiores pontuadores do evento!</p>
                 <div id="lista-ranking" class="lista-ranking-container"></div>
+
+                <hr class="divisor">
+
+                <h3>Últimos Títulos 🏅</h3>
+                <div id="lista-titulos-recentes" class="lista-ranking-container list-p"></div>
+                
                 <button onclick="fecharRanking()">Voltar</button>
             </div>
 
+            <!-- TELA: CADASTRO JOGADORES -->
             <div id="tela-inicial" class="escondido">
                 <h2 id="titulo-cadastro">Registro dos Craques</h2>
-                <p id="subtitulo-cadastro">Insiram os nomes e escolham os avatares!</p>
-                
                 <div class="campos-cadastro">
                     <div class="cadastro-bloco">
                         <input type="text" id="input-nome1" placeholder="Nome do Jogador 1" autocomplete="off">
-                        <p class="legenda-avatar">Escolha seu Avatar (J1):</p>
+                        <p class="legenda-avatar">Avatar (J1):</p>
                         <div class="botoes-avatar">
                             <img src="img/1.jpg" class="img-avatar-opcao" onclick="selecionarAvatar(1, 0, this)">
                             <img src="img/2.jpg" class="img-avatar-opcao" onclick="selecionarAvatar(1, 1, this)">
@@ -55,10 +71,9 @@
                             <img src="img/4.jpg" class="img-avatar-opcao" onclick="selecionarAvatar(1, 3, this)">
                         </div>
                     </div>
-
                     <div id="container-avatar2" class="cadastro-bloco escondido">
                         <input type="text" id="input-nome2" placeholder="Nome do Jogador 2" autocomplete="off">
-                        <p class="legenda-avatar">Escolha seu Avatar (J2):</p>
+                        <p class="legenda-avatar">Avatar (J2):</p>
                         <div class="botoes-avatar">
                             <img src="img/1.jpg" class="img-avatar-opcao" onclick="selecionarAvatar(2, 0, this)">
                             <img src="img/2.jpg" class="img-avatar-opcao" onclick="selecionarAvatar(2, 1, this)">
@@ -70,37 +85,49 @@
                 <button id="btn-comecar-jogo" onclick="validarComeco()">Iniciar Partida</button>
             </div>
 
+            <!-- TELA: PASSAGEM DE TURNO -->
             <div id="tela-passagem" class="escondido">
                 <h2>Prepare-se!</h2>
                 <img id="img-avatar-passagem" src="" alt="Avatar" class="avatar-circular size-m">
                 <p>A próxima pergunta é para:</p>
                 <h1 id="nome-destaque">NOME</h1>
-                <p style="color: var(--color-wrong); font-weight: bold;">Você terá 30 segundos!</p>
                 <button onclick="iniciarTurno()">Estou Pronto!</button>
             </div>
 
+            <!-- TELA: QUIZ -->
             <div id="tela-quiz" class="escondido">
                 <div id="btn-desistir" onclick="confirmarDesistencia()">✖</div>
-
                 <div class="aviso-turno-wrapper">
                     <img id="img-avatar-quiz" src="" alt="Avatar" class="avatar-circular size-p">
                     <div id="aviso-turno-nome" class="turno-destaque"></div> 
                 </div>
                 <div class="progresso" id="barra-progresso">Pergunta 1 de 10</div>
-                
                 <h3 id="texto-pergunta">Pergunta?</h3>
-                <div id="feedback-acerto" class="escondido feedback-text">Goooooooool!!!</div>
-                <div id="feedback-erro" class="escondido feedback-text">Para fooora!</div>
+                <div id="feedback-acerto" class="escondido feedback-text">Gooooool!</div>
+                <div id="feedback-erro" class="escondido feedback-text">Para fora!</div>
                 <div id="area-botoes"></div>
             </div>
 
+            <!-- TELA: RESULTADO FINAL -->
             <div id="tela-resultado" class="escondido">
                 <img id="img-avatar-vencedor" src="" alt="Campeão" class="avatar-circular size-g">
                 <h2 id="titulo-vencedor">Fim de Jogo!</h2>
-                <p id="mensagem-final" style="white-space: pre-line; font-weight: bold; margin: 20px 0;"></p>
+                <p id="mensagem-final" style="white-space: pre-line; font-weight: bold; margin: 15px 0;"></p>
                 
-                <button onclick="mostrarRanking('tela-resultado')" class="btn-ranking" style="margin-bottom: 12px;">🏆 Ver Top 10 Ranking</button>
-                <button onclick="location.reload()">Início / Novo Jogo</button>
+                <!-- PESQUISA DE SATISFAÇÃO -->
+                <div id="secao-pesquisa">
+                    <p style="margin-top: 10px; font-weight: 900; color: var(--color-blue);">O que achou da experiência?</p>
+                    <div class="emoji-container">
+                        <span class="emoji-btn" onclick="enviarPesquisa('amei')">😍</span>
+                        <span class="emoji-btn" onclick="enviarPesquisa('curti')">🙂</span>
+                        <span class="emoji-btn" onclick="enviarPesquisa('mais-ou-menos')">😐</span>
+                        <span class="emoji-btn" onclick="enviarPesquisa('nao-curti')">🙁</span>
+                    </div>
+                    <p id="feedback-agradecimento" class="escondido" style="color: var(--color-green); font-size: 14px; font-weight: bold;">Obrigado pelo feedback! 🙌</p>
+                </div>
+
+                <button onclick="mostrarRanking('tela-resultado')" class="btn-ranking" style="margin-top: 20px; margin-bottom: 10px;">🏆 Ranking Completo</button>
+                <button onclick="location.reload()">Novo Jogo</button>
             </div>
 
         </div>
@@ -110,6 +137,7 @@
         </div>
     </div>
 
+    <!-- BOTÕES FIXOS FLUTUANTES -->
     <button id="btn-musica-toggle" onclick="toggleMusica()"><span id="musica-icone">🔊</span></button>
     <button id="btn-fullscreen" onclick="toggleFullscreen()"><span>↕️</span></button>
 

@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Copa Saminina - O Conhecimento é Campeão</title>
+
+    <!-- SDKs do Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-database-compat.js"></script>
+
     <link rel="stylesheet" href="style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -93,7 +98,16 @@
                 <img id="img-avatar-vencedor" src="" alt="Campeão" class="avatar-circular size-g">
                 <h2 id="titulo-vencedor">Fim de Jogo!</h2>
                 <p id="mensagem-final" style="white-space: pre-line; font-weight: bold; margin: 20px 0;"></p>
-                
+                <div id="secao-pesquisa">
+    <p style="margin-top: 20px; font-weight: 900;">O que achou da experiência?</p>
+                <div class="emoji-container">
+                    <span class="emoji-btn" onclick="enviarPesquisa('amei')">😍</span>
+                    <span class="emoji-btn" onclick="enviarPesquisa('curti')">🙂</span>
+                    <span class="emoji-btn" onclick="enviarPesquisa('mais-ou-menos')">😐</span>
+                    <span class="emoji-btn" onclick="enviarPesquisa('nao-curti')">🙁</span>
+                </div>
+                    <p id="feedback-agradecimento" class="escondido" style="color: var(--color-green); font-size: 14px;">Obrigado pelo feedback! 🙌</p>
+                </div>
                 <button onclick="mostrarRanking('tela-resultado')" class="btn-ranking" style="margin-bottom: 12px;">🏆 Ver Top 10 Ranking</button>
                 <button onclick="location.reload()">Início / Novo Jogo</button>
             </div>
