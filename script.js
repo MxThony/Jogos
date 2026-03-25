@@ -1,3 +1,23 @@
+// =========================================
+// CONFIGURAÇÃO DO FIREBASE
+// =========================================
+const firebaseConfig = {
+    apiKey: "AIzaSyDbvleD3CCVEOybvc7B-sKmzL1ugnHiMyk",
+    authDomain: "copa-saminina.firebaseapp.com",
+    databaseURL: "https://copa-saminina-default-rtdb.firebaseio.com",
+    projectId: "copa-saminina",
+    storageBucket: "copa-saminina.firebasestorage.app",
+    messagingSenderId: "961413845237",
+    appId: "1:961413845237:web:4c2b36f903a3f3c0f9f5bc"
+};
+
+// Inicializa o Firebase
+firebase.initializeApp(firebaseConfig);
+const database = firebase.database();
+
+// =========================================
+// VARIÁVEIS DO JOGO E ÁUDIO
+// =========================================
 const somAcerto = new Audio('audio/acerto.mp3');
 const somErro = new Audio('audio/erro.mp3');
 const musicaFundo = new Audio('audio/fundo.mp3');
@@ -15,7 +35,7 @@ let j1Avatar = "", j2Avatar = "";
 let perguntaAtual = 0, jogadorAtual = 1;
 let perguntasDaRodada = [];
 let tempoRestante = 30, controleCronometro, modoDeJogo = "";
-let telaAnteriorAoRanking = "tela-modo"; // Controla o botão de voltar do ranking
+let telaAnteriorAoRanking = "tela-modo";
 
 const bancoDePerguntas = [
     { pergunta: "Quantas Copas o Brasil ganhou?", respostas: ["3", "4", "5"], respostaCerta: 2 },
@@ -61,58 +81,83 @@ const bancoDePerguntas = [
 ];
 
 // =========================================
-// RANKING E DESISTÊNCIA (W.O.)
+// RANKING E DESISTÊNCIA (ONLINE - FIREBASE)
 // =========================================
 function verificarSenhaReset() {
-    let senha = prompt("Acesso Restrito Saminina:\nDigite a senha para ZERAR o ranking:");
-    if (senha === "321") { localStorage.removeItem("samininaRanking"); alert("Ranking zerado com sucesso!"); } 
-    else if (senha !== null) { alert("Senha incorreta!"); }
+    let senha = prompt("Acesso Restrito Saminina:\nDigite a senha para ZERAR o ranking online:");
+    if (senha === "321") { 
+        // Remove todos os dados do nó 'samininaRanking' no Firebase
+        database.ref('samininaRanking').remove()
+            .then(() => alert("Ranking online zerado com sucesso!"))
+            .catch((error) => alert("Erro ao zerar: " + error));
+    } 
+    else if (senha !== null) { 
+        alert("Senha incorreta!"); 
+    }
 }
 
 function salvarNoRanking(nomeVencedor, avatarVencedor) {
-    let ranking = JSON.parse(localStorage.getItem("samininaRanking") || "[]");
     let nomeFormatado = nomeVencedor.trim().toUpperCase();
-    let jogadorExistente = ranking.find(j => j.nome === nomeFormatado && j.avatar === avatarVencedor);
-    if (jogadorExistente) { jogadorExistente.copas += 1; } else { ranking.push({ nome: nomeFormatado, avatar: avatarVencedor, copas: 1 }); }
-    localStorage.setItem("samininaRanking", JSON.stringify(ranking));
+    const jogadorRef = database.ref('samininaRanking/' + nomeFormatado);
+
+    jogadorRef.once('value').then((snapshot) => {
+        if (snapshot.exists()) {
+            let dados = snapshot.val();
+            jogadorRef.update({ 
+                copas: dados.copas + 1, 
+                avatar: avatarVencedor 
+            });
+        } else {
+            jogadorRef.set({ 
+                nome: nomeFormatado, 
+                avatar: avatarVencedor, 
+                copas: 1 
+            });
+        }
+    }).catch((error) => console.error("Erro ao salvar online: ", error));
 }
 
 function mostrarRanking(origem) {
-    telaAnteriorAoRanking = origem; // Salva de onde a pessoa abriu (tela-modo ou tela-resultado)
+    telaAnteriorAoRanking = origem; 
     document.getElementById("tela-modo").classList.add("escondido");
     document.getElementById("tela-resultado").classList.add("escondido");
     document.getElementById("tela-ranking").classList.remove("escondido");
 
-    let ranking = JSON.parse(localStorage.getItem("samininaRanking") || "[]");
-    ranking.sort((a, b) => b.copas - a.copas);
-    let top10 = ranking.slice(0, 10);
-    let htmlLista = "";
+    const listaRanking = document.getElementById("lista-ranking");
+    listaRanking.innerHTML = "<p style='text-align: center; font-weight: bold;'>Carregando os craques da nuvem... ☁️</p>";
 
-    if (top10.length === 0) { htmlLista = "<p style='text-align: center;'>Nenhum campeão registrado ainda.</p>"; } 
-    else {
-        top10.forEach((jogador, index) => {
-            let trofeu = index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : "🎖️";
-            htmlLista += `<div class="ranking-item"><div class="ranking-pos">${index + 1}º</div><img src="${jogador.avatar}" class="ranking-avatar"><div class="ranking-info"><div class="ranking-nome">${jogador.nome} ${trofeu}</div><div class="ranking-copas">${jogador.copas} ${jogador.copas > 1 ? 'Copas' : 'Copa'} Conquistada(s)</div></div></div>`;
-        });
-    }
-    document.getElementById("lista-ranking").innerHTML = htmlLista;
+    database.ref('samininaRanking').orderByChild('copas').limitToLast(10).once('value', (snapshot) => {
+        let ranking = [];
+        snapshot.forEach((childSnapshot) => { ranking.push(childSnapshot.val()); });
+        ranking.reverse(); // Deixa o maior pontuador em cima
+
+        let htmlLista = "";
+        if (ranking.length === 0) { 
+            htmlLista = "<p style='text-align: center;'>Nenhum campeão registrado ainda.</p>"; 
+        } else {
+            ranking.forEach((jogador, index) => {
+                let trofeu = index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : "🎖️";
+                htmlLista += `<div class="ranking-item"><div class="ranking-pos">${index + 1}º</div><img src="${jogador.avatar}" class="ranking-avatar"><div class="ranking-info"><div class="ranking-nome">${jogador.nome} ${trofeu}</div><div class="ranking-copas">${jogador.copas} ${jogador.copas > 1 ? 'Copas' : 'Copa'} Conquistada(s)</div></div></div>`;
+            });
+        }
+        listaRanking.innerHTML = htmlLista;
+    }).catch((error) => {
+        listaRanking.innerHTML = "<p style='text-align: center; color: red;'>Erro ao conectar com a internet.</p>";
+    });
 }
 
 function fecharRanking() {
     document.getElementById("tela-ranking").classList.add("escondido");
-    document.getElementById(telaAnteriorAoRanking).classList.remove("escondido"); // Volta pra tela certa
+    document.getElementById(telaAnteriorAoRanking).classList.remove("escondido"); 
 }
 
 function confirmarDesistencia() {
-    clearInterval(controleCronometro); // Pausa o tempo
+    clearInterval(controleCronometro); 
     const nomeVez = (jogadorAtual === 1 ? j1Nome : j2Nome).toUpperCase();
     const querDesistir = confirm(`${nomeVez}, tem certeza que deseja desistir da partida?`);
 
-    if (querDesistir) {
-        finalizarPorWO();
-    } else {
-        iniciarCronometro(); // Retoma o tempo
-    }
+    if (querDesistir) finalizarPorWO();
+    else iniciarCronometro(); 
 }
 
 function finalizarPorWO() {
@@ -127,13 +172,12 @@ function finalizarPorWO() {
         msg = `${j1Nome.toUpperCase()} abandonou o jogo.\nNenhuma Copa conquistada.`;
         winAvatar = "";
     } else {
-        // Na Batalha, o outro jogador ganha automaticamente
-        if (jogadorAtual === 1) { // J1 desistiu
+        if (jogadorAtual === 1) { 
             tit = `${j2Nome.toUpperCase()} VENCEU POR W.O.! 🏆`;
             winAvatar = j2Avatar;
             salvarNoRanking(j2Nome, j2Avatar);
             msg = `${j1Nome} desistiu da partida!\n${j2Nome} ganha uma Copa automática!`;
-        } else { // J2 desistiu
+        } else { 
             tit = `${j1Nome.toUpperCase()} VENCEU POR W.O.! 🏆`;
             winAvatar = j1Avatar;
             salvarNoRanking(j1Nome, j1Avatar);
@@ -217,7 +261,6 @@ function mostrarPergunta() {
     document.getElementById("feedback-acerto").classList.add("escondido");
     document.getElementById("feedback-erro").classList.add("escondido");
     
-    // CORREÇÃO DA CONTAGEM DE PERGUNTAS (1 de 5 na Batalha)
     let totalPerguntas = (modoDeJogo === 'solo') ? 10 : 5;
     let rodadaAtual = (modoDeJogo === 'solo') ? perguntaAtual + 1 : Math.floor(perguntaAtual / 2) + 1;
     document.getElementById("barra-progresso").innerText = `Pergunta ${rodadaAtual} de ${totalPerguntas}`;
@@ -250,14 +293,14 @@ function verificarResposta(idx, btn) {
     btns.forEach(b => b.disabled = true);
 
     if (idx === correta) {
-        somAcerto.currentTime = 0; // CORREÇÃO DO ÁUDIO
+        somAcerto.currentTime = 0; 
         somAcerto.play(); 
         btn.classList.add('correta');
         document.getElementById("feedback-acerto").classList.remove("escondido");
         document.getElementById("texto-pergunta").classList.add("escondido");
         if (jogadorAtual === 1) j1Pontos++; else j2Pontos++;
     } else {
-        somErro.currentTime = 0; // CORREÇÃO DO ÁUDIO
+        somErro.currentTime = 0; 
         somErro.play(); 
         if(btn) btn.classList.add('errada');
         btns[correta].classList.add('correta');
@@ -283,7 +326,6 @@ function mostrarResultadoFinal() {
 
     if (modoDeJogo === 'solo') {
         winAvatar = j1Avatar;
-        // REGRA NOVA: Fez 6 ou mais, ganha a Copa!
         if (j1Pontos >= 6) {
             tit = `MANDOU BEM, ${j1Nome.toUpperCase()}! 🏆`;
             msg = `Você marcou ${j1Pontos}/10 acertos e conquistou uma Copa pro Ranking!`;
@@ -293,7 +335,6 @@ function mostrarResultadoFinal() {
             msg = `Você marcou ${j1Pontos} pontos. Para ganhar uma Copa e entrar no ranking, você precisa acertar pelo menos 6 perguntas! Tente de novo!`;
         }
     } else {
-        // Modo Batalha
         if (j1Pontos > j2Pontos) { 
             tit = `${j1Nome.toUpperCase()} VENCEU! 🏆`; 
             winAvatar = j1Avatar;
