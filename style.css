@@ -59,8 +59,8 @@ body::before {
     width: 100%;
     display: flex;
     justify-content: center;
-    margin-bottom: 15px;
-    padding-top: 30%; /* O respiro de 30% fica aqui, é mais seguro! */
+    margin-bottom: 10px;
+    padding-top: 15%; /* O respiro de 30% fica aqui, é mais seguro! */
 }
 
 .logo-marca {
@@ -114,23 +114,49 @@ p { font-size: 15px; color: var(--color-blue); margin-bottom: 15px; font-weight:
    ========================================= */
 .cadastro-bloco {
     margin-bottom: 20px;
-    padding-bottom: 15px;
+    padding-bottom: 10px;
     border-bottom: 1px dashed #eee;
 }
 
 .legenda-avatar {
-    font-size: 14px; /* Aumentei a legenda um pouquinho */
+    font-size: 13px;
     color: var(--color-blue);
     font-weight: bold;
     margin-top: 15px;
-    margin-bottom: 15px;
+    margin-bottom: 10px;
 }
 
+/* CONTÊINER FLEXÍVEL - CORRIGIDO */
 .botoes-avatar {
     display: flex;
-    justify-content: space-around;
-    gap: 10px;
+    justify-content: space-between; /* Espalha as fotos usando 100% da largura */
+    gap: 0 !important;              /* IMPORTANTE: Removemos o espaço fixo que quebrava o layout */
     margin-bottom: 15px;
+    width: 100%;                     /* Garante que o contêiner ocupe a caixa branca inteira */
+}
+
+/* FOTOS DE ESCOLHA EM PORCENTAGEM */
+.img-avatar-opcao {
+    /* MATEMÁTICA: 4 itens a 22.5% = 90% da largura. Os 10% restantes viram espaços automáticos entre elas. */
+    width: 22.5% !important; 
+    height: auto !important;     /* IMPORTANTE: Proibimos altura fixa em PX */
+    
+    /* max-width opcional: impede que fiquem gigantes em computadores grandes */
+    max-width: 70px; 
+    
+    /* aspect-ratio (já na base) garante o círculo perfeito quando a largura % muda */
+    
+    border-radius: 50% !important; /* Força o círculo perfeito */
+    border: 3px solid transparent; 
+    cursor: pointer;
+    transition: all 0.2s ease;
+    object-fit: cover;
+}
+
+.img-avatar-opcao.selecionado {
+    border-color: var(--color-yellow);
+    box-shadow: 0 0 10px rgba(0, 51, 153, 0.3);
+    transform: scale(1.1); /* Cresce suavemente ao selecionar, sem quebrar layout */
 }
 
 /* O SEGREDO DOS AVATARES DE SELEÇÃO */
