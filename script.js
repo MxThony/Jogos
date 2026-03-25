@@ -11,7 +11,6 @@ const firebaseConfig = {
     appId: "1:961413845237:web:4c2b36f903a3f3c0f9f5bc"
 };
 
-// Inicialização
 firebase.initializeApp(firebaseConfig);
 const database = firebase.database();
 
@@ -33,6 +32,7 @@ let j1Nome = "", j2Nome = "", j1Pontos = 0, j2Pontos = 0, j1Avatar = "", j2Avata
 let perguntaAtual = 0, jogadorAtual = 1, perguntasDaRodada = [];
 let tempoRestante = 30, controleCronometro, modoDeJogo = "", telaAnteriorAoRanking = "tela-modo";
 
+// BANCO DE PERGUNTAS (40 ANTIGAS + 30 NOVAS = 70)
 const bancoDePerguntas = [
     { pergunta: "Quantas Copas o Brasil ganhou?", respostas: ["3", "4", "5"], respostaCerta: 2 },
     { pergunta: "Quem é o maior artilheiro das Copas?", respostas: ["Pelé", "Ronaldo", "Miroslav Klose"], respostaCerta: 2 },
@@ -50,7 +50,7 @@ const bancoDePerguntas = [
     { pergunta: "Qual narrador diz 'Haja coração!'?", respostas: ["Galvão Bueno", "Cléber Machado", "Tiago Leifert"], respostaCerta: 0 },
     { pergunta: "Qual o estádio da final de 2014?", respostas: ["Mineirão", "Arena Cora", "Maracanã"], respostaCerta: 2 },
     { pergunta: "Quantas estrelas tem o escudo do Brasil?", respostas: ["4", "5", "6"], respostaCerta: 1 },
-    { pergunta: "Em ano o Brasil ganhou o Tetra?", respostas: ["1990", "1994", "1998"], respostaCerta: 1 },
+    { pergunta: "Em qual ano o Brasil ganhou o Tetra?", respostas: ["1990", "1994", "1998"], respostaCerta: 1 },
     { pergunta: "Qual jogador francês deu uma cabeçada em 2006?", respostas: ["Henry", "Ribéry", "Zidane"], respostaCerta: 2 },
     { pergunta: "Qual seleção é chamada de 'Azzurra'?", respostas: ["França", "Itália", "Grécia"], respostaCerta: 1 },
     { pergunta: "De quantos em quantos anos tem Copa?", respostas: ["2", "4", "5"], respostaCerta: 1 },
@@ -73,14 +73,46 @@ const bancoDePerguntas = [
     { pergunta: "Quem fez gol de mão (La Mano de Dios)?", respostas: ["Pelé", "Maradona", "Messi"], respostaCerta: 1 },
     { pergunta: "Qual a maior goleada sofrida pelo Brasil?", respostas: ["3x0", "7x1", "5x2"], respostaCerta: 1 },
     { pergunta: "Qual cidade NÃO sediou a Copa 2014?", respostas: ["Cuiabá", "Manaus", "Arcoverde"], respostaCerta: 2 },
-    { pergunta: "Qual a forma da taça da Copa?", respostas: ["Globo", "Dois atletas", "Chuteira"], respostaCerta: 1 }
+    { pergunta: "Qual a forma da taça da Copa?", respostas: ["Globo", "Dois atletas", "Chuteira"], respostaCerta: 1 },
+    
+    // --- NOVAS 30 PERGUNTAS (CURIOSIDADES E ATUAIS) ---
+    { pergunta: "Onde será a final da Copa de 2026?", respostas: ["Nova York/New Jersey", "Dallas", "Cidade do México"], respostaCerta: 0 },
+    { pergunta: "Quantas seleções participarão da Copa de 2026?", respostas: ["32", "48", "64"], respostaCerta: 1 },
+    { pergunta: "Quem marcou um golaço de bicicleta na Copa 2022?", respostas: ["Neymar", "Richarlison", "Vinícius Jr"], respostaCerta: 1 },
+    { pergunta: "Qual o único jogador a vencer 3 Copas do Mundo?", respostas: ["Maradona", "Zidane", "Pelé"], respostaCerta: 2 },
+    { pergunta: "Qual país sediará a Copa de 2026 junto com EUA e México?", respostas: ["Canadá", "Brasil", "Panamá"], respostaCerta: 0 },
+    { pergunta: "Qual a maior artilheira de todas as Copas (Masculina e Feminina)?", respostas: ["Marta", "Cristiane", "Mia Hamm"], respostaCerta: 0 },
+    { pergunta: "Quem superou o recorde de gols de Pelé pela Seleção (FIFA)?", respostas: ["Ronaldo", "Neymar", "Romário"], respostaCerta: 1 },
+    { pergunta: "Em 2022, qual seleção africana chegou à semifinal pela 1ª vez?", respostas: ["Egito", "Nigéria", "Marrocos"], respostaCerta: 2 },
+    { pergunta: "Qual goleiro brilhou nos pênaltis na final de 2022?", respostas: ["Emiliano Martínez", "Lloris", "Alisson"], respostaCerta: 0 },
+    { pergunta: "Qual o apelido da bola da Copa de 2014 no Brasil?", respostas: ["Brazuca", "Jabulani", "Al Rihla"], respostaCerta: 0 },
+    { pergunta: "Quem é o jogador com mais partidas em Copas (26 jogos)?", respostas: ["Messi", "Matthäus", "Klose"], respostaCerta: 0 },
+    { pergunta: "Quantos anos Pelé tinha quando ganhou sua 1ª Copa?", respostas: ["17", "18", "19"], respostaCerta: 0 },
+    { pergunta: "Qual seleção detém o título de 2022?", respostas: ["França", "Argentina", "Croácia"], respostaCerta: 1 },
+    { pergunta: "Quem marcou 3 gols na final da Copa de 2022?", respostas: ["Messi", "Mbappé", "Julián Álvarez"], respostaCerta: 1 },
+    { pergunta: "Onde aconteceu a Copa do Mundo de 2002?", respostas: ["Japão e Coreia do Sul", "China", "Alemanha"], respostaCerta: 0 },
+    { pergunta: "Qual o nome do troféu da Copa antes de 1974?", respostas: ["Taça FIFA", "Jules Rimet", "Copa Ouro"], respostaCerta: 1 },
+    { pergunta: "Qual foi a primeira Copa a usar o VAR?", respostas: ["2014", "2018", "2022"], respostaCerta: 1 },
+    { pergunta: "Em qual cidade brasileira o Brasil perdeu de 7x1?", respostas: ["Rio de Janeiro", "Belo Horizonte", "São Paulo"], respostaCerta: 1 },
+    { pergunta: "Quem é o técnico que mais vezes comandou o Brasil (126 jogos)?", respostas: ["Zagallo", "Tite", "Parreira"], respostaCerta: 0 },
+    { pergunta: "Qual jogador é conhecido como 'O Baixinho'?", respostas: ["Zico", "Romário", "Bebeto"], respostaCerta: 1 },
+    { pergunta: "Em que ano o Brasil sediou sua primeira Copa?", respostas: ["1930", "1950", "1962"], respostaCerta: 1 },
+    { pergunta: "Qual seleção jogou todas as Copas do Mundo até hoje?", respostas: ["Alemanha", "Itália", "Brasil"], respostaCerta: 2 },
+    { pergunta: "Quem fez o gol do título do Tetra em 1994 nos pênaltis?", respostas: ["Baggio errou", "Romário", "Dunga"], respostaCerta: 0 },
+    { pergunta: "Qual era a cor da camisa do Brasil antes da amarela?", respostas: ["Branca", "Verde", "Azul"], respostaCerta: 0 },
+    { pergunta: "Quem marcou o gol do título da Alemanha em 2014?", respostas: ["Müller", "Klose", "Götze"], respostaCerta: 2 },
+    { pergunta: "Qual o estádio com maior capacidade da Copa 2026?", respostas: ["Azteca", "MetLife", "AT&T Stadium"], respostaCerta: 0 },
+    { pergunta: "Qual jogador brasileiro é o único a jogar 3 finais seguidas?", respostas: ["Pelé", "Cafu", "Ronaldo"], respostaCerta: 1 },
+    { pergunta: "Qual país venceu a Copa de 1998 como anfitrião?", respostas: ["Brasil", "França", "Alemanha"], respostaCerta: 1 },
+    { pergunta: "Quem é o maior artilheiro em UMA ÚNICA edição (13 gols)?", respostas: ["Just Fontaine", "Pelé", "Ronaldo"], respostaCerta: 0 },
+    { pergunta: "Qual seleção tem o apelido de 'La Roja'?", respostas: ["Espanha", "Portugal", "Bélgica"], respostaCerta: 0 }
 ];
 
 // =========================================
 // 3. TÍTULOS E HISTÓRICO
 // =========================================
 function calcularTitulo(pontos) {
-    if (pontos <= 2) return "Perna de Pau 🦵";
+    if (pontos <= 2) return "Perna de Pau 🪵";
     if (pontos <= 5) return "Reserva de Luxo 🪑";
     if (pontos <= 8) return "Titular Absoluto 🏃‍♂️";
     return "Lenda do Penta 🏆";
@@ -102,7 +134,7 @@ function salvarHistoricoPartida(nome, avatar, pontos) {
 function gerarQRCode() {
     const container = document.getElementById("qrcode-container");
     if (!container) return;
-    container.innerHTML = ""; // Limpa antes de gerar
+    container.innerHTML = ""; 
 
     const urlComAtalho = window.location.origin + window.location.pathname + "?exibir=ranking";
 
@@ -138,7 +170,7 @@ function verificarSenhaReset() {
             let rel = `📊 RELATÓRIO LIVE\n\n` +
                       `🏟️ Total de Partidas: ${Object.keys(h).length}\n` +
                       `🏆 Campeões Únicos: ${Object.keys(r).length}\n\n` +
-                      `💬 PESQUISA:\n😍 Amei: ${v.amei}\n🙂 Curti: ${v.curti}\n😐 Médio: ${v['mais-ou-menos']}\n🙁 Não curti: ${v['nao-curti']}\n\n` +
+                      `💬 PESQUISA:\n😍 Amei: ${v.amei}\n🙂 Curti: ${v.curti}\n😐 Médio: ${v['mais-ou-menos']}\n🙁 Não curti: ${v.nao-curti}\n\n` +
                       `Deseja ZERAR tudo? Digite SIM:`;
             
             if (prompt(rel)?.toUpperCase() === "SIM") {
@@ -165,7 +197,6 @@ function mostrarRanking(origem) {
     document.getElementById("tela-resultado").classList.add("escondido");
     document.getElementById("tela-ranking").classList.remove("escondido");
 
-    // Top 10 Copas
     database.ref('samininaRanking').orderByChild('copas').limitToLast(10).on('value', (s) => {
         let html = "";
         let arr = []; s.forEach(c => { arr.push(c.val()); });
@@ -175,7 +206,6 @@ function mostrarRanking(origem) {
         document.getElementById("lista-ranking").innerHTML = html || "<p style='text-align:center'>Sem campeões.</p>";
     });
 
-    // Últimos 10 Títulos
     database.ref('historicoPartidas').orderByChild('timestamp').limitToLast(10).on('value', (s) => {
         let html = "";
         let arr = []; s.forEach(c => { arr.push(c.val()); });
