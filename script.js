@@ -102,7 +102,7 @@ const bancoDePerguntas = [
     { pergunta: "Qual jogador é conhecido como 'O Baixinho'?", respostas: ["Zico", "Romário", "Bebeto"], respostaCerta: 1 },
     { pergunta: "Em que ano o Brasil sediou sua primeira Copa?", respostas: ["1930", "1950", "1962"], respostaCerta: 1 },
     { pergunta: "Qual seleção jogou todas as Copas do Mundo?", respostas: ["Alemanha", "Itália", "Brasil"], respostaCerta: 2 },
-    { pergunta: "Quem fez o gol do título do Tetra em 1994?", respostas: ["Baggio errou", "Romário", "Dunga"], respostaCerta: 0 },
+    { pergunta: "Quem fez o gol do título do Tetra em 1994?", respostas: ["Baggio", "Romário", "Dunga"], respostaCerta: 0 },
     { pergunta: "Qual era a cor da camisa do Brasil antes da amarela?", respostas: ["Branca", "Verde", "Azul"], respostaCerta: 0 },
     { pergunta: "Quem marcou o gol do título da Alemanha em 2014?", respostas: ["Müller", "Klose", "Götze"], respostaCerta: 2 },
     { pergunta: "Qual o estádio com maior capacidade da Copa 2026?", respostas: ["Azteca", "MetLife", "AT&T Stadium"], respostaCerta: 0 },
