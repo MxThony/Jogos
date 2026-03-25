@@ -1,5 +1,5 @@
 // =========================================
-// 1. CONFIGURAÇÃO DO FIREBASE (SUAS CHAVES)
+// 1. CONFIGURAÇÃO DO FIREBASE
 // =========================================
 const firebaseConfig = {
     apiKey: "AIzaSyDbvleD3CCVEOybvc7B-sKmzL1ugnHiMyk",
@@ -29,15 +29,16 @@ musicaFundo.loop = true;
 const listaAvatares = ['img/1.jpg', 'img/2.jpg', 'img/3.jpg', 'img/4.jpg'];
 
 let j1Nome = "", j2Nome = "", j1Pontos = 0, j2Pontos = 0, j1Avatar = "", j2Avatar = ""; 
+let j1Streak = 0, j2Streak = 0;
+let errosSeguidosJ1 = 0, errosSeguidosJ2 = 0; // <-- Variáveis da Pergunta de Ouro
+let ePerguntaOuro = false;
+
 let perguntaAtual = 0, jogadorAtual = 1, perguntasDaRodada = [];
 let tempoRestante = 30, controleCronometro, modoDeJogo = "", telaAnteriorAoRanking = "tela-modo";
 
-// Lógica de "Catch-up" (Recuperação)
-let errosSeguidosJ1 = 0;
-let errosSeguidosJ2 = 0;
-let ePerguntaOuro = false;
-
-// BANCO DE PERGUNTAS (70 QUESTÕES)
+// =========================================
+// 3. BANCO DE PERGUNTAS (70 QUESTÕES)
+// =========================================
 const bancoDePerguntas = [
     { pergunta: "Quantas Copas o Brasil ganhou?", respostas: ["3", "4", "5"], respostaCerta: 2 },
     { pergunta: "Quem é o maior artilheiro das Copas?", respostas: ["Pelé", "Ronaldo", "Miroslav Klose"], respostaCerta: 2 },
@@ -112,239 +113,405 @@ const bancoDePerguntas = [
 ];
 
 // =========================================
-// 3. TÍTULOS E HISTÓRICO
+// 4. LÓGICA DE STREAK E TÍTULOS
 // =========================================
-function calcularTitulo(pontos) {
-    if (pontos <= 2) return "Perna de Pau 🦵";
-    if (pontos <= 5) return "Reserva de Luxo 🪑";
-    if (pontos <= 8) return "Titular Absoluto 🏃‍♂️";
-    return "Lenda do Penta 🏆";
+function getStreakData(streak) {
+    const msgs = { 
+        3: "Hat-trick! 🎩", 4: "Chocolate! 🍫", 5: "Pentaaaa! 🖐️", 
+        6: "Calma lá, paizão! 🛑", 7: "Alemanha de 2014? 🇩🇪", 
+        8: "Bayern de Munique 🏰", 9: "Fora de Controle! 🚨", 10: "Aí virou bagunça! 🤪" 
+    };
+    return { msg: msgs[streak] || "", bonus: streak >= 3 ? 1 : 0 };
+}
+
+function calcularTitulo(pts) {
+    if (pts <= 2) return "Perna de Pau 🪵";
+    if (pts <= 5) return "Reserva de Luxo 🪑";
+    if (pts <= 8) return "Titular Absoluto 🏃‍♂️";
+    if (pts <= 11) return "Craque da Rodada 🌟";
+    if (pts <= 14) return "Lenda do Penta 🏆";
+    if (pts <= 17) return "Fenômeno das Copas 🇧🇷";
+    return "O Inevitável 🤖";
+}
+
+// =========================================
+// 5. INICIALIZAÇÃO
+// =========================================
+function selecionarModo(m) { 
+    modoDeJogo = m; 
+    document.getElementById("tela-modo").classList.add("escondido"); 
+    document.getElementById("tela-inicial").classList.remove("escondido");
+    document.getElementById("container-avatar2").classList.toggle("escondido", m === 'solo');
+    
+    // Reseta tudo
+    j1Pontos = 0; j2Pontos = 0; j1Streak = 0; j2Streak = 0; 
+    errosSeguidosJ1 = 0; errosSeguidosJ2 = 0; // Zera contagem da Pergunta Ouro
+    perguntaAtual = 0; jogadorAtual = 1;
+    
+    document.querySelector('.emoji-container')?.classList.remove('escondido');
+    document.getElementById('feedback-agradecimento')?.classList.add('escondido');
+}
+
+function selecionarAvatar(j, i, el) {
+    const av = listaAvatares[i];
+    if (j === 1) j1Avatar = av; else j2Avatar = av;
+    el.parentElement.querySelectorAll('img').forEach(img => img.classList.remove('selecionado'));
+    el.classList.add('selecionado');
+}
+
+function validarComeco() {
+    j1Nome = document.getElementById("input-nome1").value;
+    j2Nome = modoDeJogo === 'solo' ? "Computador" : document.getElementById("input-nome2").value;
+    
+    if (!j1Nome || !j1Avatar || (modoDeJogo === 'batalha' && (!j2Nome || !j2Avatar))) {
+        return alert("Preencha os craques e escolha os avatares!");
+    }
+
+    perguntasDaRodada = bancoDePerguntas.sort(() => 0.5 - Math.random()).slice(0, 10);
+    document.getElementById("tela-inicial").classList.add("escondido");
+    document.getElementById("tela-quiz").classList.remove("escondido");
+    document.getElementById("timer-container").classList.remove("escondido");
+
+    musicaFundo.play();
+    mostrarPergunta();
+    iniciarCronometro();
+}
+
+// =========================================
+// 6. LÓGICA DO QUIZ (COM PERGUNTA DE OURO)
+// =========================================
+function mostrarPergunta() {
+    const d = perguntasDaRodada[perguntaAtual];
+    const quizContainer = document.querySelector('.quiz-container');
+    
+    // Checa se é Pergunta de Ouro
+    const errosAtuais = (jogadorAtual === 1) ? errosSeguidosJ1 : errosSeguidosJ2;
+    ePerguntaOuro = (errosAtuais >= 2);
+
+    if (ePerguntaOuro) {
+        quizContainer.classList.add('ouro-active');
+        document.getElementById("texto-pergunta").innerHTML = `<span style="color: #DAA520; font-weight:900; display:block; margin-bottom:10px;">⭐ PERGUNTA DE OURO ⭐</span><small style="font-size: 14px; color: var(--color-blue); display:block; margin-bottom:10px;">VALE 2 PONTOS!</small>${d.pergunta}`;
+    } else {
+        quizContainer.classList.remove('ouro-active');
+        document.getElementById("texto-pergunta").innerText = d.pergunta;
+    }
+    
+    document.getElementById("img-avatar-quiz").src = jogadorAtual === 1 ? j1Avatar : j2Avatar;
+    document.getElementById("aviso-turno-nome").innerText = jogadorAtual === 1 ? j1Nome : j2Nome;
+    document.getElementById("barra-progresso").innerText = `Pergunta ${perguntaAtual + 1} de 10`;
+
+    document.getElementById("feedback-acerto").classList.add("escondido");
+    document.getElementById("feedback-erro").classList.add("escondido");
+    document.getElementById("texto-pergunta").classList.remove("escondido");
+    document.getElementById("streak-popup").innerText = "";
+    
+    const area = document.getElementById("area-botoes");
+    area.innerHTML = "";
+    
+    d.respostas.forEach((r, i) => {
+        const b = document.createElement("button");
+        b.className = "btn-resposta";
+        b.innerText = r;
+        b.onclick = () => verificarResposta(i, b);
+        area.appendChild(b);
+    });
+}
+
+function iniciarCronometro() {
+    tempoRestante = 30; 
+    clearInterval(controleCronometro);
+    document.getElementById("timer-display").innerText = `Tempo: ${tempoRestante}s`;
+    
+    controleCronometro = setInterval(() => {
+        tempoRestante--; 
+        document.getElementById("timer-display").innerText = `Tempo: ${tempoRestante}s`;
+        if (tempoRestante <= 0) { 
+            somErro.play(); 
+            verificarResposta(-1, null); 
+        }
+    }, 1000);
+}
+
+function verificarResposta(idxSelecionado, botaoClicado) {
+    clearInterval(controleCronometro); 
+    
+    const correta = perguntasDaRodada[perguntaAtual].respostaCerta;
+    const botoes = document.querySelectorAll(".btn-resposta");
+    
+    botoes.forEach(btn => btn.disabled = true); 
+
+    if (idxSelecionado === correta) {
+        // ACERTOU
+        somAcerto.currentTime = 0; somAcerto.play();
+        if(botaoClicado) botaoClicado.classList.add("correta"); 
+        document.getElementById("feedback-acerto").classList.remove("escondido");
+
+        let streak = jogadorAtual === 1 ? ++j1Streak : ++j2Streak;
+        let bonus = getStreakData(streak).bonus;
+        let ptsQuestao = ePerguntaOuro ? 2 : 1; // Soma 2 se for Ouro
+        
+        if (jogadorAtual === 1) {
+            j1Pontos += (ptsQuestao + bonus); 
+            errosSeguidosJ1 = 0; // Zera os erros do cara
+        } else {
+            j2Pontos += (ptsQuestao + bonus); 
+            errosSeguidosJ2 = 0;
+        }
+        
+        // Confete Ouro vs Confete Streak
+        if (ePerguntaOuro) {
+            confetti({ particleCount: 200, spread: 90, origin: { y: 0.6 }, colors: ['#DAA520', '#FDD017'] });
+        } else if (bonus > 0) {
+            document.getElementById("streak-popup").innerText = getStreakData(streak).msg;
+            confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, colors: ['#FDD017', '#006735'] });
+        }
+    } else {
+        // ERROU
+        somErro.currentTime = 0; somErro.play();
+        if(botaoClicado) botaoClicado.classList.add("errada"); 
+        
+        botoes[correta].classList.add("correta"); // Mostra Gabarito
+        document.getElementById("feedback-erro").classList.remove("escondido");
+
+        if (jogadorAtual === 1) {
+            j1Streak = 0;
+            errosSeguidosJ1++; // Soma nos erros pra ativar a ouro
+        } else {
+            j2Streak = 0;
+            errosSeguidosJ2++;
+        }
+    }
+    
+    document.getElementById("texto-pergunta").classList.add("escondido");
+
+    setTimeout(() => {
+        perguntaAtual++;
+        if (perguntaAtual >= 10) finalizarJogo();
+        else {
+            if (modoDeJogo === 'batalha') jogadorAtual = jogadorAtual === 1 ? 2 : 1;
+            mostrarPergunta();
+            iniciarCronometro();
+        }
+    }, 2500); 
+}
+
+// =========================================
+// 7. FINALIZAÇÃO, DESISTÊNCIA E SALVAMENTO
+// =========================================
+function finalizarJogo() {
+    document.querySelector('.quiz-container').classList.remove('ouro-active'); // Garante que a borda amarela suma
+    document.getElementById("tela-quiz").classList.add("escondido");
+    document.getElementById("timer-container").classList.add("escondido");
+    document.getElementById("tela-resultado").classList.remove("escondido");
+
+    let vencedor, vAvatar, vPontos;
+    
+    if (modoDeJogo === 'solo') {
+        vencedor = j1Nome; vAvatar = j1Avatar; vPontos = j1Pontos;
+        salvarNoRanking(j1Nome, j1Avatar, j1Pontos, (j1Pontos >= 10)); 
+    } else {
+        vencedor = (j1Pontos >= j2Pontos) ? j1Nome : j2Nome;
+        vAvatar = (j1Pontos >= j2Pontos) ? j1Avatar : j2Avatar;
+        vPontos = Math.max(j1Pontos, j2Pontos);
+        
+        if(j1Pontos !== j2Pontos) {
+            salvarNoRanking(vencedor, vAvatar, vPontos, true); 
+        } else {
+            salvarNoRanking(vencedor, vAvatar, vPontos, false); 
+        }
+    }
+
+    document.getElementById("img-avatar-vencedor").src = vAvatar;
+    document.getElementById("titulo-vencedor").innerText = (modoDeJogo === 'batalha' && j1Pontos === j2Pontos) ? "Empate!" : `${vencedor} Venceu!`;
+    document.getElementById("mensagem-final").innerText = `${vPontos} Pontos\n${calcularTitulo(vPontos)}`;
+    
+    if (vPontos >= 10) confetti({ particleCount: 300, spread: 100 });
+}
+
+function confirmarDesistencia() {
+    const nome = (modoDeJogo === 'solo' ? j1Nome : (jogadorAtual === 1 ? j1Nome : j2Nome)).toUpperCase();
+    if (confirm(`${nome}, deseja abandonar a partida?`)) {
+        clearInterval(controleCronometro); 
+        musicaFundo.pause(); somErro.play();
+        
+        let tit = "ABANDONOU! 🏳️"; let msg = ""; let winAv = "";
+        
+        if (modoDeJogo === 'solo') {
+            msg = `${j1Nome} desistiu.\nTítulo: Perna de Pau 🪵`;
+            // CORREÇÃO: Agora o fujão vai pro Ranking Geral com 0 pontos!
+            salvarNoRanking(j1Nome, j1Avatar, 0, false);
+        } else {
+            const vNome = (jogadorAtual === 1 ? j2Nome : j1Nome);
+            const vAv = (jogadorAtual === 1 ? j2Avatar : j1Avatar);
+            tit = `${vNome.toUpperCase()} VENCEU POR W.O.! 🏆`;
+            msg = `${nome} desistiu!\n${vNome} ganha uma Copa automática.`;
+            winAv = vAv;
+            salvarNoRanking(vNome, vAv, 10, true);
+        }
+        
+        document.getElementById("titulo-vencedor").innerText = tit;
+        document.getElementById("mensagem-final").innerText = msg;
+        
+        const imgV = document.getElementById("img-avatar-vencedor");
+        if (winAv) { imgV.src = winAv; imgV.style.display = "block"; } else { imgV.style.display = "none"; }
+        
+        document.querySelector('.quiz-container').classList.remove('ouro-active');
+        document.getElementById("tela-quiz").classList.add("escondido");
+        document.getElementById("timer-container").classList.add("escondido");
+        document.getElementById("secao-pesquisa").classList.add("escondido");
+        document.getElementById("tela-resultado").classList.remove("escondido");
+    } else {
+        iniciarCronometro(); 
+    }
+}
+
+function salvarNoRanking(nome, avatar, pontos, ganhouCopa) {
+    const nomeLimpo = nome.trim().toUpperCase();
+    const ref = database.ref('samininaRanking/' + nomeLimpo);
+    
+    ref.once('value').then(s => {
+        let data = s.exists() ? s.val() : {};
+        
+        // BLINDAGEM MÁXIMA: Garante que os pontos são números, senão vira 0
+        data.nome = nomeLimpo;
+        data.avatar = avatar; 
+        data.pontosTotais = (Number(data.pontosTotais) || 0) + Number(pontos);
+        data.copas = (Number(data.copas) || 0) + (ganhouCopa ? 1 : 0);
+        
+        ref.set(data);
+    });
+    
+    salvarHistoricoPartida(nomeLimpo, avatar, pontos);
 }
 
 function salvarHistoricoPartida(nome, avatar, pontos) {
-    database.ref('historicoPartidas').push({
-        nome: nome.trim().toUpperCase(),
-        avatar: avatar,
-        pontos: pontos,
-        titulo: calcularTitulo(pontos),
-        timestamp: firebase.database.ServerValue.TIMESTAMP
+    database.ref('historicoPartidas').push({ 
+        nome: nome.toUpperCase(), avatar: avatar, pontos: pontos, 
+        titulo: calcularTitulo(pontos), timestamp: firebase.database.ServerValue.TIMESTAMP 
     });
 }
 
 // =========================================
-// 4. QR CODE E INTERFACE
+// 8. TELA DE RANKING E SATISFAÇÃO
 // =========================================
-function gerarQRCode() {
-    const container = document.getElementById("qrcode-container");
-    if (!container) return;
-    container.innerHTML = ""; 
-    const urlComAtalho = window.location.origin + window.location.pathname + "?exibir=ranking";
-    new QRCode(container, { text: urlComAtalho, width: 120, height: 120, colorDark : "#003399", colorLight : "#FFFFFF" });
+function mostrarRanking() {
+    document.getElementById("tela-modo").classList.add("escondido");
+    document.getElementById("tela-resultado").classList.add("escondido");
+    document.getElementById("tela-ranking").classList.remove("escondido");
+    
+    // Desliga ouvintes antigos para não dar conflito no ao vivo
+    database.ref('samininaRanking').off();
+    database.ref('historicoPartidas').off();
+
+    // Liga o ao vivo
+    database.ref('samininaRanking').on('value', s => {
+        let list = []; s.forEach(c => list.push(c.val()));
+        
+        // Ordena apenas valores válidos (Blinda contra erros de testes antigos)
+        list.sort((a,b) => (Number(b.copas) || 0) - (Number(a.copas) || 0) || (Number(b.pontosTotais) || 0) - (Number(a.pontosTotais) || 0));
+        
+        document.getElementById("lista-ranking").innerHTML = list.slice(0,10).map((j,i) => `
+            <div class="ranking-item">
+                <div class="ranking-pos">${i+1}º</div>
+                <img src="${j.avatar || 'img/1.jpg'}" class="ranking-avatar">
+                <div class="ranking-info"><b>${j.nome}</b><br><span>${j.copas || 0} Copas | ${j.pontosTotais || 0} Pts</span></div>
+            </div>`).join("");
+    });
+
+    database.ref('historicoPartidas').orderByChild('timestamp').limitToLast(10).on('value', (s) => {
+        let list = []; s.forEach(c => list.push(c.val()));
+        document.getElementById("lista-titulos-recentes").innerHTML = list.reverse().map(p => `
+            <div class="ranking-item">
+                <img src="${p.avatar || 'img/1.jpg'}" class="ranking-avatar">
+                <div class="ranking-info"><b>${p.nome}</b><br><span>${p.titulo}</span></div>
+            </div>`).join("");
+    });
+}
+
+function fecharRanking() { 
+    database.ref('samininaRanking').off();
+    database.ref('historicoPartidas').off();
+    document.getElementById("tela-ranking").classList.add("escondido"); 
+    document.getElementById("tela-modo").classList.remove("escondido"); 
 }
 
 function enviarPesquisa(reacao) {
-    database.ref('pesquisaSatisfacao').push({ voto: reacao, timestamp: firebase.database.ServerValue.TIMESTAMP }).then(() => {
+    database.ref('pesquisaSatisfacao').push({ 
+        voto: reacao, 
+        timestamp: firebase.database.ServerValue.TIMESTAMP 
+    }).then(() => {
         document.querySelector('.emoji-container').classList.add('escondido');
         document.getElementById('feedback-agradecimento').classList.remove('escondido');
     });
 }
 
+// =========================================
+// 9. ATALHOS E PAINEL SECRETO
+// =========================================
+function toggleMusica() { 
+    if (musicaFundo.paused) { musicaFundo.play(); document.getElementById("musica-icone").innerText = "🔊"; }
+    else { musicaFundo.pause(); document.getElementById("musica-icone").innerText = "🔇"; }
+}
+
+function toggleFullscreen() { 
+    if (!document.fullscreenElement) document.documentElement.requestFullscreen(); 
+    else document.exitFullscreen(); 
+}
+
+function gerarDesafio() { 
+    document.getElementById("modal-desafio").classList.remove("escondido"); 
+    document.getElementById("qrcode-desafio").innerHTML = "";
+    new QRCode(document.getElementById("qrcode-desafio"), { text: window.location.origin + window.location.pathname, width: 150, height: 150 }); 
+}
+
+function fecharModalDesafio() { document.getElementById("modal-desafio").classList.add("escondido"); }
+
+function gerarQRCodeInicial() { 
+    const container = document.getElementById("qrcode-container");
+    if(!container) return;
+    container.innerHTML = "";
+    new QRCode(container, { text: window.location.origin + window.location.pathname + "?exibir=ranking", width: 100, height: 100 }); 
+}
+
 function verificarSenhaReset() {
     let senha = prompt("🔐 ACESSO RESTRITO\nDigite a senha para ver o relatório ou zerar o banco:");
+    
     if (senha === "321") {
         database.ref().once('value').then((snapshot) => {
             const d = snapshot.val() || {};
-            const p = d.pesquisaSatisfacao || {};
+            const r = d.samininaRanking || {};
+            const h = d.historicoPartidas || {};
+            const p = d.pesquisaSatisfacao || {}; 
+            
             let v = { amei: 0, curti: 0, "mais-ou-menos": 0, "nao-curti": 0 };
             Object.values(p).forEach(i => { if(v[i.voto] !== undefined) v[i.voto]++; });
-            let rel = `📊 RELATÓRIO LIVE\n🏟️ Partidas: ${Object.keys(d.historicoPartidas || {}).length}\n🏆 Campeões: ${Object.keys(d.samininaRanking || {}).length}\n\n😍:${v.amei} 🙂:${v.curti} 😐:${v['mais-ou-menos']} 🙁:${v['nao-curti']}\n\nZerar banco? Digite SIM:`;
-            if (prompt(rel)?.toUpperCase() === "SIM") database.ref().remove().then(() => location.reload());
+
+            let rel = `📊 RELATÓRIO DO EVENTO\n\n` +
+                      `🏟️ Partidas Jogadas: ${Object.keys(h).length}\n` +
+                      `🏆 Campeões no Ranking: ${Object.keys(r).length}\n\n` +
+                      `Avaliações do Público:\n` +
+                      `😍 Amei: ${v.amei}\n` +
+                      `🙂 Curti: ${v.curti}\n` +
+                      `😐 Mais ou Menos: ${v['mais-ou-menos']}\n` +
+                      `🙁 Não Curti: ${v['nao-curti']}\n\n` +
+                      `Deseja ZERAR o banco? Digite SIM para confirmar:`;
+            
+            if (prompt(rel)?.toUpperCase() === "SIM") {
+                database.ref().remove().then(() => {
+                    alert("Banco de dados limpo com sucesso!");
+                    location.reload();
+                });
+            }
         });
-    }
-}
-
-function mostrarRanking(origem) {
-    telaAnteriorAoRanking = origem;
-    document.getElementById("tela-modo").classList.add("escondido");
-    document.getElementById("tela-resultado").classList.add("escondido");
-    document.getElementById("tela-ranking").classList.remove("escondido");
-
-    database.ref('samininaRanking').orderByChild('copas').limitToLast(10).on('value', (s) => {
-        let html = ""; let arr = []; s.forEach(c => { arr.push(c.val()); });
-        arr.reverse().forEach((j, i) => {
-            html += `<div class="ranking-item"><div class="ranking-pos">${i+1}º</div><img src="${j.avatar}" class="ranking-avatar"><div class="ranking-info"><div class="ranking-nome">${j.nome}</div><div class="ranking-copas">${j.copas} Copas</div></div></div>`;
-        });
-        document.getElementById("lista-ranking").innerHTML = html || "Sem campeões.";
-    });
-
-    database.ref('historicoPartidas').orderByChild('timestamp').limitToLast(10).on('value', (s) => {
-        let html = ""; let arr = []; s.forEach(c => { arr.push(c.val()); });
-        arr.reverse().forEach(p => {
-            html += `<div class="ranking-item p-recent"><img src="${p.avatar}" class="ranking-avatar size-p"><div class="ranking-info"><div class="ranking-nome">${p.nome}</div><div class="ranking-titulo">${p.titulo}</div></div></div>`;
-        });
-        document.getElementById("lista-titulos-recentes").innerHTML = html || "Sem histórico.";
-    });
-}
-
-// =========================================
-// 5. LÓGICA DO QUIZ, DESISTÊNCIA E CONFETES
-// =========================================
-function confirmarDesistencia() {
-    const nome = (modoDeJogo === 'solo' ? j1Nome : (jogadorAtual === 1 ? j1Nome : j2Nome)).toUpperCase();
-    if (confirm(`${nome}, deseja abandonar a partida?`)) {
-        clearInterval(controleCronometro); musicaFundo.pause(); somErro.play();
-        let tit = "ABANDONOU! 🏳️"; let msg = ""; let winAv = "";
-        if (modoDeJogo === 'solo') {
-            msg = `${j1Nome} desistiu.\nTítulo: Perna de Pau 🪵`;
-            salvarHistoricoPartida(j1Nome, j1Avatar, 0);
-        } else {
-            const vNome = (jogadorAtual === 1 ? j2Nome : j1Nome);
-            const vAv = (jogadorAtual === 1 ? j2Avatar : j1Avatar);
-            tit = `${vNome.toUpperCase()} VENCEU POR W.O.! 🏆`;
-            msg = `${nome} desistiu!\n${vNome} ganha uma Copa.`;
-            winAv = vAv;
-            salvarNoRankingCopa(vNome, vAv);
-            salvarHistoricoPartida(nome, (jogadorAtual === 1 ? j1Avatar : j2Avatar), 0);
-            salvarHistoricoPartida(vNome, vAv, 10);
-        }
-        document.getElementById("titulo-vencedor").innerText = tit;
-        document.getElementById("mensagem-final").innerText = msg;
-        const imgV = document.getElementById("img-avatar-vencedor");
-        if (winAv) { imgV.src = winAv; imgV.style.display = "block"; } else { imgV.style.display = "none"; }
-        document.getElementById("tela-quiz").classList.add("escondido");
-        document.getElementById("timer-container").classList.add("escondido");
-        document.getElementById("tela-resultado").classList.remove("escondido");
-    }
-}
-
-function mostrarPergunta() {
-    const d = perguntasDaRodada[perguntaAtual];
-    const quizContainer = document.querySelector('.quiz-container');
-    const erros = (jogadorAtual === 1) ? errosSeguidosJ1 : errosSeguidosJ2;
-    ePerguntaOuro = (erros >= 2);
-
-    if (ePerguntaOuro) {
-        quizContainer.classList.add('ouro-active');
-        document.getElementById("texto-pergunta").innerHTML = `<span style="color: #DAA520; font-weight:900">⭐ PERGUNTA DE OURO ⭐</span><br><small>VALE 2 PONTOS!</small><br><br>${d.pergunta}`;
-    } else {
-        quizContainer.classList.remove('ouro-active');
-        document.getElementById("texto-pergunta").innerText = d.pergunta;
-    }
-
-    document.getElementById("img-avatar-quiz").src = (jogadorAtual === 1) ? j1Avatar : j2Avatar;
-    document.getElementById("aviso-turno-nome").innerText = "Vez de: " + (jogadorAtual === 1 ? j1Nome : j2Nome);
-    let total = (modoDeJogo === 'solo') ? 10 : 5;
-    let atual = (modoDeJogo === 'solo') ? perguntaAtual + 1 : Math.floor(perguntaAtual / 2) + 1;
-    document.getElementById("barra-progresso").innerText = `Pergunta ${atual} de ${total}`;
-    
-    const area = document.getElementById("area-botoes"); area.innerHTML = "";
-    d.respostas.forEach((t, i) => {
-        const b = document.createElement("button"); b.innerText = t; b.className = "btn-resposta";
-        b.onclick = () => verificarResposta(i, b); area.appendChild(b);
-    });
-    document.getElementById("feedback-acerto").classList.add("escondido");
-    document.getElementById("feedback-erro").classList.add("escondido");
-}
-
-function verificarResposta(i, b) {
-    clearInterval(controleCronometro);
-    const correta = perguntasDaRodada[perguntaAtual].respostaCerta;
-    const todosOsBotoes = document.querySelectorAll('.btn-resposta');
-    
-    // Desativa todos os botões para não clicar de novo
-    todosOsBotoes.forEach(btn => btn.disabled = true);
-
-    if (i === correta) { 
-        // ACERTOU
-        somAcerto.currentTime = 0; somAcerto.play(); 
-        if(b) b.classList.add('correta'); 
-        document.getElementById("feedback-acerto").classList.remove("escondido"); 
-        
-        let pts = ePerguntaOuro ? 2 : 1;
-        if(jogadorAtual === 1) { j1Pontos += pts; errosSeguidosJ1 = 0; } 
-        else { j2Pontos += pts; errosSeguidosJ2 = 0; }
-        
-        if (ePerguntaOuro) confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, colors: ['#FDD017', '#006735'] });
-    } else { 
-        // ERROU
-        somErro.currentTime = 0; somErro.play(); 
-        if(b) b.classList.add('errada'); // Fica vermelho o que clicou
-        
-        // --- O PULO DO GATO: Mostra a certa ---
-        todosOsBotoes[correta].classList.add('correta'); // Fica verde a resposta certa
-        
-        document.getElementById("feedback-erro").classList.remove("escondido"); 
-        if(jogadorAtual === 1) errosSeguidosJ1++; else errosSeguidosJ2++;
-    }
-
-    document.getElementById("texto-pergunta").classList.add("escondido");
-    
-    setTimeout(() => {
-        perguntaAtual++;
-        if (perguntaAtual >= 10) finalizarJogo();
-        else if (modoDeJogo === 'batalha') { jogadorAtual = (jogadorAtual === 1) ? 2 : 1; prepararTurno(); }
-        else { mostrarPergunta(); iniciarCronometro(); }
-    }, 2500); // Aumentei para 2.5s para dar tempo de ler a resposta certa
-}
-
-function finalizarJogo() {
-    document.getElementById("tela-quiz").classList.add("escondido");
-    document.getElementById("timer-container").classList.add("escondido");
-    document.getElementById("tela-resultado").classList.remove("escondido");
-    
-    if (modoDeJogo === 'solo') {
-        salvarHistoricoPartida(j1Nome, j1Avatar, j1Pontos);
-        if (j1Pontos >= 6) { salvarNoRankingCopa(j1Nome, j1Avatar); document.getElementById("titulo-vencedor").innerText = "CAMPEÃO! 🏆"; showWinConfetti(); }
-        else document.getElementById("titulo-vencedor").innerText = "FIM DE JOGO!";
-        document.getElementById("mensagem-final").innerText = `${j1Nome}: ${j1Pontos} acertos\nTítulo: ${calcularTitulo(j1Pontos)}`;
-        document.getElementById("img-avatar-vencedor").src = j1Avatar;
-    } else {
-        salvarHistoricoPartida(j1Nome, j1Avatar, j1Pontos); salvarHistoricoPartida(j2Nome, j2Avatar, j2Pontos);
-        let win = j1Pontos > j2Pontos ? j1Nome : j2Nome; let winAv = j1Pontos > j2Pontos ? j1Avatar : j2Avatar;
-        if (j1Pontos !== j2Pontos) { salvarNoRankingCopa(win, winAv); showWinConfetti(); }
-        document.getElementById("titulo-vencedor").innerText = j1Pontos === j2Pontos ? "EMPATE!" : win + " VENCEU!";
-        document.getElementById("mensagem-final").innerText = `${j1Nome}: ${j1Pontos} pts (${calcularTitulo(j1Pontos)})\n${j2Nome}: ${j2Pontos} pts (${calcularTitulo(j2Pontos)})`;
-        document.getElementById("img-avatar-vencedor").src = j1Pontos >= j2Pontos ? j1Avatar : j2Avatar;
-    }
-}
-
-function showWinConfetti() {
-    var end = Date.now() + (3 * 1000);
-    (function frame() {
-        confetti({ particleCount: 3, angle: 60, spread: 55, origin: { x: 0 }, colors: ['#006735', '#FDD017'] });
-        confetti({ particleCount: 3, angle: 120, spread: 55, origin: { x: 1 }, colors: ['#006735', '#FDD017'] });
-        if (Date.now() < end) requestAnimationFrame(frame);
-    }());
-}
-
-function gerarDesafio() {
-    const pts = (modoDeJogo === 'solo') ? j1Pontos : Math.max(j1Pontos, j2Pontos);
-    const msg = `Fiz ${pts} pontos na Copa Saminina! Bate meu recorde: ${window.location.origin + window.location.pathname}`;
-    if (/Android|iPhone/i.test(navigator.userAgent)) window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank');
-    else {
-        document.getElementById("modal-desafio").classList.remove("escondido");
-        const container = document.getElementById("qrcode-desafio"); container.innerHTML = "";
-        new QRCode(container, { text: window.location.origin + window.location.pathname, width: 150, height: 150 });
+    } else if (senha !== null) { 
+        alert("Senha incorreta!"); 
     }
 }
 
 // =========================================
-// 6. AUXILIARES E INICIALIZAÇÃO
+// 10. INICIALIZADOR DE PÁGINA
 // =========================================
-function selecionarModo(m) { modoDeJogo = m; document.getElementById("tela-modo").classList.add("escondido"); document.getElementById("tela-inicial").classList.remove("escondido"); document.getElementById("container-avatar2").classList.toggle("escondido", m === 'solo'); j1Pontos = 0; j2Pontos = 0; perguntaAtual = 0; jogadorAtual = 1; document.querySelector('.emoji-container')?.classList.remove('escondido'); document.getElementById('feedback-agradecimento')?.classList.add('escondido'); }
-function selecionarAvatar(p, i, el) { if (p === 1) j1Avatar = listaAvatares[i]; else j2Avatar = listaAvatares[i]; el.parentElement.querySelectorAll('img').forEach(img => img.classList.remove('selecionado')); el.classList.add('selecionado'); }
-function validarComeco() { j1Nome = document.getElementById("input-nome1").value; j2Nome = (modoDeJogo === 'solo') ? "Computador" : document.getElementById("input-nome2").value; if (!j1Nome || !j1Avatar || (modoDeJogo === 'batalha' && (!j2Nome || !j2Avatar))) return alert("Preencha tudo!"); musicaFundo.play(); perguntasDaRodada = bancoDePerguntas.sort(() => 0.5 - Math.random()).slice(0, 10); document.getElementById("tela-inicial").classList.add("escondido"); if (modoDeJogo === 'solo') { mostrarPergunta(); iniciarCronometro(); document.getElementById("tela-quiz").classList.remove("escondido"); document.getElementById("timer-container").classList.remove("escondido"); } else prepararTurno(); }
-function prepararTurno() { clearInterval(controleCronometro); document.getElementById("nome-destaque").innerText = (jogadorAtual === 1) ? j1Nome : j2Nome; document.getElementById("img-avatar-passagem").src = (jogadorAtual === 1) ? j1Avatar : j2Avatar; document.getElementById("tela-quiz").classList.add("escondido"); document.getElementById("tela-passagem").classList.remove("escondido"); document.getElementById("timer-container").classList.add("escondido"); }
-function iniciarTurno() { document.getElementById("tela-passagem").classList.add("escondido"); document.getElementById("tela-quiz").classList.remove("escondido"); document.getElementById("timer-container").classList.remove("escondido"); mostrarPergunta(); iniciarCronometro(); }
-function iniciarCronometro() { tempoRestante = 30; clearInterval(controleCronometro); controleCronometro = setInterval(() => { tempoRestante--; document.getElementById("timer-display").innerText = `Tempo: ${tempoRestante}s`; if (tempoRestante <= 0) { somErro.play(); verificarResposta(-1, null); } }, 1000); }
-function fecharRanking() { document.getElementById("tela-ranking").classList.add("escondido"); document.getElementById(telaAnteriorAoRanking).classList.remove("escondido"); }
-function toggleMusica() { musicaFundo.muted = !musicaFundo.muted; document.getElementById("musica-icone").innerText = musicaFundo.muted ? "🔇" : "🔊"; }
-function toggleFullscreen() { if (!document.fullscreenElement) document.documentElement.requestFullscreen(); else document.exitFullscreen(); }
-function fecharModalDesafio() { document.getElementById("modal-desafio").classList.add("escondido"); }
-function salvarNoRankingCopa(nome, avatar) { const ref = database.ref('samininaRanking/' + nome.trim().toUpperCase()); ref.once('value').then((s) => { if (s.exists()) ref.update({ copas: s.val().copas + 1, avatar: avatar }); else ref.set({ nome: nome.trim().toUpperCase(), avatar: avatar, copas: 1 }); }); }
-
 document.addEventListener("DOMContentLoaded", () => {
-    gerarQRCode();
-    const p = new URLSearchParams(window.location.search);
-    if (p.get('exibir') === 'ranking') mostrarRanking('tela-modo');
+    gerarQRCodeInicial();
+    if (new URLSearchParams(window.location.search).get('exibir') === 'ranking') mostrarRanking();
 });
