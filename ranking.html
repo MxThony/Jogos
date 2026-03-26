@@ -3,79 +3,180 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Placar Ao Vivo - Copa Saminina</title>
+    <title>Ao Vivo - Copa Saminina</title>
     
-    <!-- Bibliotecas (Mesmas do jogo) -->
+    <!-- Bibliotecas do Firebase -->
     <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-database-compat.js"></script>
+    
+    <!-- Puxa suas cores e fontes originais -->
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
 
     <style>
-        /* Estilos exclusivos para a tela de transmissão */
-        .public-ranking { min-height: 100vh; padding-bottom: 60px; }
-        .quiz-container { border: 4px solid var(--color-yellow); }
-        
-        /* Faixa de Transmissão (Marquee) */
+        /* Ajuste do corpo para a TV */
+        body.tela-tv {
+            padding-top: 70px; /* Abre espaço para a faixa de cima */
+            padding-bottom: 70px; /* Abre espaço para a faixa de baixo */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        /* Container do placar com destaque amarelo */
+        .tv-container {
+            background: var(--color-white); 
+            padding: 30px 25px; 
+            border-radius: 20px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5); 
+            width: 100%; 
+            max-width: 450px; 
+            text-align: center;
+            border: 4px solid var(--color-yellow);
+        }
+
+        /* ========================================= */
+        /* O SEGREDO DO LETREIRO INFINITO EM CIMA E EMBAIXO */
+        /* ========================================= */
         .faixa-transmissao {
             position: fixed;
-            bottom: 0;
             left: 0;
             width: 100%;
             background: var(--color-yellow);
             color: var(--color-blue);
-            overflow: hidden;
-            padding: 10px 0;
+            padding: 12px 0;
+            font-size: 18px;
             font-weight: 900;
             text-transform: uppercase;
             z-index: 2000;
-            box-shadow: 0 -4px 10px rgba(0,0,0,0.2);
-        }
-        .marquee-content {
-            display: inline-block;
+            display: flex;
             white-space: nowrap;
-            padding-left: 100%;
-            animation: marquee 15s linear infinite;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            overflow: hidden;
         }
-        @keyframes marquee {
-            0%   { transform: translate(0, 0); }
-            100% { transform: translate(-100%, 0); }
+        
+        /* Posicionamento */
+        .faixa-top { top: 0; border-bottom: 3px solid #002266; }
+        .faixa-bottom { bottom: 0; border-top: 3px solid #002266; }
+
+        .marquee-content {
+            display: flex;
+            animation: rolarTexto 20s linear infinite;
+        }
+        
+        .marquee-texto { padding-right: 50px; }
+
+        /* Faz a engrenagem rodar perfeitamente pela metade e recomeçar sem piscar */
+        @keyframes rolarTexto {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); } 
         }
     </style>
 </head>
-<body class="public-ranking">
+<body class="tela-tv">
+
+    <!-- FAIXA DE CIMA -->
+    <div class="faixa-transmissao faixa-top">
+        <div class="marquee-content">
+            <!-- Texto repetido para criar o loop infinito perfeito -->
+            <span class="marquee-texto">⚽ VOCÊ ESTÁ ACOMPANHANDO A COPA SAMININA AO VIVO • QUEM SERÁ O PRÓXIMO CRAQUE? • DESAFIE SEUS AMIGOS NO TOTEM! ⚽</span>
+            <span class="marquee-texto">⚽ VOCÊ ESTÁ ACOMPANHANDO A COPA SAMININA AO VIVO • QUEM SERÁ O PRÓXIMO CRAQUE? • DESAFIE SEUS AMIGOS NO TOTEM! ⚽</span>
+            <span class="marquee-texto">⚽ VOCÊ ESTÁ ACOMPANHANDO A COPA SAMININA AO VIVO • QUEM SERÁ O PRÓXIMO CRAQUE? • DESAFIE SEUS AMIGOS NO TOTEM! ⚽</span>
+            <span class="marquee-texto">⚽ VOCÊ ESTÁ ACOMPANHANDO A COPA SAMININA AO VIVO • QUEM SERÁ O PRÓXIMO CRAQUE? • DESAFIE SEUS AMIGOS NO TOTEM! ⚽</span>
+        </div>
+    </div>
+
+    <!-- CONTEÚDO PRINCIPAL (PLACAR) -->
     <div class="main-wrapper">
         <div class="logo-container">
             <img src="logo/samininacopa.svg" class="logo-marca">
         </div>
 
-        <div class="quiz-container">
-            <h2 style="font-size: 22px;">Placar Oficial 🏆</h2>
-            <div id="lista-ranking" class="lista-ranking-container"></div>
+        <div class="tv-container">
+            <h2 style="font-size: 24px;">PLACAR OFICIAL 🏆</h2>
+            <div id="lista-ranking" class="lista-ranking-container">Carregando craques...</div>
             
             <hr class="divisor">
             
-            <h3>Últimas Conquistas 🏅</h3>
-            <div id="lista-titulos-recentes" class="lista-ranking-container"></div>
+            <h3 style="font-size: 20px;">ÚLTIMAS CONQUISTAS 🏅</h3>
+            <div id="lista-titulos-recentes" class="lista-ranking-container list-p">Buscando histórico...</div>
         </div>
     </div>
 
-    <!-- Letreiro Passando -->
-    <div class="faixa-transmissao">
+    <!-- FAIXA DE BAIXO -->
+    <div class="faixa-transmissao faixa-bottom">
         <div class="marquee-content">
-            ⚽ VOCÊ ESTÁ ACOMPANHANDO A COPA SAMININA AO VIVO • QUEM SERÁ O PRÓXIMO CRAQUE? • DESAFIE SEUS AMIGOS NO TOTEM! ⚽
+            <!-- Texto repetido para criar o loop infinito perfeito -->
+            <span class="marquee-texto">⚽ VOCÊ ESTÁ ACOMPANHANDO A COPA SAMININA AO VIVO • QUEM SERÁ O PRÓXIMO CRAQUE? • DESAFIE SEUS AMIGOS NO TOTEM! ⚽</span>
+            <span class="marquee-texto">⚽ VOCÊ ESTÁ ACOMPANHANDO A COPA SAMININA AO VIVO • QUEM SERÁ O PRÓXIMO CRAQUE? • DESAFIE SEUS AMIGOS NO TOTEM! ⚽</span>
+            <span class="marquee-texto">⚽ VOCÊ ESTÁ ACOMPANHANDO A COPA SAMININA AO VIVO • QUEM SERÁ O PRÓXIMO CRAQUE? • DESAFIE SEUS AMIGOS NO TOTEM! ⚽</span>
+            <span class="marquee-texto">⚽ VOCÊ ESTÁ ACOMPANHANDO A COPA SAMININA AO VIVO • QUEM SERÁ O PRÓXIMO CRAQUE? • DESAFIE SEUS AMIGOS NO TOTEM! ⚽</span>
         </div>
     </div>
 
-    <!-- Script de Inicialização Direta -->
-    <script src="script.js"></script>
+    <!-- SCRIPT ISOLADO (Livre de bugs do jogo principal) -->
     <script>
-        // Quando a página carregar, força a abertura do ranking sem os botões
-        document.addEventListener("DOMContentLoaded", () => {
-            mostrarRanking();
-            // Esconde elementos que não pertencem à tela pública (blindagem extra)
-            const btnVoltar = document.querySelector("#tela-ranking button");
-            if(btnVoltar) btnVoltar.style.display = "none";
+        // Suas chaves de acesso ao Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyDbvleD3CCVEOybvc7B-sKmzL1ugnHiMyk",
+            authDomain: "copa-saminina.firebaseapp.com",
+            databaseURL: "https://copa-saminina-default-rtdb.firebaseio.com",
+            projectId: "copa-saminina",
+            storageBucket: "copa-saminina.firebasestorage.app",
+            messagingSenderId: "961413845237",
+            appId: "1:961413845237:web:4c2b36f903a3f3c0f9f5bc"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        // PUXAR O RANKING PRINCIPAL
+        database.ref('samininaRanking').on('value', s => {
+            let list = []; 
+            s.forEach(c => { if(c.val() && c.val().nome) list.push(c.val()); });
+            
+            list.sort((a,b) => (Number(b.copas) || 0) - (Number(a.copas) || 0) || (Number(b.pontosTotais) || 0) - (Number(a.pontosTotais) || 0));
+            
+            const containerRanking = document.getElementById("lista-ranking");
+            
+            if (list.length === 0) {
+                containerRanking.innerHTML = "<p style='padding: 20px;'>Ainda não há campeões!</p>";
+                return;
+            }
+
+            containerRanking.innerHTML = list.slice(0,10).map((j,i) => {
+                let posicao = `${i+1}º`; let tamanhoFonte = '18px';
+                if (i === 0) { posicao = "🥇"; tamanhoFonte = '28px'; }
+                else if (i === 1) { posicao = "🥈"; tamanhoFonte = '28px'; }
+                else if (i === 2) { posicao = "🥉"; tamanhoFonte = '28px'; }
+
+                return `
+                <div class="ranking-item">
+                    <div class="ranking-pos" style="font-size: ${tamanhoFonte};">${posicao}</div>
+                    <img src="${j.avatar || 'img/1.jpg'}" class="ranking-avatar">
+                    <div class="ranking-info"><b>${j.nome}</b><br><span>${j.copas || 0} Copas | ${j.pontosTotais || 0} Pts</span></div>
+                </div>`;
+            }).join("");
+        });
+
+        // PUXAR OS ÚLTIMOS TÍTULOS
+        database.ref('historicoPartidas').orderByChild('timestamp').limitToLast(10).on('value', (s) => {
+            let list = []; 
+            s.forEach(c => { if(c.val() && c.val().nome) list.push(c.val()); });
+            
+            const containerTitulos = document.getElementById("lista-titulos-recentes");
+            
+            if (list.length === 0) {
+                containerTitulos.innerHTML = "<p style='padding: 10px;'>Aguardando partidas...</p>";
+                return;
+            }
+
+            containerTitulos.innerHTML = list.reverse().map(p => `
+                <div class="ranking-item">
+                    <img src="${p.avatar || 'img/1.jpg'}" class="ranking-avatar">
+                    <div class="ranking-info"><b>${p.nome}</b><br><span>${p.titulo}</span></div>
+                </div>`).join("");
         });
     </script>
 </body>
