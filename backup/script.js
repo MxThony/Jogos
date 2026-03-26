@@ -1,3 +1,4 @@
+console.log("🚀 SCRIPT.JS ATUALIZADO E RODANDO!");
 // =========================================
 // 1. CONFIGURAÇÃO DO FIREBASE
 // =========================================
@@ -30,11 +31,11 @@ const listaAvatares = ['img/1.jpg', 'img/2.jpg', 'img/3.jpg', 'img/4.jpg'];
 
 let j1Nome = "", j2Nome = "", j1Pontos = 0, j2Pontos = 0, j1Avatar = "", j2Avatar = ""; 
 let j1Streak = 0, j2Streak = 0;
-let errosSeguidosJ1 = 0, errosSeguidosJ2 = 0; // <-- Variáveis da Pergunta de Ouro
+let errosSeguidosJ1 = 0, errosSeguidosJ2 = 0; 
 let ePerguntaOuro = false;
 
 let perguntaAtual = 0, jogadorAtual = 1, perguntasDaRodada = [];
-let tempoRestante = 30, controleCronometro, controleTimeout, modoDeJogo = "", telaAnteriorAoRanking = "tela-modo";
+let tempoRestante = 30, controleCronometro, controleTimeout, modoDeJogo = "";
 
 // =========================================
 // 3. BANCO DE PERGUNTAS (70 QUESTÕES)
@@ -135,7 +136,7 @@ function calcularTitulo(pts) {
 }
 
 // =========================================
-// 5. INICIALIZAÇÃO
+// 5. INICIALIZAÇÃO E NAVEGAÇÃO
 // =========================================
 function selecionarModo(m) { 
     modoDeJogo = m; 
@@ -145,11 +146,16 @@ function selecionarModo(m) {
     
     // Reseta tudo
     j1Pontos = 0; j2Pontos = 0; j1Streak = 0; j2Streak = 0; 
-    errosSeguidosJ1 = 0; errosSeguidosJ2 = 0; // Zera contagem da Pergunta Ouro
+    errosSeguidosJ1 = 0; errosSeguidosJ2 = 0;
     perguntaAtual = 0; jogadorAtual = 1;
     
     document.querySelector('.emoji-container')?.classList.remove('escondido');
     document.getElementById('feedback-agradecimento')?.classList.add('escondido');
+}
+
+function voltarParaModos() {
+    document.getElementById("tela-inicial").classList.add("escondido");
+    document.getElementById("tela-modo").classList.remove("escondido");
 }
 
 function selecionarAvatar(j, i, el) {
@@ -178,13 +184,12 @@ function validarComeco() {
 }
 
 // =========================================
-// 6. LÓGICA DO QUIZ (COM PERGUNTA DE OURO E BÔNUS CORRIGIDOS)
+// 6. LÓGICA DO QUIZ
 // =========================================
 function mostrarPergunta() {
     const d = perguntasDaRodada[perguntaAtual];
     const quizContainer = document.querySelector('.quiz-container');
     
-    // Checa se é Pergunta de Ouro baseado nos erros anteriores
     const errosAtuais = (jogadorAtual === 1) ? errosSeguidosJ1 : errosSeguidosJ2;
     ePerguntaOuro = (errosAtuais >= 2);
 
@@ -242,21 +247,19 @@ function verificarResposta(idxSelecionado, botaoClicado) {
     botoes.forEach(btn => btn.disabled = true); 
 
     if (idxSelecionado === correta) {
-        // ACERTOU
         somAcerto.currentTime = 0; somAcerto.play();
         if(botaoClicado) botaoClicado.classList.add("correta"); 
         document.getElementById("feedback-acerto").classList.remove("escondido");
 
-        // Calcula a Streak (Sequência)
         let streak = jogadorAtual === 1 ? ++j1Streak : ++j2Streak;
-        let bonus = getStreakData(streak).bonus; // Retorna 1 se streak >= 3
+        let bonus = getStreakData(streak).bonus; 
         let ptsQuestao = ePerguntaOuro ? 2 : 1; 
         
         let pontosGanhos = ptsQuestao + bonus;
 
         if (jogadorAtual === 1) {
             j1Pontos += pontosGanhos; 
-            errosSeguidosJ1 = 0; // Zera os erros APÓS o acerto
+            errosSeguidosJ1 = 0; 
         } else {
             j2Pontos += pontosGanhos; 
             errosSeguidosJ2 = 0;
@@ -269,7 +272,6 @@ function verificarResposta(idxSelecionado, botaoClicado) {
             confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, colors: ['#FDD017', '#006735'] });
         }
     } else {
-        // ERROU
         somErro.currentTime = 0; somErro.play();
         if(botaoClicado) botaoClicado.classList.add("errada"); 
         
@@ -277,8 +279,8 @@ function verificarResposta(idxSelecionado, botaoClicado) {
         document.getElementById("feedback-erro").classList.remove("escondido");
 
         if (jogadorAtual === 1) {
-            j1Streak = 0; // Perde a sequência
-            errosSeguidosJ1++; // Acumula erro
+            j1Streak = 0; 
+            errosSeguidosJ1++; 
         } else {
             j2Streak = 0;
             errosSeguidosJ2++;
@@ -297,7 +299,7 @@ function verificarResposta(idxSelecionado, botaoClicado) {
 }
 
 // =========================================
-// 7. FINALIZAÇÃO, DESISTÊNCIA E SALVAMENTO
+// 7. FINALIZAÇÃO E SALVAMENTO NO FIREBASE
 // =========================================
 function finalizarJogo() {
     document.querySelector('.quiz-container').classList.remove('ouro-active'); 
@@ -343,7 +345,6 @@ function confirmarDesistencia() {
         
         if (modoDeJogo === 'solo') {
             msg = `${j1Nome} desistiu.\nTítulo: Perna de Pau 🪵`;
-            // AGORA SIM: Título especial de desistência
             salvarNoRanking(j1Nome, j1Avatar, 0, false, "Arregou 🏳️");
         } else {
             const vNome = (jogadorAtual === 1 ? j2Nome : j1Nome);
@@ -351,7 +352,6 @@ function confirmarDesistencia() {
             tit = `${vNome.toUpperCase()} VENCEU POR W.O.! 🏆`;
             msg = `${nome} desistiu!\n${vNome} ganha uma Copa automática.`;
             winAv = vAv;
-            // AGORA SIM: Título especial de W.O.
             salvarNoRanking(vNome, vAv, 10, true, "Venceu por W.O. 🏆");
         }
         
@@ -386,7 +386,6 @@ function salvarNoRanking(nome, avatar, pontos, ganhouCopa, tituloEspecial = null
         ref.set(data);
     });
     
-    // Repassa o título especial pro histórico
     salvarHistoricoPartida(nomeLimpo, avatar, pontos, tituloEspecial);
 }
 
@@ -401,75 +400,8 @@ function salvarHistoricoPartida(nome, avatar, pontos, tituloEspecial = null) {
 }
 
 // =========================================
-// 8. TELA DE RANKING E SATISFAÇÃO (COM MEDALHAS)
+// 8. PESQUISA DE SATISFAÇÃO
 // =========================================
-function mostrarRanking() {
-    // 1. BLINDAGEM: Só tenta esconder as telas se elas existirem (Evita erro no ranking.html)
-    const telaModo = document.getElementById("tela-modo");
-    const telaRes = document.getElementById("tela-resultado");
-    const telaRank = document.getElementById("tela-ranking");
-
-    if(telaModo) telaModo.classList.add("escondido");
-    if(telaRes) telaRes.classList.add("escondido");
-    if(telaRank) telaRank.classList.remove("escondido");
-    
-    // 2. Limpa conexões antigas
-    database.ref('samininaRanking').off();
-    database.ref('historicoPartidas').off();
-
-    // 3. Liga o ao vivo do Ranking Principal
-    database.ref('samininaRanking').on('value', s => {
-        let list = []; 
-        s.forEach(c => { if(c.val() && c.val().nome) list.push(c.val()); });
-        
-        list.sort((a,b) => (Number(b.copas) || 0) - (Number(a.copas) || 0) || (Number(b.pontosTotais) || 0) - (Number(a.pontosTotais) || 0));
-        
-        const containerRanking = document.getElementById("lista-ranking");
-        if(containerRanking) {
-            containerRanking.innerHTML = list.slice(0,10).map((j,i) => {
-                let posicao = `${i+1}º`;
-                let tamanhoFonte = '18px';
-                
-                if (i === 0) { posicao = "🥇"; tamanhoFonte = '28px'; }
-                else if (i === 1) { posicao = "🥈"; tamanhoFonte = '28px'; }
-                else if (i === 2) { posicao = "🥉"; tamanhoFonte = '28px'; }
-
-                return `
-                <div class="ranking-item">
-                    <div class="ranking-pos" style="font-size: ${tamanhoFonte};">${posicao}</div>
-                    <img src="${j.avatar || 'img/1.jpg'}" class="ranking-avatar">
-                    <div class="ranking-info"><b>${j.nome}</b><br><span>${j.copas || 0} Copas | ${j.pontosTotais || 0} Pts</span></div>
-                </div>`;
-            }).join("");
-        }
-    });
-
-    // 4. Liga o ao vivo dos Últimos Títulos
-    database.ref('historicoPartidas').orderByChild('timestamp').limitToLast(10).on('value', (s) => {
-        let list = []; 
-        s.forEach(c => { if(c.val() && c.val().nome) list.push(c.val()); });
-        
-        const containerTitulos = document.getElementById("lista-titulos-recentes");
-        if(containerTitulos) {
-            containerTitulos.innerHTML = list.reverse().map(p => `
-                <div class="ranking-item">
-                    <img src="${p.avatar || 'img/1.jpg'}" class="ranking-avatar">
-                    <div class="ranking-info"><b>${p.nome}</b><br><span>${p.titulo}</span></div>
-                </div>`).join("");
-        }
-    });
-}
-
-function fecharRanking() { 
-    database.ref('samininaRanking').off();
-    database.ref('historicoPartidas').off();
-    const telaRank = document.getElementById("tela-ranking");
-    const telaModo = document.getElementById("tela-modo");
-    
-    if(telaRank) telaRank.classList.add("escondido"); 
-    if(telaModo) telaModo.classList.remove("escondido"); 
-}
-
 function enviarPesquisa(reacao) {
     database.ref('pesquisaSatisfacao').push({ 
         voto: reacao, 
@@ -479,6 +411,7 @@ function enviarPesquisa(reacao) {
         document.getElementById('feedback-agradecimento').classList.remove('escondido');
     });
 }
+
 // =========================================
 // 9. ATALHOS E PAINEL SECRETO
 // =========================================
@@ -496,7 +429,6 @@ function gerarDesafio() {
     document.getElementById("modal-desafio").classList.remove("escondido"); 
     document.getElementById("qrcode-desafio").innerHTML = "";
 
-    // Descobre quem ganhou e quantos pontos fez para montar a mensagem
     let nomeDesafiante = "";
     let pontosDesafiante = 0;
 
@@ -508,14 +440,11 @@ function gerarDesafio() {
         pontosDesafiante = Math.max(j1Pontos, j2Pontos);
     }
 
-    // Monta o texto que vai pro WhatsApp
     const linkJogo = window.location.origin + window.location.pathname;
     const mensagem = `Fiz ${pontosDesafiante} pontos na Copa Saminina! Meu título é ${calcularTitulo(pontosDesafiante)}. 🏆⚽ Duvido você bater meu recorde! Jogue agora: ${linkJogo}`;
     
-    // Cria o link oficial do WhatsApp com o texto codificado
     const linkWhatsApp = `https://api.whatsapp.com/send?text=${encodeURIComponent(mensagem)}`;
 
-    // Gera o QR Code com o link do Zap
     new QRCode(document.getElementById("qrcode-desafio"), { 
         text: linkWhatsApp, 
         width: 180, 
@@ -530,7 +459,7 @@ function gerarQRCodeInicial() {
     if(!container) return;
     container.innerHTML = "";
     
-    // Altere para apontar diretamente para o novo arquivo ranking.html
+    // O QR Code da tela inicial vai apontar para a transmissão contínua (ranking.html)
     const linkPublico = window.location.origin + window.location.pathname.replace("index.html", "") + "ranking.html";
     
     new QRCode(container, { 
@@ -582,5 +511,5 @@ function verificarSenhaReset() {
 // =========================================
 document.addEventListener("DOMContentLoaded", () => {
     gerarQRCodeInicial();
-    if (new URLSearchParams(window.location.search).get('exibir') === 'ranking') mostrarRanking();
+    // (O código antigo de puxar ranking pela URL também foi deletado para evitar conflitos)
 });

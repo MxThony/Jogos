@@ -29,22 +29,13 @@
                 <div class="botoes-modo">
                     <button onclick="selecionarModo('solo')" class="btn-modo">Carreira Solo 🏃</button>
                     <button onclick="selecionarModo('batalha')" class="btn-modo">Batalha Multiplayer ⚔️</button>
-                    <button onclick="mostrarRanking('tela-modo')" class="btn-modo btn-ranking">🏆 Ranking e Títulos</button>
+                    <!-- 👇 LINK ATUALIZADO PARA O RANKING MESTRE 👇 -->
+                    <button onclick="window.location.href='ranking-mestre.html'" class="btn-modo btn-ranking">🏆 Ranking e Títulos</button>
                 </div>
                 <div class="qrcode-wrapper">
-                    <p>Acompanhe o ranking no celular:</p>
+                    <p>Acompanhe o ranking na TV:</p>
                     <div id="qrcode-container"></div>
                 </div>
-            </div>
-
-            <!-- TELA: RANKING -->
-            <div id="tela-ranking" class="escondido">
-                <h2>Galeria de Campeões 🏆</h2>
-                <div id="lista-ranking" class="lista-ranking-container"></div>
-                <hr class="divisor">
-                <h3>Últimos Títulos 🏅</h3>
-                <div id="lista-titulos-recentes" class="lista-ranking-container list-p"></div>
-                <button onclick="fecharRanking()">Voltar</button>
             </div>
 
             <!-- TELA: CADASTRO -->
@@ -52,7 +43,7 @@
                 
                 <!-- Botão de fechar/voltar -->
                 <div id="btn-voltar-registro" onclick="voltarParaModos()" style="position: absolute; top: -15px; right: -15px; background: #dc3545; color: white; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; cursor: pointer; border: 3px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.3); z-index: 20;">✖</div>
-    ...
+                
                 <h2>Registro dos Craques</h2>
                 <div class="campos-cadastro">
                     <input type="text" id="input-nome1" placeholder="Nome Jogador 1">
@@ -90,7 +81,6 @@
                 
                 <h3 id="texto-pergunta">Pergunta?</h3>
                 
-                <!-- FEEDBACKS INCLUÍDOS AQUI -->
                 <div id="feedback-acerto" class="escondido feedback-text">Gooooool!</div>
                 <div id="feedback-erro" class="escondido feedback-text">Para fora!</div>
                 
@@ -102,7 +92,8 @@
                 <img id="img-avatar-vencedor" src="" class="avatar-circular size-g">
                 <h2 id="titulo-vencedor">Fim de Jogo!</h2>
                 <p id="mensagem-final" style="white-space: pre-line;"></p>
-                <!-- 👇 PESQUISA DE SATISFAÇÃO VOLTOU AQUI 👇 -->
+                
+                <!-- PESQUISA DE SATISFAÇÃO -->
                 <div id="secao-pesquisa">
                     <p style="margin-top: 15px; font-weight: 900; color: var(--color-blue);">O que achou da experiência?</p>
                     <div class="emoji-container">
@@ -113,12 +104,12 @@
                     </div>
                     <p id="feedback-agradecimento" class="escondido" style="color: var(--color-green); font-size: 16px; font-weight: 900; margin-bottom: 15px;">Obrigado pelo feedback! 🙌</p>
                 </div>
-                <!-- 👆 FIM DA PESQUISA 👆 -->
+                
                 <button onclick="gerarDesafio()" class="btn-desafio">🔥 Desafiar Amigo</button>
-                <button onclick="mostrarRanking('tela-resultado')" class="btn-ranking">🏆 Ranking Completo</button>
+                <!-- 👇 LINK ATUALIZADO PARA O RANKING MESTRE 👇 -->
+                <button onclick="window.location.href='ranking-mestre.html'" class="btn-ranking">🏆 Ranking Completo</button>
                 
                 <button onclick="location.reload()">Novo Jogo</button>
-            
             </div>
         </div>
 
@@ -137,10 +128,10 @@
         </div>
     </div>
 
-    <!-- BOTÕES FIXOS FLUTUANTES (Apenas uma vez) -->
+    <!-- BOTÕES FIXOS FLUTUANTES -->
     <button id="btn-musica-toggle" onclick="toggleMusica()"><span id="musica-icone">🔊</span></button>
     <button id="btn-fullscreen" onclick="toggleFullscreen()"><span>↕️</span></button>
 
-    <script src="script.js?v=PRODUCAO_FINAL_V3"></script>
+    <script src="script.js"></script>
 </body>
 </html>

@@ -32,6 +32,46 @@ body::before {
     background-image: url('logo/bk_1.svg'); background-repeat: repeat; background-size: 150px; opacity: 0.15; 
 }
 
+/* ========================================= */
+/* FAIXAS DE TRANSMISSÃO (RANKING) */
+/* ========================================= */
+.faixa-transmissao {
+    position: fixed;
+    left: 0;
+    width: 100%;
+    background: var(--color-yellow);
+    color: var(--color-blue);
+    padding: 12px 0;
+    font-size: 18px;
+    font-weight: 900;
+    text-transform: uppercase;
+    z-index: 2000;
+    display: flex;
+    white-space: nowrap;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    overflow: hidden;
+}
+
+.faixa-top { top: 0; border-bottom: 3px solid #002266; }
+.faixa-bottom { bottom: 0; border-top: 3px solid #002266; }
+
+.marquee-content {
+    display: flex;
+    animation: rolarTexto 40s linear infinite; 
+}
+
+.marquee-texto { padding-right: 50px; }
+
+@keyframes rolarTexto {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); } 
+}
+
+.texto-destaque {
+    color: var(--color-green);
+    text-shadow: 1px 1px 0px #fff;
+}
+
 .main-wrapper { width: 100%; max-width: 450px; display: flex; flex-direction: column; align-items: center; padding: 0 20px; z-index: 1; }
 .logo-container { width: 100%; display: flex; justify-content: center; margin-bottom: 20px; }
 .logo-marca { width: 100%; max-width: 250px; height: auto; cursor: pointer; transition: 0.3s; }
