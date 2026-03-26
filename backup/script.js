@@ -144,10 +144,14 @@ function selecionarModo(m) {
     document.getElementById("tela-inicial").classList.remove("escondido");
     document.getElementById("container-avatar2").classList.toggle("escondido", m === 'solo');
     
-    // Reseta tudo
+    // Reseta pontos e streaks
     j1Pontos = 0; j2Pontos = 0; j1Streak = 0; j2Streak = 0; 
     errosSeguidosJ1 = 0; errosSeguidosJ2 = 0;
     perguntaAtual = 0; jogadorAtual = 1;
+
+    // Reseta o visual do placar para zero
+    if(document.getElementById("placar-pts-j1")) document.getElementById("placar-pts-j1").innerText = "0";
+    if(document.getElementById("placar-pts-j2")) document.getElementById("placar-pts-j2").innerText = "0";
     
     document.querySelector('.emoji-container')?.classList.remove('escondido');
     document.getElementById('feedback-agradecimento')?.classList.add('escondido');
@@ -167,11 +171,26 @@ function selecionarAvatar(j, i, el) {
 
 function validarComeco() {
     j1Nome = document.getElementById("input-nome1").value;
-    j2Nome = modoDeJogo === 'solo' ? "Computador" : document.getElementById("input-nome2").value;
+    
+    // Define o J2Nome baseado no modo
+    if (modoDeJogo === 'solo') {
+        j2Nome = "Rei das Copas 👑";
+        j2Avatar = "img/rei_avatar.jpg"; // (Você pode criar uma imagem para o Rei ou usar uma padrão)
+    } else {
+        j2Nome = document.getElementById("input-nome2").value;
+        // O j2Avatar já foi definido em selecionarAvatar() na batalha
+    }
     
     if (!j1Nome || !j1Avatar || (modoDeJogo === 'batalha' && (!j2Nome || !j2Avatar))) {
         return alert("Preencha os craques e escolha os avatares!");
     }
+
+    // 👇 ATUALIZA OS DADOS NO PLACAR VISUAL DO TOPO 👇
+    document.getElementById("placar-nome-j1").innerText = j1Nome.toUpperCase();
+    document.getElementById("placar-avatar-j1").src = j1Avatar;
+    
+    document.getElementById("placar-nome-j2").innerText = j2Nome.toUpperCase();
+    document.getElementById("placar-avatar-j2").src = j2Avatar;
 
     perguntasDaRodada = bancoDePerguntas.sort(() => 0.5 - Math.random()).slice(0, 10);
     document.getElementById("tela-inicial").classList.add("escondido");
@@ -182,7 +201,6 @@ function validarComeco() {
     mostrarPergunta();
     iniciarCronometro();
 }
-
 // =========================================
 // 6. LÓGICA DO QUIZ
 // =========================================
@@ -190,9 +208,11 @@ function mostrarPergunta() {
     const d = perguntasDaRodada[perguntaAtual];
     const quizContainer = document.querySelector('.quiz-container');
     
+    // Lógica da Pergunta de Ouro baseada no turno do jogador
     const errosAtuais = (jogadorAtual === 1) ? errosSeguidosJ1 : errosSeguidosJ2;
     ePerguntaOuro = (errosAtuais >= 2);
 
+    // Ajusta o CSS da pergunta
     if (ePerguntaOuro) {
         quizContainer.classList.add('ouro-active');
         document.getElementById("texto-pergunta").innerHTML = `<span style="color: #DAA520; font-weight:900; display:block; margin-bottom:10px;">⭐ PERGUNTA DE OURO ⭐</span><small style="font-size: 14px; color: var(--color-blue); display:block; margin-bottom:10px;">VALE 2 PONTOS!</small>${d.pergunta}`;
@@ -201,19 +221,19 @@ function mostrarPergunta() {
         document.getElementById("texto-pergunta").innerText = d.pergunta;
     }
     
-    document.getElementById("img-avatar-quiz").src = jogadorAtual === 1 ? j1Avatar : j2Avatar;
-    document.getElementById("aviso-turno-nome").innerText = jogadorAtual === 1 ? j1Nome : j2Nome;
+    // 👇 REMOVI O CÓDIGO QUE ATUALIZAVA O AVATAR DO MEIO 👇
+    // O placar do topo já mostra quem é quem e o turno é automático.
+
     document.getElementById("barra-progresso").innerText = `Pergunta ${perguntaAtual + 1} de 10`;
 
+    // Reseta feedbacks
     document.getElementById("feedback-acerto").classList.add("escondido");
     document.getElementById("feedback-erro").classList.add("escondido");
-    
-    document.getElementById("texto-pergunta").classList.remove("escondido");
     document.getElementById("streak-popup").innerText = "";
     
+    // Gera os botões
     const area = document.getElementById("area-botoes");
     area.innerHTML = "";
-    
     d.respostas.forEach((r, i) => {
         const b = document.createElement("button");
         b.className = "btn-resposta";
@@ -260,9 +280,13 @@ function verificarResposta(idxSelecionado, botaoClicado) {
         if (jogadorAtual === 1) {
             j1Pontos += pontosGanhos; 
             errosSeguidosJ1 = 0; 
+            // ATUALIZA PLACAR J1
+            document.getElementById("placar-pts-j1").innerText = j1Pontos;
         } else {
             j2Pontos += pontosGanhos; 
             errosSeguidosJ2 = 0;
+            // ATUALIZA PLACAR J2
+            document.getElementById("placar-pts-j2").innerText = j2Pontos;
         }
         
         if (ePerguntaOuro) {
@@ -281,6 +305,12 @@ function verificarResposta(idxSelecionado, botaoClicado) {
         if (jogadorAtual === 1) {
             j1Streak = 0; 
             errosSeguidosJ1++; 
+            
+            // Se for modo SOLO e o jogador errar, o REI DAS COPAS ganha 1 ponto
+            if (modoDeJogo === 'solo') {
+                j2Pontos += 1;
+                document.getElementById("placar-pts-j2").innerText = j2Pontos;
+            }
         } else {
             j2Streak = 0;
             errosSeguidosJ2++;
