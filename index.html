@@ -38,9 +38,11 @@
             <div id="tela-modo">
                 <h2>Vamos jogar?</h2>
                 <div class="botoes-modo">
-                    <button onclick="selecionarModo('solo')" class="btn-modo">Carreira Solo</button>
-                    <button onclick="selecionarModo('local')" class="btn-modo">Batalha Local</button>
-                    <button onclick="selecionarModo('online')" class="btn-modo">Batalha Online</button>
+                    <button onclick="selecionarModo('solo')" class="btn-modo">Carreira Solo 🏃</button>
+
+<button onclick="selecionarModo('batalha_local')" class="btn-modo">Batalha Local ⚔️</button>
+
+<button onclick="selecionarModo('batalha_online')" class="btn-modo">Batalha Online 🌐</button>
                     <button onclick="abrirRankingMestreInicio()" class="btn-modo btn-ranking">Ranking e Títulos</button>
                 </div>
                 <div class="qrcode-wrapper">
@@ -153,13 +155,20 @@
         </div>
     </div>
 
-    <div id="modal-desafio" class="escondido modal-overlay" onclick="fecharModalDesafio()">
-        <div class="modal-content" onclick="event.stopPropagation()">
-            <span class="fechar-modal" onclick="fecharModalDesafio()">×</span>
-            <h3>Duvido bater meu recorde!</h3>
-            <div id="qrcode-desafio"></div>
-        </div>
+   <div id="modal-compartilhar" class="escondido modal-overlay" onclick="fecharModalCompartilhar()">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <span class="fechar-modal" onclick="fecharModalCompartilhar()">×</span>
+        <h3>Sala criada com sucesso</h3>
+        <p>Compartilhe o link com seu amigo para ele entrar na partida.</p>
+
+        <input type="text" id="input-link-sala" readonly>
+
+        <button onclick="copiarLinkSala()">Copiar link</button>
+        <button onclick="compartilharWhatsapp()" class="btn-desafio">Enviar no WhatsApp</button>
+
+        <p style="margin-top: 10px;">Aguardando o amigo entrar...</p>
     </div>
+</div>
 
     <button id="btn-musica-toggle" onclick="toggleMusica()"><span id="musica-icone">🔊</span></button>
     <button id="btn-fullscreen" onclick="toggleFullscreen()"><span>↕️</span></button>
