@@ -5,26 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ao Vivo - Copa Saminina</title>
     
-    <!-- Bibliotecas do Firebase -->
     <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-database-compat.js"></script>
     
-    <!-- Puxa suas cores e fontes originais -->
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
 
     <style>
-        /* Ajuste do corpo para a TV */
         body.tela-tv {
-            padding-top: 70px; /* Abre espaço para a faixa de cima */
-            padding-bottom: 70px; /* Abre espaço para a faixa de baixo */
+            padding-top: 70px; 
+            padding-bottom: 70px; 
             display: flex;
             align-items: center;
             justify-content: center;
             min-height: 100vh;
         }
 
-        /* Container do placar com destaque amarelo */
         .tv-container {
             background: var(--color-white); 
             padding: 30px 25px; 
@@ -36,9 +32,7 @@
             border: 4px solid var(--color-yellow);
         }
 
-        /* ========================================= */
-        /* O SEGREDO DO LETREIRO INFINITO EM CIMA E EMBAIXO */
-        /* ========================================= */
+        /* FAIXAS DE TRANSMISSÃO */
         .faixa-transmissao {
             position: fixed;
             left: 0;
@@ -56,38 +50,36 @@
             overflow: hidden;
         }
         
-        /* Posicionamento */
         .faixa-top { top: 0; border-bottom: 3px solid #002266; }
         .faixa-bottom { bottom: 0; border-top: 3px solid #002266; }
 
         .marquee-content {
             display: flex;
-            animation: rolarTexto 20s linear infinite;
+            /* Aumentei para 40s para dar tempo de ler o texto gigante */
+            animation: rolarTexto 40s linear infinite; 
         }
         
         .marquee-texto { padding-right: 50px; }
 
-        /* Faz a engrenagem rodar perfeitamente pela metade e recomeçar sem piscar */
         @keyframes rolarTexto {
             0% { transform: translateX(0); }
             100% { transform: translateX(-50%); } 
+        }
+
+        /* CLASSE PARA O TEXTO EM VERDE */
+        .texto-destaque {
+            color: var(--color-green);
+            text-shadow: 1px 1px 0px #fff; /* Sombrinha branca pra dar leitura no amarelo */
         }
     </style>
 </head>
 <body class="tela-tv">
 
-    <!-- FAIXA DE CIMA -->
     <div class="faixa-transmissao faixa-top">
-        <div class="marquee-content">
-            <!-- Texto repetido para criar o loop infinito perfeito -->
-            <span class="marquee-texto">⚽ VOCÊ ESTÁ ACOMPANHANDO A COPA SAMININA AO VIVO • QUEM SERÁ O PRÓXIMO CRAQUE? • DESAFIE SEUS AMIGOS NO TOTEM! ⚽</span>
-            <span class="marquee-texto">⚽ VOCÊ ESTÁ ACOMPANHANDO A COPA SAMININA AO VIVO • QUEM SERÁ O PRÓXIMO CRAQUE? • DESAFIE SEUS AMIGOS NO TOTEM! ⚽</span>
-            <span class="marquee-texto">⚽ VOCÊ ESTÁ ACOMPANHANDO A COPA SAMININA AO VIVO • QUEM SERÁ O PRÓXIMO CRAQUE? • DESAFIE SEUS AMIGOS NO TOTEM! ⚽</span>
-            <span class="marquee-texto">⚽ VOCÊ ESTÁ ACOMPANHANDO A COPA SAMININA AO VIVO • QUEM SERÁ O PRÓXIMO CRAQUE? • DESAFIE SEUS AMIGOS NO TOTEM! ⚽</span>
-        </div>
+        <div class="marquee-content" id="letreiro-cima">
+            </div>
     </div>
 
-    <!-- CONTEÚDO PRINCIPAL (PLACAR) -->
     <div class="main-wrapper">
         <div class="logo-container">
             <img src="logo/samininacopa.svg" class="logo-marca">
@@ -104,20 +96,12 @@
         </div>
     </div>
 
-    <!-- FAIXA DE BAIXO -->
     <div class="faixa-transmissao faixa-bottom">
-        <div class="marquee-content">
-            <!-- Texto repetido para criar o loop infinito perfeito -->
-            <span class="marquee-texto">⚽ VOCÊ ESTÁ ACOMPANHANDO A COPA SAMININA AO VIVO • QUEM SERÁ O PRÓXIMO CRAQUE? • DESAFIE SEUS AMIGOS NO TOTEM! ⚽</span>
-            <span class="marquee-texto">⚽ VOCÊ ESTÁ ACOMPANHANDO A COPA SAMININA AO VIVO • QUEM SERÁ O PRÓXIMO CRAQUE? • DESAFIE SEUS AMIGOS NO TOTEM! ⚽</span>
-            <span class="marquee-texto">⚽ VOCÊ ESTÁ ACOMPANHANDO A COPA SAMININA AO VIVO • QUEM SERÁ O PRÓXIMO CRAQUE? • DESAFIE SEUS AMIGOS NO TOTEM! ⚽</span>
-            <span class="marquee-texto">⚽ VOCÊ ESTÁ ACOMPANHANDO A COPA SAMININA AO VIVO • QUEM SERÁ O PRÓXIMO CRAQUE? • DESAFIE SEUS AMIGOS NO TOTEM! ⚽</span>
-        </div>
+        <div class="marquee-content" id="letreiro-baixo">
+            </div>
     </div>
 
-    <!-- SCRIPT ISOLADO (Livre de bugs do jogo principal) -->
     <script>
-        // Suas chaves de acesso ao Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyDbvleD3CCVEOybvc7B-sKmzL1ugnHiMyk",
             authDomain: "copa-saminina.firebaseapp.com",
@@ -131,7 +115,38 @@
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
-        // PUXAR O RANKING PRINCIPAL
+        // Variáveis para guardar os textos dinâmicos
+        let infoTop3 = "";
+        let infoUltimo = "";
+
+        // FUNÇÃO QUE MONTA E ATUALIZA O LETREIRO
+        function atualizarLetreiro() {
+            const textoBase = "⚽ VOCÊ ESTÁ ACOMPANHANDO A COPA SAMININA AO VIVO • QUEM SERÁ O PRÓXIMO CRAQUE? • DESAFIE SEUS AMIGOS NO TOTEM!";
+            
+            let textoCompleto = textoBase;
+
+            // Se tiver último jogador, adiciona em VERDE com emojis
+            if (infoUltimo !== "") {
+                textoCompleto += ` • 🚨 ÚLTIMO NA ARENA: <span class="texto-destaque">${infoUltimo}</span>`;
+            }
+
+            // Se tiver Top 3, adiciona em VERDE com emojis
+            if (infoTop3 !== "") {
+                textoCompleto += ` • 👑 TOP 3 GERAL: <span class="texto-destaque">${infoTop3}</span>`;
+            }
+
+            // Monta o pedaço de HTML
+            const spanHTML = `<span class="marquee-texto">${textoCompleto}</span>`;
+            
+            // Multiplica por 4 para garantir que o letreiro nunca fique com buracos na tela
+            const loopInfinito = spanHTML + spanHTML + spanHTML + spanHTML;
+
+            // Injeta nas duas faixas
+            document.getElementById("letreiro-cima").innerHTML = loopInfinito;
+            document.getElementById("letreiro-baixo").innerHTML = loopInfinito;
+        }
+
+        // PUXAR O RANKING (E EXTRAIR O TOP 3)
         database.ref('samininaRanking').on('value', s => {
             let list = []; 
             s.forEach(c => { if(c.val() && c.val().nome) list.push(c.val()); });
@@ -142,25 +157,36 @@
             
             if (list.length === 0) {
                 containerRanking.innerHTML = "<p style='padding: 20px;'>Ainda não há campeões!</p>";
-                return;
+                infoTop3 = "";
+            } else {
+                // Desenha o Ranking na caixinha branca
+                containerRanking.innerHTML = list.slice(0,10).map((j,i) => {
+                    let posicao = `${i+1}º`; let tamanhoFonte = '18px';
+                    if (i === 0) { posicao = "🥇"; tamanhoFonte = '28px'; }
+                    else if (i === 1) { posicao = "🥈"; tamanhoFonte = '28px'; }
+                    else if (i === 2) { posicao = "🥉"; tamanhoFonte = '28px'; }
+
+                    return `
+                    <div class="ranking-item">
+                        <div class="ranking-pos" style="font-size: ${tamanhoFonte};">${posicao}</div>
+                        <img src="${j.avatar || 'img/1.jpg'}" class="ranking-avatar">
+                        <div class="ranking-info"><b>${j.nome}</b><br><span>${j.copas || 0} Copas | ${j.pontosTotais || 0} Pts</span></div>
+                    </div>`;
+                }).join("");
+
+                // Puxa só os 3 primeiros para o letreiro
+                let top3Array = list.slice(0, 3).map((j, i) => {
+                    let medalha = i === 0 ? "🥇" : (i === 1 ? "🥈" : "🥉");
+                    return `${medalha} ${j.nome} (${j.copas || 0} COPAS)`;
+                });
+                infoTop3 = top3Array.join(" • ");
             }
-
-            containerRanking.innerHTML = list.slice(0,10).map((j,i) => {
-                let posicao = `${i+1}º`; let tamanhoFonte = '18px';
-                if (i === 0) { posicao = "🥇"; tamanhoFonte = '28px'; }
-                else if (i === 1) { posicao = "🥈"; tamanhoFonte = '28px'; }
-                else if (i === 2) { posicao = "🥉"; tamanhoFonte = '28px'; }
-
-                return `
-                <div class="ranking-item">
-                    <div class="ranking-pos" style="font-size: ${tamanhoFonte};">${posicao}</div>
-                    <img src="${j.avatar || 'img/1.jpg'}" class="ranking-avatar">
-                    <div class="ranking-info"><b>${j.nome}</b><br><span>${j.copas || 0} Copas | ${j.pontosTotais || 0} Pts</span></div>
-                </div>`;
-            }).join("");
+            
+            // Chama a atualização do letreiro
+            atualizarLetreiro();
         });
 
-        // PUXAR OS ÚLTIMOS TÍTULOS
+        // PUXAR OS ÚLTIMOS TÍTULOS (E EXTRAIR O ÚLTIMO JOGADOR)
         database.ref('historicoPartidas').orderByChild('timestamp').limitToLast(10).on('value', (s) => {
             let list = []; 
             s.forEach(c => { if(c.val() && c.val().nome) list.push(c.val()); });
@@ -169,15 +195,28 @@
             
             if (list.length === 0) {
                 containerTitulos.innerHTML = "<p style='padding: 10px;'>Aguardando partidas...</p>";
-                return;
+                infoUltimo = "";
+            } else {
+                let reversa = list.reverse();
+                
+                // Desenha o histórico na caixinha branca
+                containerTitulos.innerHTML = reversa.map(p => `
+                    <div class="ranking-item">
+                        <img src="${p.avatar || 'img/1.jpg'}" class="ranking-avatar">
+                        <div class="ranking-info"><b>${p.nome}</b><br><span>${p.titulo}</span></div>
+                    </div>`).join("");
+
+                // Puxa só o primeirão da lista (que é o último que jogou) para o letreiro
+                let ultimo = reversa[0];
+                infoUltimo = `🕹️ ${ultimo.nome} - ${ultimo.titulo}`;
             }
 
-            containerTitulos.innerHTML = list.reverse().map(p => `
-                <div class="ranking-item">
-                    <img src="${p.avatar || 'img/1.jpg'}" class="ranking-avatar">
-                    <div class="ranking-info"><b>${p.nome}</b><br><span>${p.titulo}</span></div>
-                </div>`).join("");
+            // Chama a atualização do letreiro
+            atualizarLetreiro();
         });
+
+        // Força a primeira escrita do letreiro enquanto o banco de dados ainda carrega
+        atualizarLetreiro();
     </script>
 </body>
 </html>
