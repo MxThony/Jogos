@@ -1,5 +1,5 @@
 // =========================================
-// CONFIGURAÇÃO DO FIREBASE
+// 1. CONFIGURAÇÃO DO FIREBASE
 // =========================================
 const firebaseConfig = {
     apiKey: "AIzaSyDbvleD3CCVEOybvc7B-sKmzL1ugnHiMyk",
@@ -11,12 +11,11 @@ const firebaseConfig = {
     appId: "1:961413845237:web:4c2b36f903a3f3c0f9f5bc"
 };
 
-// Inicializa o Firebase
 firebase.initializeApp(firebaseConfig);
 const database = firebase.database();
 
 // =========================================
-// VARIÁVEIS DO JOGO E ÁUDIO
+// 2. VARIÁVEIS GLOBAIS E ÁUDIO
 // =========================================
 const somAcerto = new Audio('audio/acerto.mp3');
 const somErro = new Audio('audio/erro.mp3');
@@ -29,14 +28,17 @@ musicaFundo.loop = true;
 
 const listaAvatares = ['img/1.jpg', 'img/2.jpg', 'img/3.jpg', 'img/4.jpg'];
 
-let j1Nome = "", j2Nome = "";
-let j1Pontos = 0, j2Pontos = 0;
-let j1Avatar = "", j2Avatar = ""; 
-let perguntaAtual = 0, jogadorAtual = 1;
-let perguntasDaRodada = [];
-let tempoRestante = 30, controleCronometro, modoDeJogo = "";
-let telaAnteriorAoRanking = "tela-modo";
+let j1Nome = "", j2Nome = "", j1Pontos = 0, j2Pontos = 0, j1Avatar = "", j2Avatar = ""; 
+let j1Streak = 0, j2Streak = 0;
+let errosSeguidosJ1 = 0, errosSeguidosJ2 = 0; // <-- Variáveis da Pergunta de Ouro
+let ePerguntaOuro = false;
 
+let perguntaAtual = 0, jogadorAtual = 1, perguntasDaRodada = [];
+let tempoRestante = 30, controleCronometro, controleTimeout, modoDeJogo = "", telaAnteriorAoRanking = "tela-modo";
+
+// =========================================
+// 3. BANCO DE PERGUNTAS (70 QUESTÕES)
+// =========================================
 const bancoDePerguntas = [
     { pergunta: "Quantas Copas o Brasil ganhou?", respostas: ["3", "4", "5"], respostaCerta: 2 },
     { pergunta: "Quem é o maior artilheiro das Copas?", respostas: ["Pelé", "Ronaldo", "Miroslav Klose"], respostaCerta: 2 },
@@ -77,360 +79,483 @@ const bancoDePerguntas = [
     { pergunta: "Quem fez gol de mão (La Mano de Dios)?", respostas: ["Pelé", "Maradona", "Messi"], respostaCerta: 1 },
     { pergunta: "Qual a maior goleada sofrida pelo Brasil?", respostas: ["3x0", "7x1", "5x2"], respostaCerta: 1 },
     { pergunta: "Qual cidade NÃO sediou a Copa 2014?", respostas: ["Cuiabá", "Manaus", "Arcoverde"], respostaCerta: 2 },
-    { pergunta: "Qual a forma da taça da Copa?", respostas: ["Globo", "Dois atletas", "Chuteira"], respostaCerta: 1 }
+    { pergunta: "Qual a forma da taça da Copa?", respostas: ["Globo", "Dois atletas", "Chuteira"], respostaCerta: 1 },
+    { pergunta: "Onde será a final da Copa de 2026?", respostas: ["Nova York/New Jersey", "Dallas", "Cidade do México"], respostaCerta: 0 },
+    { pergunta: "Quantas seleções participarão da Copa de 2026?", respostas: ["32", "48", "64"], respostaCerta: 1 },
+    { pergunta: "Quem marcou um golaço de bicicleta na Copa 2022?", respostas: ["Neymar", "Richarlison", "Vinícius Jr"], respostaCerta: 1 },
+    { pergunta: "Qual o único jogador a vencer 3 Copas do Mundo?", respostas: ["Maradona", "Zidane", "Pelé"], respostaCerta: 2 },
+    { pergunta: "Qual país sediará a Copa de 2026 junto com EUA e México?", respostas: ["Canadá", "Brasil", "Panamá"], respostaCerta: 0 },
+    { pergunta: "Qual a maior artilheira de todas as Copas?", respostas: ["Marta", "Cristiane", "Mia Hamm"], respostaCerta: 0 },
+    { pergunta: "Quem superou o recorde de gols de Pelé pela Seleção?", respostas: ["Ronaldo", "Neymar", "Romário"], respostaCerta: 1 },
+    { pergunta: "Em 2022, qual seleção africana chegou à semifinal?", respostas: ["Egito", "Nigéria", "Marrocos"], respostaCerta: 2 },
+    { pergunta: "Qual goleiro brilhou nos pênaltis na final de 2022?", respostas: ["Emiliano Martínez", "Lloris", "Alisson"], respostaCerta: 0 },
+    { pergunta: "Qual o apelido da bola da Copa de 2014?", respostas: ["Brazuca", "Jabulani", "Al Rihla"], respostaCerta: 0 },
+    { pergunta: "Quem é o jogador com mais partidas em Copas?", respostas: ["Messi", "Matthäus", "Klose"], respostaCerta: 0 },
+    { pergunta: "Quantos anos Pelé tinha quando ganhou sua 1ª Copa?", respostas: ["17", "18", "19"], respostaCerta: 0 },
+    { pergunta: "Qual seleção detém o título de 2022?", respostas: ["França", "Argentina", "Croácia"], respostaCerta: 1 },
+    { pergunta: "Quem marcou 3 gols na final da Copa de 2022?", respostas: ["Messi", "Mbappé", "Julián Álvarez"], respostaCerta: 1 },
+    { pergunta: "Onde aconteceu a Copa do Mundo de 2002?", respostas: ["Japão e Coreia do Sul", "China", "Alemanha"], respostaCerta: 0 },
+    { pergunta: "Qual o nome do troféu da Copa antes de 1974?", respostas: ["Taça FIFA", "Jules Rimet", "Copa Ouro"], respostaCerta: 1 },
+    { pergunta: "Qual foi a primeira Copa a usar o VAR?", respostas: ["2014", "2018", "2022"], respostaCerta: 1 },
+    { pergunta: "Em qual cidade o Brasil perdeu de 7x1?", respostas: ["Rio de Janeiro", "Belo Horizonte", "São Paulo"], respostaCerta: 1 },
+    { pergunta: "Quem é o técnico com mais jogos pelo Brasil?", respostas: ["Zagallo", "Tite", "Parreira"], respostaCerta: 0 },
+    { pergunta: "Qual jogador é conhecido como 'O Baixinho'?", respostas: ["Zico", "Romário", "Bebeto"], respostaCerta: 1 },
+    { pergunta: "Em que ano o Brasil sediou sua primeira Copa?", respostas: ["1930", "1950", "1962"], respostaCerta: 1 },
+    { pergunta: "Qual seleção jogou todas as Copas do Mundo?", respostas: ["Alemanha", "Itália", "Brasil"], respostaCerta: 2 },
+    { pergunta: "Quem fez o gol do título do Tetra em 1994?", respostas: ["Baggio", "Romário", "Dunga"], respostaCerta: 0 },
+    { pergunta: "Qual era a cor da camisa do Brasil antes da amarela?", respostas: ["Branca", "Verde", "Azul"], respostaCerta: 0 },
+    { pergunta: "Quem marcou o gol do título da Alemanha em 2014?", respostas: ["Müller", "Klose", "Götze"], respostaCerta: 2 },
+    { pergunta: "Qual o estádio com maior capacidade da Copa 2026?", respostas: ["Azteca", "MetLife", "AT&T Stadium"], respostaCerta: 0 },
+    { pergunta: "Qual jogador brasileiro jogou 3 finais seguidas?", respostas: ["Pelé", "Cafu", "Ronaldo"], respostaCerta: 1 },
+    { pergunta: "Qual país venceu a Copa de 1998?", respostas: ["Brasil", "França", "Alemanha"], respostaCerta: 1 },
+    { pergunta: "Quem é o maior artilheiro em uma única edição?", respostas: ["Just Fontaine", "Pelé", "Ronaldo"], respostaCerta: 0 },
+    { pergunta: "Qual seleção tem o apelido de 'La Roja'?", respostas: ["Espanha", "Portugal", "Bélgica"], respostaCerta: 0 }
 ];
 
 // =========================================
-// RANKING E DESISTÊNCIA (ONLINE - FIREBASE)
+// 4. LÓGICA DE STREAK E TÍTULOS
 // =========================================
-function verificarSenhaReset() {
-    let senha = prompt("Acesso Restrito Saminina:\nDigite a senha para ZERAR o ranking online:");
-    if (senha === "321") { 
-        // Remove todos os dados do nó 'samininaRanking' no Firebase
-        database.ref('samininaRanking').remove()
-            .then(() => alert("Ranking online zerado com sucesso!"))
-            .catch((error) => alert("Erro ao zerar: " + error));
-    } 
-    else if (senha !== null) { 
-        alert("Senha incorreta!"); 
-    }
+function getStreakData(streak) {
+    const msgs = { 
+        3: "Hat-trick! 🎩", 4: "Chocolate! 🍫", 5: "Pentaaaa! 🖐️", 
+        6: "Calma lá, paizão! 🛑", 7: "Alemanha de 2014? 🇩🇪", 
+        8: "Bayern de Munique 🏰", 9: "Fora de Controle! 🚨", 10: "Aí virou bagunça! 🤪" 
+    };
+    return { msg: msgs[streak] || "", bonus: streak >= 3 ? 1 : 0 };
 }
 
-function salvarNoRanking(nomeVencedor, avatarVencedor) {
-    let nomeFormatado = nomeVencedor.trim().toUpperCase();
-    const jogadorRef = database.ref('samininaRanking/' + nomeFormatado);
-
-    jogadorRef.once('value').then((snapshot) => {
-        if (snapshot.exists()) {
-            let dados = snapshot.val();
-            jogadorRef.update({ 
-                copas: dados.copas + 1, 
-                avatar: avatarVencedor 
-            });
-        } else {
-            jogadorRef.set({ 
-                nome: nomeFormatado, 
-                avatar: avatarVencedor, 
-                copas: 1 
-            });
-        }
-    }).catch((error) => console.error("Erro ao salvar online: ", error));
-}
-
-function mostrarRanking(origem) {
-    telaAnteriorAoRanking = origem; 
-    document.getElementById("tela-modo").classList.add("escondido");
-    document.getElementById("tela-resultado").classList.add("escondido");
-    document.getElementById("tela-ranking").classList.remove("escondido");
-
-    const listaRanking = document.getElementById("lista-ranking");
-    listaRanking.innerHTML = "<p style='text-align: center; font-weight: bold;'>Carregando os craques da nuvem... ☁️</p>";
-
-    database.ref('samininaRanking').orderByChild('copas').limitToLast(10).once('value', (snapshot) => {
-        let ranking = [];
-        snapshot.forEach((childSnapshot) => { ranking.push(childSnapshot.val()); });
-        ranking.reverse(); // Deixa o maior pontuador em cima
-
-        let htmlLista = "";
-        if (ranking.length === 0) { 
-            htmlLista = "<p style='text-align: center;'>Nenhum campeão registrado ainda.</p>"; 
-        } else {
-            ranking.forEach((jogador, index) => {
-                let trofeu = index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : "🎖️";
-                htmlLista += `<div class="ranking-item"><div class="ranking-pos">${index + 1}º</div><img src="${jogador.avatar}" class="ranking-avatar"><div class="ranking-info"><div class="ranking-nome">${jogador.nome} ${trofeu}</div><div class="ranking-copas">${jogador.copas} ${jogador.copas > 1 ? 'Copas' : 'Copa'} Conquistada(s)</div></div></div>`;
-            });
-        }
-        listaRanking.innerHTML = htmlLista;
-    }).catch((error) => {
-        listaRanking.innerHTML = "<p style='text-align: center; color: red;'>Erro ao conectar com a internet.</p>";
-    });
-}
-
-function fecharRanking() {
-    document.getElementById("tela-ranking").classList.add("escondido");
-    document.getElementById(telaAnteriorAoRanking).classList.remove("escondido"); 
-}
-
-function confirmarDesistencia() {
-    clearInterval(controleCronometro); 
-    const nomeVez = (jogadorAtual === 1 ? j1Nome : j2Nome).toUpperCase();
-    const querDesistir = confirm(`${nomeVez}, tem certeza que deseja desistir da partida?`);
-
-    if (querDesistir) finalizarPorWO();
-    else iniciarCronometro(); 
-}
-
-function finalizarPorWO() {
-    document.getElementById("tela-quiz").classList.add("escondido");
-    document.getElementById("timer-container").classList.add("escondido");
-    document.getElementById("tela-resultado").classList.remove("escondido");
-
-    let tit = "", msg = "", winAvatar = "";
-
-    if (modoDeJogo === 'solo') {
-        tit = "DESISTIU! 🏳️";
-        msg = `${j1Nome.toUpperCase()} abandonou o jogo.\nNenhuma Copa conquistada.`;
-        winAvatar = "";
-    } else {
-        if (jogadorAtual === 1) { 
-            tit = `${j2Nome.toUpperCase()} VENCEU POR W.O.! 🏆`;
-            winAvatar = j2Avatar;
-            salvarNoRanking(j2Nome, j2Avatar);
-            msg = `${j1Nome} desistiu da partida!\n${j2Nome} ganha uma Copa automática!`;
-        } else { 
-            tit = `${j1Nome.toUpperCase()} VENCEU POR W.O.! 🏆`;
-            winAvatar = j1Avatar;
-            salvarNoRanking(j1Nome, j1Avatar);
-            msg = `${j2Nome} desistiu da partida!\n${j1Nome} ganha uma Copa automática!`;
-        }
-    }
-
-    document.getElementById("img-avatar-vencedor").src = winAvatar;
-    document.getElementById("img-avatar-vencedor").style.display = winAvatar ? "block" : "none";
-    document.getElementById("titulo-vencedor").innerText = tit;
-    document.getElementById("mensagem-final").innerText = msg;
+function calcularTitulo(pts) {
+    if (pts <= 2) return "Perna de Pau 🦵";
+    if (pts <= 5) return "Reserva de Luxo 🪑";
+    if (pts <= 8) return "Titular Absoluto 🏃‍♂️";
+    if (pts <= 11) return "Craque da Rodada 🌟";
+    if (pts <= 14) return "Lenda do Penta 🏆";
+    if (pts <= 17) return "Fenômeno das Copas 🇧🇷";
+    return "O Inevitável 🤖";
 }
 
 // =========================================
-// LÓGICA DO QUIZ
+// 5. INICIALIZAÇÃO
 // =========================================
-function selecionarModo(modo) {
-    modoDeJogo = modo;
-    document.getElementById("tela-modo").classList.add("escondido");
+function selecionarModo(m) { 
+    modoDeJogo = m; 
+    document.getElementById("tela-modo").classList.add("escondido"); 
     document.getElementById("tela-inicial").classList.remove("escondido");
-    const container2 = document.getElementById("container-avatar2");
-    if (modo === 'solo') container2.classList.add("escondido");
-    else container2.classList.remove("escondido");
-    const secaoEmoji = document.querySelector('.emoji-container');
-    const feedbackMsg = document.getElementById('feedback-agradecimento');
+    document.getElementById("container-avatar2").classList.toggle("escondido", m === 'solo');
     
-    if(secaoEmoji) secaoEmoji.classList.remove('escondido'); // Mostra os emojis de novo
-    if(feedbackMsg) feedbackMsg.classList.add('escondido');   // Esconde a mensagem de "Obrigado"
-
+    // Reseta tudo
+    j1Pontos = 0; j2Pontos = 0; j1Streak = 0; j2Streak = 0; 
+    errosSeguidosJ1 = 0; errosSeguidosJ2 = 0; // Zera contagem da Pergunta Ouro
+    perguntaAtual = 0; jogadorAtual = 1;
+    
+    document.querySelector('.emoji-container')?.classList.remove('escondido');
+    document.getElementById('feedback-agradecimento')?.classList.add('escondido');
 }
 
-function selecionarAvatar(player, idx, el) {
-    const caminho = listaAvatares[idx];
-    if (player === 1) j1Avatar = caminho; else j2Avatar = caminho;
-    const parent = el.parentElement;
-    parent.querySelectorAll('.img-avatar-opcao').forEach(img => img.classList.remove('selecionado'));
+function selecionarAvatar(j, i, el) {
+    const av = listaAvatares[i];
+    if (j === 1) j1Avatar = av; else j2Avatar = av;
+    el.parentElement.querySelectorAll('img').forEach(img => img.classList.remove('selecionado'));
     el.classList.add('selecionado');
 }
 
-function toggleMusica() { musicaFundo.muted = !musicaFundo.muted; document.getElementById("musica-icone").innerText = musicaFundo.muted ? "🔇" : "🔊"; }
-function toggleFullscreen() { if (!document.fullscreenElement) document.documentElement.requestFullscreen(); else document.exitFullscreen(); }
-
 function validarComeco() {
     j1Nome = document.getElementById("input-nome1").value;
-    j2Nome = (modoDeJogo === 'solo') ? "Computador" : document.getElementById("input-nome2").value;
+    j2Nome = modoDeJogo === 'solo' ? "Computador" : document.getElementById("input-nome2").value;
+    
+    if (!j1Nome || !j1Avatar || (modoDeJogo === 'batalha' && (!j2Nome || !j2Avatar))) {
+        return alert("Preencha os craques e escolha os avatares!");
+    }
 
-    if (!j1Nome || (modoDeJogo === 'batalha' && !j2Nome)) { alert("Preencham os nomes!"); return; }
-    if (!j1Avatar || (modoDeJogo === 'batalha' && !j2Avatar)) { alert("Escolham os avatares!"); return; }
-
-    musicaFundo.play();
-    document.getElementById("btn-musica-toggle").style.display = "flex";
     perguntasDaRodada = bancoDePerguntas.sort(() => 0.5 - Math.random()).slice(0, 10);
     document.getElementById("tela-inicial").classList.add("escondido");
-
-    if (modoDeJogo === 'solo') {
-        document.getElementById("tela-quiz").classList.remove("escondido");
-        document.getElementById("timer-container").classList.remove("escondido");
-        mostrarPergunta(); iniciarCronometro();
-    } else prepararTurno();
-}
-
-function prepararTurno() {
-    clearInterval(controleCronometro);
-    document.getElementById("timer-container").classList.add("escondido");
-    const nome = (jogadorAtual === 1) ? j1Nome : j2Nome;
-    const avatar = (jogadorAtual === 1) ? j1Avatar : j2Avatar;
-    document.getElementById("nome-destaque").innerText = nome;
-    document.getElementById("img-avatar-passagem").src = avatar;
-    document.getElementById("tela-quiz").classList.add("escondido");
-    document.getElementById("tela-passagem").classList.remove("escondido");
-}
-
-function iniciarTurno() {
-    document.getElementById("tela-passagem").classList.add("escondido");
     document.getElementById("tela-quiz").classList.remove("escondido");
     document.getElementById("timer-container").classList.remove("escondido");
-    mostrarPergunta(); iniciarCronometro();
+
+    musicaFundo.play();
+    mostrarPergunta();
+    iniciarCronometro();
 }
 
+// =========================================
+// 6. LÓGICA DO QUIZ (COM PERGUNTA DE OURO E BÔNUS CORRIGIDOS)
+// =========================================
 function mostrarPergunta() {
-    const dados = perguntasDaRodada[perguntaAtual];
-    const nome = (jogadorAtual === 1 ? j1Nome : j2Nome);
-    const avatar = (jogadorAtual === 1 ? j1Avatar : j2Avatar);
-    document.getElementById("img-avatar-quiz").src = avatar;
-    document.getElementById("aviso-turno-nome").innerText = "Vez de: " + nome;
-    document.getElementById("texto-pergunta").classList.remove("escondido");
+    const d = perguntasDaRodada[perguntaAtual];
+    const quizContainer = document.querySelector('.quiz-container');
+    
+    // Checa se é Pergunta de Ouro baseado nos erros anteriores
+    const errosAtuais = (jogadorAtual === 1) ? errosSeguidosJ1 : errosSeguidosJ2;
+    ePerguntaOuro = (errosAtuais >= 2);
+
+    if (ePerguntaOuro) {
+        quizContainer.classList.add('ouro-active');
+        document.getElementById("texto-pergunta").innerHTML = `<span style="color: #DAA520; font-weight:900; display:block; margin-bottom:10px;">⭐ PERGUNTA DE OURO ⭐</span><small style="font-size: 14px; color: var(--color-blue); display:block; margin-bottom:10px;">VALE 2 PONTOS!</small>${d.pergunta}`;
+    } else {
+        quizContainer.classList.remove('ouro-active');
+        document.getElementById("texto-pergunta").innerText = d.pergunta;
+    }
+    
+    document.getElementById("img-avatar-quiz").src = jogadorAtual === 1 ? j1Avatar : j2Avatar;
+    document.getElementById("aviso-turno-nome").innerText = jogadorAtual === 1 ? j1Nome : j2Nome;
+    document.getElementById("barra-progresso").innerText = `Pergunta ${perguntaAtual + 1} de 10`;
+
     document.getElementById("feedback-acerto").classList.add("escondido");
     document.getElementById("feedback-erro").classList.add("escondido");
     
-    let totalPerguntas = (modoDeJogo === 'solo') ? 10 : 5;
-    let rodadaAtual = (modoDeJogo === 'solo') ? perguntaAtual + 1 : Math.floor(perguntaAtual / 2) + 1;
-    document.getElementById("barra-progresso").innerText = `Pergunta ${rodadaAtual} de ${totalPerguntas}`;
+    document.getElementById("texto-pergunta").classList.remove("escondido");
+    document.getElementById("streak-popup").innerText = "";
     
-    document.getElementById("texto-pergunta").innerText = dados.pergunta;
+    const area = document.getElementById("area-botoes");
+    area.innerHTML = "";
     
-    const area = document.getElementById("area-botoes"); area.innerHTML = "";
-    dados.respostas.forEach((txt, idx) => {
-        const btn = document.createElement("button");
-        btn.innerText = txt; btn.className = "btn-resposta";
-        btn.onclick = () => verificarResposta(idx, btn);
-        area.appendChild(btn);
+    d.respostas.forEach((r, i) => {
+        const b = document.createElement("button");
+        b.className = "btn-resposta";
+        b.innerText = r;
+        b.onclick = () => verificarResposta(i, b);
+        area.appendChild(b);
     });
 }
 
 function iniciarCronometro() {
-    tempoRestante = 30;
-    const el = document.getElementById("timer-display");
+    tempoRestante = 30; 
     clearInterval(controleCronometro);
+    document.getElementById("timer-display").innerText = `Tempo: ${tempoRestante}s`;
+    
     controleCronometro = setInterval(() => {
-        tempoRestante--; el.innerText = `Tempo: ${tempoRestante}s`;
-        if (tempoRestante <= 0) verificarResposta(-1, null);
+        tempoRestante--; 
+        document.getElementById("timer-display").innerText = `Tempo: ${tempoRestante}s`;
+        if (tempoRestante <= 0) { 
+            somErro.play(); 
+            verificarResposta(-1, null); 
+        }
     }, 1000);
 }
 
-function verificarResposta(idx, btn) {
-    clearInterval(controleCronometro);
+function verificarResposta(idxSelecionado, botaoClicado) {
+    clearInterval(controleCronometro); 
+    
     const correta = perguntasDaRodada[perguntaAtual].respostaCerta;
-    const btns = document.querySelectorAll('.btn-resposta');
-    btns.forEach(b => b.disabled = true);
+    const botoes = document.querySelectorAll(".btn-resposta");
+    
+    botoes.forEach(btn => btn.disabled = true); 
 
-    if (idx === correta) {
-        somAcerto.currentTime = 0; 
-        somAcerto.play(); 
-        btn.classList.add('correta');
+    if (idxSelecionado === correta) {
+        // ACERTOU
+        somAcerto.currentTime = 0; somAcerto.play();
+        if(botaoClicado) botaoClicado.classList.add("correta"); 
         document.getElementById("feedback-acerto").classList.remove("escondido");
-        document.getElementById("texto-pergunta").classList.add("escondido");
-        if (jogadorAtual === 1) j1Pontos++; else j2Pontos++;
+
+        // Calcula a Streak (Sequência)
+        let streak = jogadorAtual === 1 ? ++j1Streak : ++j2Streak;
+        let bonus = getStreakData(streak).bonus; // Retorna 1 se streak >= 3
+        let ptsQuestao = ePerguntaOuro ? 2 : 1; 
+        
+        let pontosGanhos = ptsQuestao + bonus;
+
+        if (jogadorAtual === 1) {
+            j1Pontos += pontosGanhos; 
+            errosSeguidosJ1 = 0; // Zera os erros APÓS o acerto
+        } else {
+            j2Pontos += pontosGanhos; 
+            errosSeguidosJ2 = 0;
+        }
+        
+        if (ePerguntaOuro) {
+            confetti({ particleCount: 200, spread: 90, origin: { y: 0.6 }, colors: ['#DAA520', '#FDD017'] });
+        } else if (bonus > 0) {
+            document.getElementById("streak-popup").innerText = getStreakData(streak).msg;
+            confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, colors: ['#FDD017', '#006735'] });
+        }
     } else {
-        somErro.currentTime = 0; 
-        somErro.play(); 
-        if(btn) btn.classList.add('errada');
-        btns[correta].classList.add('correta');
+        // ERROU
+        somErro.currentTime = 0; somErro.play();
+        if(botaoClicado) botaoClicado.classList.add("errada"); 
+        
+        botoes[correta].classList.add("correta"); 
         document.getElementById("feedback-erro").classList.remove("escondido");
-        document.getElementById("texto-pergunta").classList.add("escondido");
+
+        if (jogadorAtual === 1) {
+            j1Streak = 0; // Perde a sequência
+            errosSeguidosJ1++; // Acumula erro
+        } else {
+            j2Streak = 0;
+            errosSeguidosJ2++;
+        }
     }
 
-    setTimeout(() => {
+    controleTimeout = setTimeout(() => {
         perguntaAtual++;
-        if (perguntaAtual >= 10) mostrarResultadoFinal();
-        else if (modoDeJogo === 'batalha') { jogadorAtual = (jogadorAtual === 1) ? 2 : 1; prepararTurno(); }
-        else { mostrarPergunta(); iniciarCronometro(); }
+        if (perguntaAtual >= 10) finalizarJogo();
+        else {
+            if (modoDeJogo === 'batalha') jogadorAtual = jogadorAtual === 1 ? 2 : 1;
+            mostrarPergunta();
+            iniciarCronometro();
+        }
     }, 2500);
 }
 
-function mostrarResultadoFinal() {
-    clearInterval(controleCronometro);
+// =========================================
+// 7. FINALIZAÇÃO, DESISTÊNCIA E SALVAMENTO
+// =========================================
+function finalizarJogo() {
+    document.querySelector('.quiz-container').classList.remove('ouro-active'); 
     document.getElementById("tela-quiz").classList.add("escondido");
     document.getElementById("timer-container").classList.add("escondido");
     document.getElementById("tela-resultado").classList.remove("escondido");
-    
-    let tit = "", msg = "", winAvatar = "";
 
+    let vencedor, vAvatar, vPontos;
+    
     if (modoDeJogo === 'solo') {
-        winAvatar = j1Avatar;
-        if (j1Pontos >= 6) {
-            tit = `MANDOU BEM, ${j1Nome.toUpperCase()}! 🏆`;
-            msg = `Você marcou ${j1Pontos}/10 acertos e conquistou uma Copa pro Ranking!`;
-            salvarNoRanking(j1Nome, j1Avatar); 
-        } else {
-            tit = `FIM DE JOGO, ${j1Nome.toUpperCase()}!`;
-            msg = `Você marcou ${j1Pontos} pontos. Para ganhar uma Copa e entrar no ranking, você precisa acertar pelo menos 6 perguntas! Tente de novo!`;
-        }
+        vencedor = j1Nome; vAvatar = j1Avatar; vPontos = j1Pontos;
+        salvarNoRanking(j1Nome, j1Avatar, j1Pontos, (j1Pontos >= 10)); 
     } else {
-        if (j1Pontos > j2Pontos) { 
-            tit = `${j1Nome.toUpperCase()} VENCEU! 🏆`; 
-            winAvatar = j1Avatar;
-            salvarNoRanking(j1Nome, j1Avatar); 
-            msg = `Parabéns! Você conquistou uma Copa para o Ranking.\n\n${j1Nome}: ${j1Pontos} acertos\n${j2Nome}: ${j2Pontos} acertos`;
-        }
-        else if (j2Pontos > j1Pontos) { 
-            tit = `${j2Nome.toUpperCase()} VENCEU! 🏆`; 
-            winAvatar = j2Avatar;
-            salvarNoRanking(j2Nome, j2Avatar); 
-            msg = `Parabéns! Você conquistou uma Copa para o Ranking.\n\n${j1Nome}: ${j1Pontos} acertos\n${j2Nome}: ${j2Pontos} acertos`;
-        }
-        else { 
-            tit = "EMPATE! 🤝"; 
-            winAvatar = ""; 
-            msg = `Foi disputado! Ninguém leva a Copa desta vez.\n\n${j1Nome}: ${j1Pontos} acertos\n${j2Nome}: ${j2Pontos} acertos`;
+        vencedor = (j1Pontos >= j2Pontos) ? j1Nome : j2Nome;
+        vAvatar = (j1Pontos >= j2Pontos) ? j1Avatar : j2Avatar;
+        vPontos = Math.max(j1Pontos, j2Pontos);
+        
+        if(j1Pontos !== j2Pontos) {
+            salvarNoRanking(vencedor, vAvatar, vPontos, true); 
+        } else {
+            salvarNoRanking(vencedor, vAvatar, vPontos, false); 
         }
     }
 
-    document.getElementById("img-avatar-vencedor").src = winAvatar;
-    document.getElementById("img-avatar-vencedor").style.display = winAvatar ? "block" : "none";
-    document.getElementById("titulo-vencedor").innerText = tit;
-    document.getElementById("mensagem-final").innerText = msg;
+    document.getElementById("img-avatar-vencedor").src = vAvatar;
+    document.getElementById("titulo-vencedor").innerText = (modoDeJogo === 'batalha' && j1Pontos === j2Pontos) ? "Empate!" : `${vencedor} Venceu!`;
+    document.getElementById("mensagem-final").innerText = `${vPontos} Pontos\n${calcularTitulo(vPontos)}`;
+    
+    if (vPontos >= 10) confetti({ particleCount: 300, spread: 100 });
 }
 
-function enviarPesquisa(reacao) {
-    // 1. Salva no Firebase em um novo nó chamado 'pesquisaSatisfacao'
-    database.ref('pesquisaSatisfacao').push({
-        voto: reacao,
-        timestamp: firebase.database.ServerValue.TIMESTAMP // Guarda data/hora automática do servidor
-    })
-    .then(() => {
-        // 2. Esconde os emojis e mostra o agradecimento
-        document.querySelector('.emoji-container').classList.add('escondido');
-        document.getElementById('feedback-agradecimento').classList.remove('escondido');
+function confirmarDesistencia() {
+    const nome = (modoDeJogo === 'solo' ? j1Nome : (jogadorAtual === 1 ? j1Nome : j2Nome)).toUpperCase();
+    if (confirm(`${nome}, deseja abandonar a partida?`)) {
+        clearInterval(controleCronometro); 
+        clearTimeout(controleTimeout); 
         
-        console.log("Pesquisa enviada: " + reacao);
-    })
-    .catch((error) => {
-        console.error("Erro ao enviar pesquisa: ", error);
+        musicaFundo.pause(); 
+        somErro.currentTime = 0; 
+        somErro.play();
+        
+        let tit = "ABANDONOU! 🏳️"; let msg = ""; let winAv = "";
+        
+        if (modoDeJogo === 'solo') {
+            msg = `${j1Nome} desistiu.\nTítulo: Perna de Pau 🪵`;
+            // AGORA SIM: Título especial de desistência
+            salvarNoRanking(j1Nome, j1Avatar, 0, false, "Arregou 🏳️");
+        } else {
+            const vNome = (jogadorAtual === 1 ? j2Nome : j1Nome);
+            const vAv = (jogadorAtual === 1 ? j2Avatar : j1Avatar);
+            tit = `${vNome.toUpperCase()} VENCEU POR W.O.! 🏆`;
+            msg = `${nome} desistiu!\n${vNome} ganha uma Copa automática.`;
+            winAv = vAv;
+            // AGORA SIM: Título especial de W.O.
+            salvarNoRanking(vNome, vAv, 10, true, "Venceu por W.O. 🏆");
+        }
+        
+        document.getElementById("titulo-vencedor").innerText = tit;
+        document.getElementById("mensagem-final").innerText = msg;
+        
+        const imgV = document.getElementById("img-avatar-vencedor");
+        if (winAv) { imgV.src = winAv; imgV.style.display = "block"; } else { imgV.style.display = "none"; }
+        
+        document.querySelector('.quiz-container').classList.remove('ouro-active');
+        document.getElementById("tela-quiz").classList.add("escondido");
+        document.getElementById("timer-container").classList.add("escondido");
+        document.getElementById("secao-pesquisa").classList.add("escondido");
+        document.getElementById("tela-resultado").classList.remove("escondido");
+    } else {
+        iniciarCronometro(); 
+    }
+}
+
+function salvarNoRanking(nome, avatar, pontos, ganhouCopa, tituloEspecial = null) {
+    const nomeLimpo = nome.trim().toUpperCase();
+    const ref = database.ref('samininaRanking/' + nomeLimpo);
+    
+    ref.once('value').then(s => {
+        let data = s.exists() ? s.val() : {};
+        
+        data.nome = nomeLimpo;
+        data.avatar = avatar; 
+        data.pontosTotais = (Number(data.pontosTotais) || 0) + Number(pontos);
+        data.copas = (Number(data.copas) || 0) + (ganhouCopa ? 1 : 0);
+        
+        ref.set(data);
+    });
+    
+    // Repassa o título especial pro histórico
+    salvarHistoricoPartida(nomeLimpo, avatar, pontos, tituloEspecial);
+}
+
+function salvarHistoricoPartida(nome, avatar, pontos, tituloEspecial = null) {
+    database.ref('historicoPartidas').push({ 
+        nome: nome.toUpperCase(), 
+        avatar: avatar, 
+        pontos: pontos, 
+        titulo: tituloEspecial || calcularTitulo(pontos), 
+        timestamp: firebase.database.ServerValue.TIMESTAMP 
     });
 }
 
+// =========================================
+// 8. TELA DE RANKING E SATISFAÇÃO (COM MEDALHAS)
+// =========================================
+function mostrarRanking() {
+    document.getElementById("tela-modo").classList.add("escondido");
+    document.getElementById("tela-resultado").classList.add("escondido");
+    document.getElementById("tela-ranking").classList.remove("escondido");
+    
+    database.ref('samininaRanking').off();
+    database.ref('historicoPartidas').off();
+
+    database.ref('samininaRanking').on('value', s => {
+        let list = []; 
+        // BLINDAGEM: Só puxa pra tela se o dado for válido e tiver nome
+        s.forEach(c => { if(c.val() && c.val().nome) list.push(c.val()); });
+        
+        list.sort((a,b) => (Number(b.copas) || 0) - (Number(a.copas) || 0) || (Number(b.pontosTotais) || 0) - (Number(a.pontosTotais) || 0));
+        
+        document.getElementById("lista-ranking").innerHTML = list.slice(0,10).map((j,i) => {
+            let posicao = `${i+1}º`;
+            let tamanhoFonte = '18px';
+            
+            if (i === 0) { posicao = "🥇"; tamanhoFonte = '28px'; }
+            else if (i === 1) { posicao = "🥈"; tamanhoFonte = '28px'; }
+            else if (i === 2) { posicao = "🥉"; tamanhoFonte = '28px'; }
+
+            return `
+            <div class="ranking-item">
+                <div class="ranking-pos" style="font-size: ${tamanhoFonte};">${posicao}</div>
+                <img src="${j.avatar || 'img/1.jpg'}" class="ranking-avatar">
+                <div class="ranking-info"><b>${j.nome}</b><br><span>${j.copas || 0} Copas | ${j.pontosTotais || 0} Pts</span></div>
+            </div>`;
+        }).join("");
+    });
+
+    database.ref('historicoPartidas').orderByChild('timestamp').limitToLast(10).on('value', (s) => {
+        let list = []; 
+        // BLINDAGEM: Só puxa pra tela se o dado for válido e tiver nome
+        s.forEach(c => { if(c.val() && c.val().nome) list.push(c.val()); });
+        
+        document.getElementById("lista-titulos-recentes").innerHTML = list.reverse().map(p => `
+            <div class="ranking-item">
+                <img src="${p.avatar || 'img/1.jpg'}" class="ranking-avatar">
+                <div class="ranking-info"><b>${p.nome}</b><br><span>${p.titulo}</span></div>
+            </div>`).join("");
+    });
+}
+
+function fecharRanking() { 
+    database.ref('samininaRanking').off();
+    database.ref('historicoPartidas').off();
+    document.getElementById("tela-ranking").classList.add("escondido"); 
+    document.getElementById("tela-modo").classList.remove("escondido"); 
+}
+
+function enviarPesquisa(reacao) {
+    database.ref('pesquisaSatisfacao').push({ 
+        voto: reacao, 
+        timestamp: firebase.database.ServerValue.TIMESTAMP 
+    }).then(() => {
+        document.querySelector('.emoji-container').classList.add('escondido');
+        document.getElementById('feedback-agradecimento').classList.remove('escondido');
+    });
+}
+// =========================================
+// 9. ATALHOS E PAINEL SECRETO
+// =========================================
+function toggleMusica() { 
+    if (musicaFundo.paused) { musicaFundo.play(); document.getElementById("musica-icone").innerText = "🔊"; }
+    else { musicaFundo.pause(); document.getElementById("musica-icone").innerText = "🔇"; }
+}
+
+function toggleFullscreen() { 
+    if (!document.fullscreenElement) document.documentElement.requestFullscreen(); 
+    else document.exitFullscreen(); 
+}
+
+function gerarDesafio() { 
+    document.getElementById("modal-desafio").classList.remove("escondido"); 
+    document.getElementById("qrcode-desafio").innerHTML = "";
+
+    // Descobre quem ganhou e quantos pontos fez para montar a mensagem
+    let nomeDesafiante = "";
+    let pontosDesafiante = 0;
+
+    if (modoDeJogo === 'solo') {
+        nomeDesafiante = j1Nome;
+        pontosDesafiante = j1Pontos;
+    } else {
+        nomeDesafiante = (j1Pontos >= j2Pontos) ? j1Nome : j2Nome;
+        pontosDesafiante = Math.max(j1Pontos, j2Pontos);
+    }
+
+    // Monta o texto que vai pro WhatsApp
+    const linkJogo = window.location.origin + window.location.pathname;
+    const mensagem = `Fiz ${pontosDesafiante} pontos na Copa Saminina! Meu título é ${calcularTitulo(pontosDesafiante)}. 🏆⚽ Duvido você bater meu recorde! Jogue agora: ${linkJogo}`;
+    
+    // Cria o link oficial do WhatsApp com o texto codificado
+    const linkWhatsApp = `https://api.whatsapp.com/send?text=${encodeURIComponent(mensagem)}`;
+
+    // Gera o QR Code com o link do Zap
+    new QRCode(document.getElementById("qrcode-desafio"), { 
+        text: linkWhatsApp, 
+        width: 180, 
+        height: 180 
+    }); 
+}
+
+function fecharModalDesafio() { document.getElementById("modal-desafio").classList.add("escondido"); }
+
+function gerarQRCodeInicial() { 
+    const container = document.getElementById("qrcode-container");
+    if(!container) return;
+    container.innerHTML = "";
+    new QRCode(container, { text: window.location.origin + window.location.pathname + "?exibir=ranking", width: 100, height: 100 }); 
+}
+
 function verificarSenhaReset() {
-    let senha = prompt("🔐 ACESSO RESTRITO SAMININA\nDigite a senha para ver o relatório ou zerar o banco:");
+    let senha = prompt("🔐 ACESSO RESTRITO\nDigite a senha para ver o relatório ou zerar o banco:");
     
     if (senha === "321") {
-        // Buscamos os dois "galhos" do banco de uma vez
         database.ref().once('value').then((snapshot) => {
-            const dadosGerais = snapshot.val() || {};
-            const ranking = dadosGerais.samininaRanking || {};
-            const pesquisa = dadosGerais.pesquisaSatisfacao || {};
+            const d = snapshot.val() || {};
+            const r = d.samininaRanking || {};
+            const h = d.historicoPartidas || {};
+            const p = d.pesquisaSatisfacao || {}; 
+            
+            let v = { amei: 0, curti: 0, "mais-ou-menos": 0, "nao-curti": 0 };
+            Object.values(p).forEach(i => { if(v[i.voto] !== undefined) v[i.voto]++; });
 
-            // 1. Processar Ranking
-            let totalCampeoes = Object.keys(ranking).length;
-
-            // 2. Processar Pesquisa de Satisfação
-            let votos = { amei: 0, curti: 0, "mais-ou-menos": 0, "nao-curti": 0 };
-            let totalVotos = 0;
-
-            Object.values(pesquisa).forEach(p => {
-                if (votos[p.voto] !== undefined) {
-                    votos[p.voto]++;
-                    totalVotos++;
-                }
-            });
-
-            // 3. Montar o Relatório visual
-            let relatorio = `📊 RELATÓRIO DO EVENTO (LIVE)\n\n` +
-                            `🏆 Total de Campeões únicos: ${totalCampeoes}\n` +
-                            `💬 Feedbacks recebidos: ${totalVotos}\n\n` +
-                            `😍 Amei: ${votos.amei}\n` +
-                            `🙂 Curti: ${votos.curti}\n` +
-                            `😐 Médio: ${votos['mais-ou-menos']}\n` +
-                            `🙁 Não curti: ${votos['nao-curti']}\n\n` +
-                            `------------------------------------------\n` +
-                            `Deseja ZERAR todos os dados agora?\n` +
-                            `Digite SIM para confirmar:`;
-
-            let confirmacao = prompt(relatorio);
-
-            if (confirmacao && confirmacao.toUpperCase() === "SIM") {
-                database.ref().remove()
-                    .then(() => {
-                        alert("✅ Banco de dados limpo com sucesso! Tudo pronto para um novo dia.");
-                        location.reload();
-                    });
+            let rel = `📊 RELATÓRIO DO EVENTO\n\n` +
+                      `🏟️ Partidas Jogadas: ${Object.keys(h).length}\n` +
+                      `🏆 Campeões no Ranking: ${Object.keys(r).length}\n\n` +
+                      `Avaliações do Público:\n` +
+                      `😍 Amei: ${v.amei}\n` +
+                      `🙂 Curti: ${v.curti}\n` +
+                      `😐 Mais ou Menos: ${v['mais-ou-menos']}\n` +
+                      `🙁 Não Curti: ${v['nao-curti']}\n\n` +
+                      `Deseja ZERAR o banco? Digite SIM para confirmar:`;
+            
+            if (prompt(rel)?.toUpperCase() === "SIM") {
+                database.ref().remove().then(() => {
+                    alert("Banco de dados limpo com sucesso!");
+                    location.reload();
+                });
             }
         });
-    } else if (senha !== null) {
-        alert("❌ Senha incorreta!");
+    } else if (senha !== null) { 
+        alert("Senha incorreta!"); 
     }
 }
+
+// =========================================
+// 10. INICIALIZADOR DE PÁGINA
+// =========================================
+document.addEventListener("DOMContentLoaded", () => {
+    gerarQRCodeInicial();
+    if (new URLSearchParams(window.location.search).get('exibir') === 'ranking') mostrarRanking();
+});
