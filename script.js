@@ -500,7 +500,7 @@ function finalizarJogo() {
         vencedor = j1Nome;
         vAvatar = j1Avatar;
         vPontos = j1Pontos;
-        salvarNoRanking(j1Nome, j1Avatar, j1Pontos, j1Pontos >= 10);
+        salvarNoRanking(j1Nome, j1Avatar, j1Pontos, j1Pontos >= 6);
     } else {
         vencedor = j1Pontos >= j2Pontos ? j1Nome : j2Nome;
         vAvatar = j1Pontos >= j2Pontos ? j1Avatar : j2Avatar;
