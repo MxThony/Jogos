@@ -404,55 +404,70 @@ function salvarHistoricoPartida(nome, avatar, pontos, tituloEspecial = null) {
 // 8. TELA DE RANKING E SATISFAÇÃO (COM MEDALHAS)
 // =========================================
 function mostrarRanking() {
-    document.getElementById("tela-modo").classList.add("escondido");
-    document.getElementById("tela-resultado").classList.add("escondido");
-    document.getElementById("tela-ranking").classList.remove("escondido");
+    // 1. BLINDAGEM: Só tenta esconder as telas se elas existirem (Evita erro no ranking.html)
+    const telaModo = document.getElementById("tela-modo");
+    const telaRes = document.getElementById("tela-resultado");
+    const telaRank = document.getElementById("tela-ranking");
+
+    if(telaModo) telaModo.classList.add("escondido");
+    if(telaRes) telaRes.classList.add("escondido");
+    if(telaRank) telaRank.classList.remove("escondido");
     
+    // 2. Limpa conexões antigas
     database.ref('samininaRanking').off();
     database.ref('historicoPartidas').off();
 
+    // 3. Liga o ao vivo do Ranking Principal
     database.ref('samininaRanking').on('value', s => {
         let list = []; 
-        // BLINDAGEM: Só puxa pra tela se o dado for válido e tiver nome
         s.forEach(c => { if(c.val() && c.val().nome) list.push(c.val()); });
         
         list.sort((a,b) => (Number(b.copas) || 0) - (Number(a.copas) || 0) || (Number(b.pontosTotais) || 0) - (Number(a.pontosTotais) || 0));
         
-        document.getElementById("lista-ranking").innerHTML = list.slice(0,10).map((j,i) => {
-            let posicao = `${i+1}º`;
-            let tamanhoFonte = '18px';
-            
-            if (i === 0) { posicao = "🥇"; tamanhoFonte = '28px'; }
-            else if (i === 1) { posicao = "🥈"; tamanhoFonte = '28px'; }
-            else if (i === 2) { posicao = "🥉"; tamanhoFonte = '28px'; }
+        const containerRanking = document.getElementById("lista-ranking");
+        if(containerRanking) {
+            containerRanking.innerHTML = list.slice(0,10).map((j,i) => {
+                let posicao = `${i+1}º`;
+                let tamanhoFonte = '18px';
+                
+                if (i === 0) { posicao = "🥇"; tamanhoFonte = '28px'; }
+                else if (i === 1) { posicao = "🥈"; tamanhoFonte = '28px'; }
+                else if (i === 2) { posicao = "🥉"; tamanhoFonte = '28px'; }
 
-            return `
-            <div class="ranking-item">
-                <div class="ranking-pos" style="font-size: ${tamanhoFonte};">${posicao}</div>
-                <img src="${j.avatar || 'img/1.jpg'}" class="ranking-avatar">
-                <div class="ranking-info"><b>${j.nome}</b><br><span>${j.copas || 0} Copas | ${j.pontosTotais || 0} Pts</span></div>
-            </div>`;
-        }).join("");
+                return `
+                <div class="ranking-item">
+                    <div class="ranking-pos" style="font-size: ${tamanhoFonte};">${posicao}</div>
+                    <img src="${j.avatar || 'img/1.jpg'}" class="ranking-avatar">
+                    <div class="ranking-info"><b>${j.nome}</b><br><span>${j.copas || 0} Copas | ${j.pontosTotais || 0} Pts</span></div>
+                </div>`;
+            }).join("");
+        }
     });
 
+    // 4. Liga o ao vivo dos Últimos Títulos
     database.ref('historicoPartidas').orderByChild('timestamp').limitToLast(10).on('value', (s) => {
         let list = []; 
-        // BLINDAGEM: Só puxa pra tela se o dado for válido e tiver nome
         s.forEach(c => { if(c.val() && c.val().nome) list.push(c.val()); });
         
-        document.getElementById("lista-titulos-recentes").innerHTML = list.reverse().map(p => `
-            <div class="ranking-item">
-                <img src="${p.avatar || 'img/1.jpg'}" class="ranking-avatar">
-                <div class="ranking-info"><b>${p.nome}</b><br><span>${p.titulo}</span></div>
-            </div>`).join("");
+        const containerTitulos = document.getElementById("lista-titulos-recentes");
+        if(containerTitulos) {
+            containerTitulos.innerHTML = list.reverse().map(p => `
+                <div class="ranking-item">
+                    <img src="${p.avatar || 'img/1.jpg'}" class="ranking-avatar">
+                    <div class="ranking-info"><b>${p.nome}</b><br><span>${p.titulo}</span></div>
+                </div>`).join("");
+        }
     });
 }
 
 function fecharRanking() { 
     database.ref('samininaRanking').off();
     database.ref('historicoPartidas').off();
-    document.getElementById("tela-ranking").classList.add("escondido"); 
-    document.getElementById("tela-modo").classList.remove("escondido"); 
+    const telaRank = document.getElementById("tela-ranking");
+    const telaModo = document.getElementById("tela-modo");
+    
+    if(telaRank) telaRank.classList.add("escondido"); 
+    if(telaModo) telaModo.classList.remove("escondido"); 
 }
 
 function enviarPesquisa(reacao) {
@@ -514,7 +529,17 @@ function gerarQRCodeInicial() {
     const container = document.getElementById("qrcode-container");
     if(!container) return;
     container.innerHTML = "";
-    new QRCode(container, { text: window.location.origin + window.location.pathname + "?exibir=ranking", width: 100, height: 100 }); 
+    
+    // Altere para apontar diretamente para o novo arquivo ranking.html
+    const linkPublico = window.location.origin + window.location.pathname.replace("index.html", "") + "ranking.html";
+    
+    new QRCode(container, { 
+        text: linkPublico, 
+        width: 120, 
+        height: 120,
+        colorDark : "#003399",
+        colorLight : "#ffffff"
+    }); 
 }
 
 function verificarSenhaReset() {

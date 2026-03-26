@@ -143,13 +143,29 @@ function selecionarModo(m) {
     document.getElementById("tela-inicial").classList.remove("escondido");
     document.getElementById("container-avatar2").classList.toggle("escondido", m === 'solo');
     
-    // Reseta tudo
+    // Reseta variáveis de controle
     j1Pontos = 0; j2Pontos = 0; j1Streak = 0; j2Streak = 0; 
-    errosSeguidosJ1 = 0; errosSeguidosJ2 = 0; // Zera contagem da Pergunta Ouro
+    errosSeguidosJ1 = 0; errosSeguidosJ2 = 0; 
     perguntaAtual = 0; jogadorAtual = 1;
     
     document.querySelector('.emoji-container')?.classList.remove('escondido');
     document.getElementById('feedback-agradecimento')?.classList.add('escondido');
+}
+
+// NOVA FUNÇÃO: Voltar para a seleção de modo sem salvar nada
+function voltarParaModos() {
+    // Esconde o registro e volta para a tela inicial de modos
+    document.getElementById("tela-inicial").classList.add("escondido");
+    document.getElementById("tela-modo").classList.remove("escondido");
+    
+    // Limpa os inputs para a próxima tentativa
+    document.getElementById("input-nome1").value = "";
+    document.getElementById("input-nome2").value = "";
+    
+    // Reseta a seleção visual e as variáveis dos avatares
+    document.querySelectorAll('.img-avatar-opcao').forEach(img => img.classList.remove('selecionado'));
+    j1Avatar = "";
+    j2Avatar = "";
 }
 
 function selecionarAvatar(j, i, el) {
@@ -176,7 +192,6 @@ function validarComeco() {
     mostrarPergunta();
     iniciarCronometro();
 }
-
 // =========================================
 // 6. LÓGICA DO QUIZ (COM PERGUNTA DE OURO E BÔNUS CORRIGIDOS)
 // =========================================
