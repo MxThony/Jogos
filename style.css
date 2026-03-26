@@ -58,7 +58,7 @@ body {
     filter: drop-shadow(0px 4px 6px rgba(0,0,0,0.3));
 }
 
-.quiz-container {
+.quiz-container, .tv-container {
     background: var(--color-white);
     border-radius: 20px;
     padding: 30px 20px;
@@ -118,7 +118,7 @@ button:active {
 
 .btn-modo { background: var(--color-green); }
 .btn-ranking { background: var(--color-yellow); color: var(--color-blue); }
-.btn-desafio { background: #25D366; color: white; } /* Cor do WhatsApp */
+.btn-desafio { background: #25D366; color: white; }
 
 /* ========================================= */
 /* AVATARES                                  */
@@ -157,7 +157,7 @@ button:active {
 .size-g { width: 120px; height: 120px; margin: 0 auto 15px; display: block; }
 
 /* ========================================= */
-/* TELA DE QUIZ (NOVO PLACAR DA TV)          */
+/* TELA DE QUIZ E PLACAR DA TV               */
 /* ========================================= */
 #tela-quiz {
     display: flex;
@@ -185,7 +185,6 @@ button:active {
     z-index: 20;
 }
 
-/* Placar Estilo TV */
 .placar-transmissao {
     background: var(--color-blue);
     color: white;
@@ -324,6 +323,97 @@ button:active {
 .turno-destaque {
     color: var(--color-blue);
     font-weight: 900;
+}
+
+/* ========================================= */
+/* TELA DE RANKING (A QUE EU TINHA APAGADO!) */
+/* ========================================= */
+.lista-ranking-container {
+    max-height: 350px;
+    overflow-y: auto;
+    padding-right: 5px;
+    margin-bottom: 15px;
+}
+
+.lista-ranking-container::-webkit-scrollbar { width: 8px; }
+.lista-ranking-container::-webkit-scrollbar-thumb { background: var(--color-yellow); border-radius: 10px; }
+
+.ranking-item {
+    display: flex;
+    align-items: center;
+    background: #f8f9fa;
+    margin-bottom: 10px;
+    padding: 10px;
+    border-radius: 10px;
+    border: 1px solid #ddd;
+    text-align: left;
+}
+
+.ranking-pos {
+    width: 40px;
+    font-weight: 900;
+    color: var(--color-blue);
+    text-align: center;
+}
+
+.ranking-avatar {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    border: 2px solid var(--color-yellow);
+    margin: 0 15px;
+    object-fit: cover;
+}
+
+.ranking-info {
+    flex-grow: 1;
+    color: var(--color-blue);
+    line-height: 1.3;
+    font-size: 14px;
+}
+
+.ranking-info b { font-size: 16px; text-transform: uppercase; }
+.ranking-info span { color: #555; font-size: 12px; font-weight: bold; }
+.divisor { border: 0; border-top: 2px dashed #ccc; margin: 15px 0; }
+
+/* ========================================= */
+/* FAIXA DE TRANSMISSÃO E LETREIROS          */
+/* ========================================= */
+.faixa-transmissao {
+    position: fixed;
+    left: 0;
+    width: 100%;
+    background: var(--color-yellow);
+    color: var(--color-blue);
+    padding: 12px 0;
+    font-size: 18px;
+    font-weight: 900;
+    text-transform: uppercase;
+    z-index: 2000;
+    display: flex;
+    white-space: nowrap;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    overflow: hidden;
+}
+
+.faixa-top { top: 0; border-bottom: 3px solid #002266; }
+.faixa-bottom { bottom: 0; border-top: 3px solid #002266; }
+
+.marquee-content {
+    display: flex;
+    animation: rolarTexto 40s linear infinite; 
+}
+
+.marquee-texto { padding-right: 50px; }
+
+@keyframes rolarTexto {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); } 
+}
+
+.texto-destaque {
+    color: var(--color-green);
+    text-shadow: 1px 1px 0px #fff;
 }
 
 /* ========================================= */
