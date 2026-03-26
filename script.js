@@ -527,24 +527,19 @@ function gerarDesafio() {
 // 9. ATALHOS E PAINEL SECRETO
 // =========================================
 
+// =========================================
+// 9. ATALHOS E PAINEL SECRETO
+// =========================================
+
 function gerarQRCodeInicial() { 
     const container = document.getElementById("qrcode-container");
     if(!container) return;
     container.innerHTML = "";
     
-    // Mágica para pegar o link exato de onde o jogo está hospedado e apontar para o ranking
-    let urlAtual = window.location.href.split('?')[0].split('#')[0];
-    let linkPublico = "";
-    
-    if (urlAtual.endsWith("index.html")) {
-        linkPublico = urlAtual.replace("index.html", "ranking.html");
-    } else if (urlAtual.endsWith("/")) {
-        linkPublico = urlAtual + "ranking.html";
-    } else {
-        linkPublico = urlAtual + "/ranking.html";
-    }
+    // Link direto e blindado! Sem margem para erro do navegador.
+    const linkPublico = "https://mxthony.github.io/Jogos/ranking.html";
 
-    // Gera o QR Code com as cores da Copa Saminina
+    // Gera o QR Code
     new QRCode(container, { 
         text: linkPublico, 
         width: 120, 
