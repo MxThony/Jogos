@@ -10,7 +10,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
-    <link rel="stylesheet" href="style.css?v=11.0">
+    <!-- Versão 13.0 para forçar a limpeza do cache -->
+    <link rel="stylesheet" href="style.css?v=13.0">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -35,7 +36,9 @@
                     <div id="qrcode-container"></div>
                 </div>
 
-                <div id="feed-inicio" class="feed-ao-vivo"></div>
+                <div id="feed-inicio" class="feed-ao-vivo">
+                    <div class="feed-box"><div class="feed-vazio">Carregando arena ao vivo...</div></div>
+                </div>
             </div>
 
             <div id="tela-inicial" class="escondido">
@@ -46,20 +49,20 @@
                     <input type="text" id="input-nome1" placeholder="Nome do Jogador" maxlength="18">
 
                     <div class="botoes-avatar" id="avatar-j1">
-                        <img src="img/1.jpg" class="img-avatar-opcao" onclick="selecionarAvatar(1, 0, this)" alt="Avatar 1">
-                        <img src="img/2.jpg" class="img-avatar-opcao" onclick="selecionarAvatar(1, 1, this)" alt="Avatar 2">
-                        <img src="img/3.jpg" class="img-avatar-opcao" onclick="selecionarAvatar(1, 2, this)" alt="Avatar 3">
-                        <img src="img/4.jpg" class="img-avatar-opcao" onclick="selecionarAvatar(1, 3, this)" alt="Avatar 4">
+                        <img src="img/1.jpg" class="img-avatar-opcao" onclick="selecionarAvatar(1, 0, this)">
+                        <img src="img/2.jpg" class="img-avatar-opcao" onclick="selecionarAvatar(1, 1, this)">
+                        <img src="img/3.jpg" class="img-avatar-opcao" onclick="selecionarAvatar(1, 2, this)">
+                        <img src="img/4.jpg" class="img-avatar-opcao" onclick="selecionarAvatar(1, 3, this)">
                     </div>
 
                     <div id="container-avatar2" class="escondido">
                         <input type="text" id="input-nome2" placeholder="Nome do Jogador 2" maxlength="18">
 
                         <div class="botoes-avatar" id="avatar-j2">
-                            <img src="img/1.jpg" class="img-avatar-opcao" onclick="selecionarAvatar(2, 0, this)" alt="Avatar 1">
-                            <img src="img/2.jpg" class="img-avatar-opcao" onclick="selecionarAvatar(2, 1, this)" alt="Avatar 2">
-                            <img src="img/3.jpg" class="img-avatar-opcao" onclick="selecionarAvatar(2, 2, this)" alt="Avatar 3">
-                            <img src="img/4.jpg" class="img-avatar-opcao" onclick="selecionarAvatar(2, 3, this)" alt="Avatar 4">
+                            <img src="img/1.jpg" class="img-avatar-opcao" onclick="selecionarAvatar(2, 0, this)">
+                            <img src="img/2.jpg" class="img-avatar-opcao" onclick="selecionarAvatar(2, 1, this)">
+                            <img src="img/3.jpg" class="img-avatar-opcao" onclick="selecionarAvatar(2, 2, this)">
+                            <img src="img/4.jpg" class="img-avatar-opcao" onclick="selecionarAvatar(2, 3, this)">
                         </div>
                     </div>
                 </div>
@@ -96,7 +99,7 @@
                             <div class="player-room-card">
                                 <div class="room-title">Você</div>
                                 <div class="room-player-row">
-                                    <img id="room-avatar-host" src="img/1.jpg" class="room-avatar" alt="Você">
+                                    <img id="room-avatar-host" src="img/1.jpg" class="room-avatar">
                                     <div>
                                         <div id="room-name-host" class="room-name">Aguardando...</div>
                                         <div id="room-ready-host" class="room-ready pending">Escolhendo dados</div>
@@ -107,7 +110,7 @@
                             <div class="player-room-card">
                                 <div class="room-title">Amigo</div>
                                 <div class="room-player-row">
-                                    <img id="room-avatar-convidado" src="img/2.jpg" class="room-avatar" alt="Amigo">
+                                    <img id="room-avatar-convidado" src="img/2.jpg" class="room-avatar">
                                     <div>
                                         <div id="room-name-convidado" class="room-name">Aguardando entrada...</div>
                                         <div id="room-ready-convidado" class="room-ready pending">Ainda não entrou</div>
@@ -148,25 +151,21 @@
 
                 <div class="placar-transmissao">
                     <div class="placar-item placar-item-j1">
-                        <img id="img-avatar-placar1" src="" class="avatar-circular size-p" alt="Jogador 1">
+                        <img id="img-avatar-placar1" src="" class="avatar-circular size-p">
                         <div class="placar-time" id="placar-nome-j1">JOGADOR 1</div>
                     </div>
-
                     <div class="placar-score">
-                        <span id="placar-pts-j1">0</span>
-                        <span class="placar-vs">X</span>
-                        <span id="placar-pts-j2">0</span>
+                        <span id="placar-pts-j1">0</span><span class="placar-vs">X</span><span id="placar-pts-j2">0</span>
                     </div>
-
                     <div class="placar-item placar-item-j2">
                         <div class="placar-time" id="placar-nome-j2">JOGADOR 2</div>
-                        <img id="img-avatar-placar2" src="" class="avatar-circular size-p" alt="Jogador 2">
+                        <img id="img-avatar-placar2" src="" class="avatar-circular size-p">
                     </div>
                 </div>
 
                 <div id="quiz-content-area">
                     <div id="aviso-turno-nome" class="turno-destaque">VEZ DE: JOGADOR</div>
-                    <div id="online-espera-msg" class="online-espera escondido">Aguardando a resposta do outro jogador...</div>
+                    <div id="online-espera-msg" class="online-espera escondido">Aguardando a resposta...</div>
                     <div id="streak-popup" class="streak-msg"></div>
                     <div class="progresso" id="barra-progresso">PERGUNTA 1 DE 10</div>
                     <h3 id="texto-pergunta">Pergunta?</h3>
@@ -177,7 +176,7 @@
             </div>
 
             <div id="tela-resultado" class="escondido">
-                <img id="img-avatar-vencedor" src="" class="avatar-circular size-g" alt="Vencedor">
+                <img id="img-avatar-vencedor" src="" class="avatar-circular size-g">
                 <h2 id="titulo-vencedor">Fim de Jogo!</h2>
                 <p id="mensagem-final" style="white-space: pre-line;"></p>
 
@@ -218,12 +217,9 @@
             <span class="fechar-modal" onclick="fecharModalCompartilhar()">×</span>
             <h3>Sala criada com sucesso</h3>
             <p>Compartilhe o link com seu amigo para ele entrar na partida.</p>
-
             <input type="text" id="input-link-sala" readonly>
-
             <button onclick="copiarLinkSala()">Copiar link</button>
             <button onclick="compartilharWhatsapp()" class="btn-desafio">Enviar no WhatsApp</button>
-
             <p id="status-sala" style="margin-top: 10px;">Aguardando o amigo entrar...</p>
         </div>
     </div>
@@ -231,11 +227,9 @@
     <button id="btn-musica-toggle" onclick="toggleMusica()">
         <span id="musica-icone">🔊</span>
     </button>
-
     <button id="btn-fullscreen" onclick="toggleFullscreen()">
         <span>↕️</span>
     </button>
-
 
     <div id="modal-repetir" class="escondido modal-overlay" onclick="fecharModalRepetir()">
         <div class="modal-content" onclick="event.stopPropagation()">
@@ -247,6 +241,7 @@
         </div>
     </div>
 
-    <script src="script.js"></script>
+    <!-- Versão 13.0 -->
+    <script src="script.js?v=13.0"></script>
 </body>
 </html>

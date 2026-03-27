@@ -1,8 +1,5 @@
 console.log("Copa Saminina carregada com modos solo, local e online");
 
-// =========================
-// FIREBASE
-// =========================
 const firebaseConfig = {
     apiKey: "AIzaSyDbvleD3CCVEOybvc7B-sKmzL1ugnHiMyk",
     authDomain: "copa-saminina.firebaseapp.com",
@@ -18,61 +15,22 @@ if (!firebase.apps.length) {
 }
 const database = firebase.database();
 
-// =========================
-// ÁUDIO
-// =========================
 const somAcerto = new Audio("audio/acerto.mp3");
 const somErro = new Audio("audio/erro.mp3");
 const musicaFundo = new Audio("audio/fundo.mp3");
-
-somAcerto.volume = 0.5;
-somErro.volume = 0.4;
-musicaFundo.volume = 0.15;
-musicaFundo.loop = true;
+somAcerto.volume = 0.5; somErro.volume = 0.4; musicaFundo.volume = 0.15; musicaFundo.loop = true;
 
 let audioMutado = false;
-
-// =========================
-// ESTADO GERAL
-// =========================
 const listaAvatares = ["img/1.jpg", "img/2.jpg", "img/3.jpg", "img/4.jpg"];
 
-let modoDeJogo = "";
-let salaId = null;
-let jogadorTipo = null; // host | convidado
-let linkSalaAtual = "";
-let salaListenerAtivo = false;
-let jogoListenerAtivo = false;
-let chatListenerAtivo = false;
-let feedIntervalId = null;
+let modoDeJogo = "", salaId = null, jogadorTipo = null, linkSalaAtual = "";
+let salaListenerAtivo = false, jogoListenerAtivo = false, chatListenerAtivo = false, feedIntervalId = null;
+let j1Nome = "", j2Nome = "", j1Avatar = "", j2Avatar = "";
+let j1Pontos = 0, j2Pontos = 0, j1Streak = 0, j2Streak = 0;
+let errosSeguidosJ1 = 0, errosSeguidosJ2 = 0, ePerguntaOuro = false;
+let perguntaAtual = 0, jogadorAtual = 1, perguntasDaRodada = [];
+let tempoRestante = 30, controleCronometro = null, controleTimeout = null;
 
-let j1Nome = "";
-let j2Nome = "";
-let j1Avatar = "";
-let j2Avatar = "";
-
-let j1Pontos = 0;
-let j2Pontos = 0;
-
-let j1Streak = 0;
-let j2Streak = 0;
-let errosSeguidosJ1 = 0;
-let errosSeguidosJ2 = 0;
-let ePerguntaOuro = false;
-
-let perguntaAtual = 0;
-let jogadorAtual = 1;
-let perguntasDaRodada = [];
-
-let tempoRestante = 30;
-let controleCronometro = null;
-let controleTimeout = null;
-
-let onlineDataAtual = null;
-
-// =========================
-// BANCO DE PERGUNTAS
-// =========================
 const bancoDePerguntas = [
     { pergunta: "Quantas Copas o Brasil ganhou?", respostas: ["3", "4", "5"], respostaCerta: 2 },
     { pergunta: "Quem é o maior artilheiro da história das Copas?", respostas: ["Pelé", "Ronaldo", "Miroslav Klose"], respostaCerta: 2 },
@@ -114,7 +72,6 @@ const bancoDePerguntas = [
     { pergunta: "Qual foi a maior goleada sofrida pelo Brasil em Copas?", respostas: ["3 a 0", "7 a 1", "5 a 2"], respostaCerta: 1 },
     { pergunta: "Qual cidade não sediou a Copa de 2014?", respostas: ["Cuiabá", "Manaus", "Arcoverde"], respostaCerta: 2 },
     { pergunta: "A taça da Copa mostra o quê?", respostas: ["Um globo", "Dois atletas sustentando o mundo", "Uma chuteira"], respostaCerta: 1 },
-
     { pergunta: "Quem é o único jogador tricampeão mundial como atleta?", respostas: ["Ronaldo", "Pelé", "Zidane"], respostaCerta: 1 },
     { pergunta: "Qual brasileiro era chamado de Anjo das Pernas Tortas?", respostas: ["Garrincha", "Romário", "Sócrates"], respostaCerta: 0 },
     { pergunta: "Quem marcou os dois gols do Brasil na final de 2002?", respostas: ["Rivaldo", "Ronaldo", "Ronaldinho"], respostaCerta: 1 },
@@ -148,20 +105,8 @@ const bancoDePerguntas = [
     { pergunta: "Quem foi o goleiro titular do Brasil no tetra de 1994?", respostas: ["Taffarel", "Marcos", "Dida"], respostaCerta: 0 }
 ];
 
-// =========================
-// UTILITÁRIOS
-// =========================
 function getStreakData(streak) {
-    const msgs = {
-        3: "Hat-trick!",
-        4: "Chocolate!",
-        5: "Pentaaaa!",
-        6: "Calma lá!",
-        7: "Virou passeio!",
-        8: "Domínio total!",
-        9: "Sem freio!",
-        10: "Aí virou bagunça!"
-    };
+    const msgs = { 3: "Hat-trick!", 4: "Chocolate!", 5: "Pentaaaa!", 6: "Calma lá!", 7: "Virou passeio!", 8: "Domínio total!", 9: "Sem freio!", 10: "Aí virou bagunça!" };
     return { msg: msgs[streak] || "", bonus: streak >= 3 ? 1 : 0 };
 }
 
@@ -177,34 +122,17 @@ function calcularTitulo(pts) {
 
 function shuffleArray(arr) {
     const copia = [...arr];
-    for (let i = copia.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [copia[i], copia[j]] = [copia[j], copia[i]];
-    }
+    for (let i = copia.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [copia[i], copia[j]] = [copia[j], copia[i]]; }
     return copia;
 }
 
-function gerarPerguntasAleatorias(qtd = 10) {
-    return shuffleArray(bancoDePerguntas).slice(0, qtd);
-}
+function gerarPerguntasAleatorias(qtd = 10) { return shuffleArray(bancoDePerguntas).slice(0, qtd); }
+function gerarCodigoSala() { return Math.random().toString(36).substring(2, 7); }
 
-function gerarCodigoSala() {
-    return Math.random().toString(36).substring(2, 7);
-}
-
-// =========================
-// ÁUDIO
-// =========================
 function aplicarEstadoAudio() {
-    somAcerto.muted = audioMutado;
-    somErro.muted = audioMutado;
-    musicaFundo.muted = audioMutado;
-
+    somAcerto.muted = audioMutado; somErro.muted = audioMutado; musicaFundo.muted = audioMutado;
     const icone = document.getElementById("musica-icone");
-    if (icone) {
-        icone.innerText = audioMutado ? "🔇" : "🔊";
-    }
-
+    if (icone) icone.innerText = audioMutado ? "🔇" : "🔊";
     mostrarBotaoMuteSePreciso();
 }
 
@@ -214,504 +142,198 @@ function mostrarBotaoMuteSePreciso() {
     botaoMute.classList.toggle("visivel", !musicaFundo.paused);
 }
 
-function toggleMusica() {
-    audioMutado = !audioMutado;
-    aplicarEstadoAudio();
-}
+function toggleMusica() { audioMutado = !audioMutado; aplicarEstadoAudio(); }
+function toggleFullscreen() { !document.fullscreenElement ? document.documentElement.requestFullscreen().catch(() => {}) : document.exitFullscreen().catch(() => {}); }
 
-function toggleFullscreen() {
-    if (!document.fullscreenElement) {
-        document.documentElement.requestFullscreen().catch(() => {});
-    } else {
-        document.exitFullscreen().catch(() => {});
-    }
-}
-
-// =========================
-// RESULTADO SALVO
-// =========================
 function salvarEstadoResultado() {
-    const dadosResultado = {
+    sessionStorage.setItem("resultadoCopaSaminina", JSON.stringify({
         titulo: document.getElementById("titulo-vencedor")?.innerText || "Fim de Jogo!",
         mensagem: document.getElementById("mensagem-final")?.innerText || "",
         avatar: document.getElementById("img-avatar-vencedor")?.src || "",
         mostrarAvatar: document.getElementById("img-avatar-vencedor")?.style.display !== "none"
-    };
-
-    sessionStorage.setItem("resultadoCopaSaminina", JSON.stringify(dadosResultado));
+    }));
 }
 
 function restaurarResultadoSeExistir() {
     const salvo = sessionStorage.getItem("resultadoCopaSaminina");
     if (!salvo) return;
-
     try {
         const dados = JSON.parse(salvo);
-
         esconderTodasAsTelas();
         document.getElementById("tela-resultado").classList.remove("escondido");
-
         document.getElementById("titulo-vencedor").innerText = dados.titulo || "Fim de Jogo!";
         document.getElementById("mensagem-final").innerText = dados.mensagem || "";
-
         const img = document.getElementById("img-avatar-vencedor");
-        if (dados.mostrarAvatar && dados.avatar) {
-            img.src = dados.avatar;
-            img.style.display = "block";
-        } else {
-            img.style.display = "none";
-        }
-    } catch (e) {
-        console.log("Erro ao restaurar resultado:", e);
-    }
+        if (dados.mostrarAvatar && dados.avatar) { img.src = dados.avatar; img.style.display = "block"; } else { img.style.display = "none"; }
+    } catch (e) { console.log(e); }
 }
 
-function limparResultadoSalvo() {
-    sessionStorage.removeItem("resultadoCopaSaminina");
-}
+function limparResultadoSalvo() { sessionStorage.removeItem("resultadoCopaSaminina"); }
 
-// =========================
-// TELAS
-// =========================
 function esconderTodasAsTelas() {
-    const ids = [
-        "tela-modo",
-        "tela-inicial",
-        "tela-quiz",
-        "tela-resultado",
-        "timer-container",
-        "tela-espera-online"
-    ];
-
-    ids.forEach(id => {
+    ["tela-modo", "tela-inicial", "tela-quiz", "tela-resultado", "timer-container", "tela-espera-online"].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.classList.add("escondido");
     });
 }
 
-function mostrarTelaAguardandoOnline(texto = "Aguardando o outro jogador...") {
+function mostrarTelaAguardandoOnline(texto = "Aguardando...", mostrarBotao = false) {
     let tela = document.getElementById("tela-espera-online");
-
     if (!tela) {
-        tela = document.createElement("div");
-        tela.id = "tela-espera-online";
-        tela.className = "quiz-container";
-        tela.innerHTML = `
-            <h2 id="texto-espera-online">Aguardando o outro jogador...</h2>
-            <p style="margin-top: 10px; color: var(--color-blue); font-weight: bold;">
-                Assim que os dois estiverem prontos, a partida começa.
-            </p>
-            <div id="feed-espera" class="feed-ao-vivo" style="margin-top:16px;"></div>
-        `;
-        const wrapper = document.querySelector(".main-wrapper");
-        if (wrapper) wrapper.appendChild(tela);
+        tela = document.createElement("div"); tela.id = "tela-espera-online"; tela.className = "quiz-container";
+        tela.innerHTML = `<h2 id="texto-espera-online"></h2><p style="margin-top:10px; color:var(--color-blue); font-weight:bold;">Prepare-se para o desafio.</p><div id="area-botao-iniciar-online"></div><div id="chat-container-espera" style="margin-top:20px; text-align:left;"></div><div id="feed-espera" class="feed-ao-vivo" style="margin-top:16px;"></div>`;
+        document.querySelector(".main-wrapper")?.appendChild(tela);
+        iniciarFeedAoVivo();
     }
-
-    const textoEl = document.getElementById("texto-espera-online");
-    if (textoEl) textoEl.innerText = texto;
-
+    document.getElementById("texto-espera-online").innerText = texto;
+    document.getElementById("area-botao-iniciar-online").innerHTML = mostrarBotao ? `<button onclick="iniciarContagemPeloHost()" class="btn-ranking" style="margin-top:20px;">COMEÇAR BATALHA!</button>` : "";
+    const chatCard = document.getElementById("chat-card-online");
+    const chatCont = document.getElementById("chat-container-espera");
+    if (chatCard && chatCont && chatCard.parentElement !== chatCont) { chatCont.appendChild(chatCard); chatCard.classList.remove("escondido"); }
     tela.classList.remove("escondido");
 }
 
-function esconderTelaAguardandoOnline() {
-    const tela = document.getElementById("tela-espera-online");
-    if (tela) tela.classList.add("escondido");
-}
+function esconderTelaAguardandoOnline() { document.getElementById("tela-espera-online")?.classList.add("escondido"); }
+function copiarLinkSala() { if (linkSalaAtual) { navigator.clipboard.writeText(linkSalaAtual); alert("Link copiado!"); } }
+function compartilharWhatsapp() { if (linkSalaAtual) window.open(`https://wa.me/?text=${encodeURIComponent("Partida Copa Saminina: " + linkSalaAtual)}`, "_blank"); }
+function compartilharSalaWhatsApp() { compartilharWhatsapp(); }
+function fecharModalCompartilhar() { document.getElementById("modal-compartilhar")?.classList.add("escondido"); }
 
-// =========================
-// COMPARTILHAMENTO
-// =========================
-function copiarLinkSala() {
-    if (!linkSalaAtual) {
-        alert("Link da sala não encontrado.");
-        return;
-    }
-
-    navigator.clipboard.writeText(linkSalaAtual).then(() => {
-        const statusSala = document.getElementById("status-sala");
-        if (statusSala) {
-            statusSala.innerText = "Link copiado! Agora envie para seu amigo.";
-        } else {
-            alert("Link copiado!");
-        }
-    }).catch(() => {
-        alert("Não foi possível copiar o link.");
-    });
-}
-
-function compartilharWhatsapp() {
-    if (!linkSalaAtual) {
-        alert("Link da sala não encontrado.");
-        return;
-    }
-
-    const mensagem = `Entre na minha partida da Copa Saminina: ${linkSalaAtual}`;
-    window.open(`https://wa.me/?text=${encodeURIComponent(mensagem)}`, "_blank");
-}
-
-function compartilharSalaWhatsApp() {
-    compartilharWhatsapp();
-}
-
-function fecharModalCompartilhar() {
-    const modal = document.getElementById("modal-compartilhar");
-    if (modal) modal.classList.add("escondido");
-}
-
-// =========================
-// QRCODE E RESET
-// =========================
 function gerarQRCodeInicial() {
     const container = document.getElementById("qrcode-container");
-    if (!container || typeof QRCode === "undefined") return;
-
+    if (!container || typeof QRCode === "undefined") {
+        console.warn("QRCode indisponível no momento.");
+        return;
+    }
     container.innerHTML = "";
-    new QRCode(container, {
-        text: "https://mxthony.github.io/Jogos/ranking.html",
-        width: 120,
-        height: 120,
-        colorDark: "#003399",
-        colorLight: "#ffffff"
-    });
+    new QRCode(container, { text: "https://mxthony.github.io/Jogos/ranking.html", width: 120, height: 120, colorDark: "#003399", colorLight: "#ffffff" });
 }
 
 function verificarSenhaReset() {
-    const senha = prompt("Digite a senha para limpar o banco:");
-    if (senha === "321") {
-        if (confirm("Deseja limpar todo o banco de dados?")) {
-            database.ref().remove().then(() => {
-                alert("Banco limpo!");
-                location.reload();
-            });
-        }
-    } else if (senha !== null) {
-        alert("Senha incorreta!");
-    }
+    if (prompt("Senha para limpar o banco:") === "321" && confirm("Zerar banco?")) { database.ref().remove().then(() => location.reload()); }
 }
 
-// =========================
-// FEED AO VIVO
-// =========================
 function gerarFeedHtml(ranking, historico) {
-    const top3Html = ranking.slice(0, 3).map((j, i) => {
-        const medalha = i === 0 ? "🥇" : i === 1 ? "🥈" : "🥉";
-        const linhaExtra = i === 0 ? "Líder absoluto" : i === 1 ? "Na cola do topo" : "Fechando o pódio";
-        return `
-            <div class="feed-item" style="display:flex;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid #e6e6e6;">
-                <div>
-                    <div style="font-weight:900;color:var(--color-blue);">${medalha} ${j.nome}</div>
-                    <div style="font-size:12px;color:#6a7280;">${linhaExtra}</div>
-                </div>
-                <div style="text-align:right;">
-                    <div style="font-weight:900;color:#1f1f1f;">${j.copas || 0} copas</div>
-                    <div style="font-size:12px;color:#6a7280;">${j.pontosTotais || 0} pts</div>
-                </div>
-            </div>
-        `;
-    }).join("");
+    const medalhas = ["🥇", "🥈", "🥉"];
+    const legendasTop = ["Líder absoluto", "Na cola do topo", "Fechando o pódio"];
 
+    // Monta a lista do TOP 3
+    const top3Html = ranking.slice(0, 3).map((j, i) => `
+        <div class="feed-item">
+            <div class="feed-col-left">
+                <div class="feed-nome">${medalhas[i]} ${j.nome}</div>
+                <div class="feed-legenda">${legendasTop[i] || ""}</div>
+            </div>
+            <div class="feed-col-right">
+                <div class="feed-score">${j.copas || 0} copas</div>
+                <div class="feed-legenda">${j.pontosTotais || 0} pts</div>
+            </div>
+        </div>`).join("");
+
+    // Monta a lista dos ÚLTIMOS JOGADORES (em linha reta)
     const ultimosHtml = historico.slice(0, 3).map((p, i) => {
         const destaque = i === 0 ? "Agora há pouco" : "Recente";
         return `
-            <div class="feed-item" style="padding:10px 0;border-bottom:1px solid #e6e6e6;">
-                <div style="font-weight:900;color:var(--color-blue);">${p.nome}</div>
-                <div style="font-size:13px;color:#333;margin-top:2px;">${p.titulo}</div>
-                <div style="font-size:11px;color:#7a7f89;margin-top:3px;">${destaque}</div>
-            </div>
-        `;
+        <div class="feed-item-row">
+            <div class="feed-nome feed-ellipsis" style="flex: 1;">${p.nome}</div>
+            <div class="feed-legenda" style="flex: 1.2; text-align: center;">${p.titulo}</div>
+            <div class="feed-time" style="flex: 0.8; text-align: right;">${destaque}</div>
+        </div>`;
     }).join("");
 
+    // Retorna a estrutura HTML completa
     return `
-        <div class="feed-box" style="background:linear-gradient(180deg,#fbfcff 0%,#f3f6fb 100%);border:1px solid #dbe3ef;">
-            <div class="feed-titulo" style="display:flex;align-items:center;justify-content:space-between;">
-                <span>Ao vivo</span>
-                <span style="font-size:11px;background:#eaf3ff;color:var(--color-blue);padding:4px 8px;border-radius:999px;font-weight:900;">Atualizando</span>
+        <div class="feed-box">
+            <div class="feed-header-top">
+                <div class="feed-titulo">Ao vivo</div>
+                <div class="feed-badge">Atualizando</div>
             </div>
-
-            <div style="display:grid;grid-template-columns:1fr;gap:14px;">
-                <div style="background:#fff;border:1px solid #e3e8f1;border-radius:12px;padding:12px;">
-                    <div class="feed-subtitulo" style="margin-top:0;">Top 3 da arena</div>
-                    ${top3Html || '<div class="feed-vazio">Ainda sem ranking.</div>'}
-                </div>
-
-                <div style="background:#fff;border:1px solid #e3e8f1;border-radius:12px;padding:12px;">
-                    <div class="feed-subtitulo" style="margin-top:0;">Últimos jogadores</div>
-                    ${ultimosHtml || '<div class="feed-vazio">Aguardando novas partidas.</div>'}
-                </div>
+            
+            <div class="feed-card-interno">
+                <div class="feed-subtitulo">Top 3 da arena</div>
+                ${top3Html || '<div class="feed-vazio">Ainda sem ranking.</div>'}
             </div>
-        </div>
-    `;
+            
+            <div class="feed-card-interno" style="margin-top: 15px;">
+                <div class="feed-subtitulo">Últimos jogadores</div>
+                ${ultimosHtml || '<div class="feed-vazio">Aguardando novas partidas.</div>'}
+            </div>
+        </div>`;
 }
 
 function iniciarFeedAoVivo() {
     const atualizarFeed = async () => {
         try {
-            const rankingSnap = await database.ref("samininaRanking").once("value");
-            const historicoSnap = await database.ref("historicoPartidas")
-                .orderByChild("timestamp")
-                .limitToLast(5)
-                .once("value");
-
-            let ranking = [];
-            rankingSnap.forEach(c => {
-                if (c.val() && c.val().nome) ranking.push(c.val());
-            });
-
-            ranking.sort((a, b) =>
-                (Number(b.copas) || 0) - (Number(a.copas) || 0) ||
-                (Number(b.pontosTotais) || 0) - (Number(a.pontosTotais) || 0)
-            );
-
-            let historico = [];
-            historicoSnap.forEach(c => {
-                if (c.val() && c.val().nome) historico.push(c.val());
-            });
-            historico.reverse();
-
-            const htmlFinal = gerarFeedHtml(ranking, historico);
-
-            [
-                document.getElementById("feed-inicio"),
-                document.getElementById("feed-espera"),
-                document.getElementById("feed-resultado")
-            ].forEach(bloco => {
-                if (bloco) bloco.innerHTML = htmlFinal;
-            });
-        } catch (e) {
-            console.error("Erro no feed ao vivo:", e);
-
-            [
-                document.getElementById("feed-inicio"),
-                document.getElementById("feed-espera"),
-                document.getElementById("feed-resultado")
-            ].forEach(bloco => {
-                if (bloco) {
-                    bloco.innerHTML = `
-                        <div class="feed-box">
-                            <div class="feed-titulo">Ao vivo</div>
-                            <div class="feed-vazio">Não foi possível carregar agora.</div>
-                        </div>
-                    `;
-                }
-            });
-        }
+            const [rankSnap, histSnap] = await Promise.all([
+                database.ref("samininaRanking").once("value"),
+                database.ref("historicoPartidas").orderByChild("timestamp").limitToLast(3).once("value")
+            ]);
+            let ranking = []; rankSnap.forEach(c => { if (c.val()?.nome) ranking.push(c.val()); });
+            ranking.sort((a, b) => (Number(b.copas)||0) - (Number(a.copas)||0) || (Number(b.pontosTotais)||0) - (Number(a.pontosTotais)||0));
+            let historico = []; histSnap.forEach(c => { if (c.val()?.nome) historico.push(c.val()); }); historico.reverse();
+            const html = gerarFeedHtml(ranking, historico);
+            ["feed-inicio", "feed-espera", "feed-resultado"].forEach(id => { const b = document.getElementById(id); if(b) b.innerHTML = html; });
+        } catch (e) { console.error("Erro Feed:", e); }
     };
-
     atualizarFeed();
-
     database.ref("samininaRanking").on("value", atualizarFeed);
-    database.ref("historicoPartidas").limitToLast(5).on("value", atualizarFeed);
-
+    database.ref("historicoPartidas").limitToLast(3).on("value", atualizarFeed);
     if (feedIntervalId) clearInterval(feedIntervalId);
     feedIntervalId = setInterval(atualizarFeed, 12000);
 }
 
-// =========================
-// RANKING
-// =========================
-function abrirRankingMestreInicio() {
-    window.location.href = "ranking-mestre.html?fs=1";
-}
+function abrirRankingMestreInicio() { window.location.href = "ranking-mestre.html?fs=1"; }
+function abrirRankingMestreResultado() { salvarEstadoResultado(); window.location.href = "ranking-mestre.html?fs=1&origem=resultado"; }
 
-function abrirRankingMestreResultado() {
-    salvarEstadoResultado();
-    window.location.href = "ranking-mestre.html?fs=1&origem=resultado";
-}
-
-// =========================
-// CHAT ONLINE
-// =========================
 function ouvirChatSala() {
-    if (!salaId || chatListenerAtivo) return;
-    chatListenerAtivo = true;
-
+    if (!salaId || chatListenerAtivo) return; chatListenerAtivo = true;
     database.ref(`salas/${salaId}/chat`).limitToLast(20).on("value", (snap) => {
-        const lista = document.getElementById("chat-online-lista");
-        if (!lista) return;
-
-        const itens = [];
-        snap.forEach((c) => {
-            const val = c.val();
-            if (val && val.autor && val.texto) itens.push(val);
-        });
-
-        if (!itens.length) {
-            lista.innerHTML = "Sem mensagens ainda.";
-            return;
-        }
-
-        lista.innerHTML = itens.map((m) => `
-            <div class="chat-msg">
-                <div class="chat-autor">${m.autor}</div>
-                <div>${m.texto}</div>
-            </div>
-        `).join("");
-
+        const lista = document.getElementById("chat-online-lista"); if (!lista) return;
+        const itens = []; snap.forEach(c => { if(c.val()?.texto) itens.push(c.val()); });
+        lista.innerHTML = itens.length ? itens.map(m => `<div class="chat-msg"><div class="chat-autor">${m.autor}</div><div>${m.texto}</div></div>`).join("") : "Sem mensagens.";
         lista.scrollTop = lista.scrollHeight;
     });
 }
 
 function enviarMensagemSala() {
-    if (!salaId) return;
-
-    const input = document.getElementById("chat-online-input");
-    if (!input) return;
-
-    const texto = input.value.trim();
-    if (!texto) return;
-
-    let autor = "Jogador";
-    if (jogadorTipo === "host") autor = j1Nome || "Host";
-    else if (jogadorTipo === "convidado") autor = j2Nome || "Convidado";
-
-    database.ref(`salas/${salaId}/chat`).push({
-        autor,
-        texto,
-        timestamp: firebase.database.ServerValue.TIMESTAMP
-    });
-
+    if (!salaId) return; const input = document.getElementById("chat-online-input");
+    if (!input || !input.value.trim()) return;
+    const autor = (jogadorTipo === "host" ? j1Nome : j2Nome) || document.getElementById("input-nome1").value.trim() || "Jogador";
+    database.ref(`salas/${salaId}/chat`).push({ autor, texto: input.value.trim(), timestamp: firebase.database.ServerValue.TIMESTAMP });
     input.value = "";
 }
 
 function enviarMensagemRapida(texto) {
     if (!salaId || !texto) return;
-
-    let autor = "Jogador";
-    if (jogadorTipo === "host") autor = j1Nome || "Host";
-    else if (jogadorTipo === "convidado") autor = j2Nome || "Convidado";
-
-    database.ref(`salas/${salaId}/chat`).push({
-        autor,
-        texto,
-        timestamp: firebase.database.ServerValue.TIMESTAMP
-    });
+    const autor = (jogadorTipo === "host" ? j1Nome : j2Nome) || document.getElementById("input-nome1").value.trim() || "Jogador";
+    database.ref(`salas/${salaId}/chat`).push({ autor, texto, timestamp: firebase.database.ServerValue.TIMESTAMP });
 }
 
-// =========================
-// MODOS
-// =========================
 function resetarEstadoPartida() {
-    j1Nome = "";
-    j2Nome = "";
-    j1Avatar = "";
-    j2Avatar = "";
-
-    j1Pontos = 0;
-    j2Pontos = 0;
-
-    j1Streak = 0;
-    j2Streak = 0;
-    errosSeguidosJ1 = 0;
-    errosSeguidosJ2 = 0;
-    ePerguntaOuro = false;
-
-    perguntaAtual = 0;
-    jogadorAtual = 1;
-    perguntasDaRodada = [];
-
-    clearInterval(controleCronometro);
-    clearTimeout(controleTimeout);
-
-    document.getElementById("placar-pts-j1").innerText = "0";
-    document.getElementById("placar-pts-j2").innerText = "0";
-
-    const input1 = document.getElementById("input-nome1");
-    const input2 = document.getElementById("input-nome2");
-    if (input1) input1.value = "";
-    if (input2) input2.value = "";
-
-    document.querySelectorAll(".img-avatar-opcao").forEach(img => {
-        img.classList.remove("selecionado");
-    });
-
-    document.getElementById("container-avatar2")?.classList.add("escondido");
-    document.getElementById("secao-pesquisa")?.classList.remove("escondido");
-    document.querySelector(".emoji-container")?.classList.remove("escondido");
-    document.getElementById("feedback-agradecimento")?.classList.add("escondido");
-
-    const painelOnline = document.getElementById("painel-online");
-    if (painelOnline) painelOnline.classList.add("escondido");
-
-    const btnIniciar = document.getElementById("btn-iniciar-local");
-    if (btnIniciar) {
-        btnIniciar.classList.remove("escondido");
-        btnIniciar.innerText = "Iniciar Partida";
-    }
-
-    const btnConfirmar = document.getElementById("btn-confirmar-online");
-    if (btnConfirmar) btnConfirmar.classList.add("escondido");
-
-    const tituloRegistro = document.getElementById("titulo-registro");
-    if (tituloRegistro) tituloRegistro.innerText = "Registro dos Craques";
-
-    const badge = document.getElementById("online-badge-status");
-    if (badge) badge.innerText = "Preparando";
-
-    const status = document.getElementById("online-status-text");
-    if (status) status.innerText = "Crie uma sala, compartilhe o link e espere seu amigo entrar.";
-
-    const blocoLink = document.getElementById("bloco-link-sala");
-    if (blocoLink) blocoLink.classList.add("escondido");
-
-    const btnZap = document.getElementById("btn-compartilhar-whatsapp");
-    const btnCopiar = document.getElementById("btn-copiar-link");
-    const btnCriar = document.getElementById("btn-criar-sala");
-    if (btnZap) btnZap.classList.add("escondido");
-    if (btnCopiar) btnCopiar.classList.add("escondido");
-    if (btnCriar) btnCriar.classList.remove("escondido");
-
-    const roomNameHost = document.getElementById("room-name-host");
-    const roomNameConvidado = document.getElementById("room-name-convidado");
-    const roomReadyHost = document.getElementById("room-ready-host");
-    const roomReadyConvidado = document.getElementById("room-ready-convidado");
-    const roomAvatarHost = document.getElementById("room-avatar-host");
-    const roomAvatarConvidado = document.getElementById("room-avatar-convidado");
-
-    if (roomNameHost) roomNameHost.innerText = "Aguardando...";
-    if (roomNameConvidado) roomNameConvidado.innerText = "Aguardando entrada...";
-    if (roomReadyHost) {
-        roomReadyHost.innerText = "Escolhendo dados";
-        roomReadyHost.className = "room-ready pending";
-    }
-    if (roomReadyConvidado) {
-        roomReadyConvidado.innerText = "Ainda não entrou";
-        roomReadyConvidado.className = "room-ready pending";
-    }
-    if (roomAvatarHost) roomAvatarHost.src = "img/1.jpg";
-    if (roomAvatarConvidado) roomAvatarConvidado.src = "img/2.jpg";
-
-    const chatLista = document.getElementById("chat-online-lista");
-    const chatInput = document.getElementById("chat-online-input");
-    const chatCard = document.getElementById("chat-card-online");
-    if (chatLista) chatLista.innerHTML = "Sem mensagens ainda.";
-    if (chatInput) chatInput.value = "";
-    if (chatCard) chatCard.classList.add("escondido");
-
-    salaId = null;
-    jogadorTipo = null;
-    linkSalaAtual = "";
-    salaListenerAtivo = false;
-    jogoListenerAtivo = false;
-    chatListenerAtivo = false;
-
-    const blocoQrSala = document.getElementById("bloco-qrcode-sala");
-    const qrSala = document.getElementById("qrcode-sala-online");
-
-    if (blocoQrSala) blocoQrSala.classList.add("escondido");
-    if (qrSala) qrSala.innerHTML = "";
+    j1Nome = j2Nome = j1Avatar = j2Avatar = ""; j1Pontos = j2Pontos = j1Streak = j2Streak = errosSeguidosJ1 = errosSeguidosJ2 = perguntaAtual = 0; jogadorAtual = 1; perguntasDaRodada = []; ePerguntaOuro = false;
+    clearInterval(controleCronometro); clearTimeout(controleTimeout);
+    document.getElementById("placar-pts-j1").innerText = "0"; document.getElementById("placar-pts-j2").innerText = "0";
+    if(document.getElementById("input-nome1")) document.getElementById("input-nome1").value = "";
+    if(document.getElementById("input-nome2")) document.getElementById("input-nome2").value = "";
+    document.querySelectorAll(".img-avatar-opcao").forEach(img => img.classList.remove("selecionado"));
+    esconderTodasAsTelas();
+    salaId = jogadorTipo = null; linkSalaAtual = ""; salaListenerAtivo = jogoListenerAtivo = chatListenerAtivo = false;
+    document.getElementById("qrcode-sala-online").innerHTML = "";
 }
 
 function selecionarModo(modo) {
-    limparResultadoSalvo();
-    resetarEstadoPartida();
-
+    limparResultadoSalvo(); 
+    resetarEstadoPartida(); 
     modoDeJogo = modo;
 
     document.getElementById("tela-modo").classList.add("escondido");
     document.getElementById("tela-inicial").classList.remove("escondido");
 
+    // Trava de segurança: só mostra o Jogador 2 se for Batalha Local
     if (modo === "batalha_local") {
         document.getElementById("container-avatar2")?.classList.remove("escondido");
+    } else {
+        document.getElementById("container-avatar2")?.classList.add("escondido");
     }
 
     if (modo === "batalha_online") {
@@ -719,1044 +341,217 @@ function selecionarModo(modo) {
         document.getElementById("btn-iniciar-local")?.classList.add("escondido");
         document.getElementById("btn-confirmar-online")?.classList.remove("escondido");
         document.getElementById("titulo-registro").innerText = "Entrar na Sala Online";
-        document.getElementById("online-status-text").innerText = "Crie a sala, compartilhe o link e depois confirme seu nome e avatar.";
         document.getElementById("chat-card-online")?.classList.add("escondido");
     }
 }
 
-function voltarParaModos() {
-    limparResultadoSalvo();
-    esconderTelaAguardandoOnline();
-    fecharModalCompartilhar();
-    resetarEstadoPartida();
-
-    document.getElementById("tela-inicial").classList.add("escondido");
-    document.getElementById("tela-modo").classList.remove("escondido");
-}
-
+function voltarParaModos() { limparResultadoSalvo(); fecharModalCompartilhar(); resetarEstadoPartida(); document.getElementById("tela-modo").classList.remove("escondido"); }
 function selecionarAvatar(j, i, el) {
-    const avatarEscolhido = listaAvatares[i];
-
-    if (modoDeJogo === "batalha_online") {
-        if (jogadorTipo === "convidado") {
-            j2Avatar = avatarEscolhido;
-        } else {
-            j1Avatar = avatarEscolhido;
-        }
-    } else {
-        if (j === 1) j1Avatar = avatarEscolhido;
-        if (j === 2) j2Avatar = avatarEscolhido;
-    }
-
+    const av = listaAvatares[i];
+    if (modoDeJogo === "batalha_online") { if (jogadorTipo === "convidado") j2Avatar = av; else j1Avatar = av; }
+    else { if (j === 1) j1Avatar = av; if (j === 2) j2Avatar = av; }
     el.parentElement.querySelectorAll("img").forEach(img => img.classList.remove("selecionado"));
     el.classList.add("selecionado");
-
     if (modoDeJogo === "batalha_online") {
-        atualizarPainelSalaLocal();
-    }
-}
-
-// =========================
-// ONLINE
-// =========================
-function atualizarPainelSalaLocal() {
-    const roomNameHost = document.getElementById("room-name-host");
-    const roomNameConvidado = document.getElementById("room-name-convidado");
-    const roomAvatarHost = document.getElementById("room-avatar-host");
-    const roomAvatarConvidado = document.getElementById("room-avatar-convidado");
-
-    if (jogadorTipo === "convidado") {
-        if (roomNameConvidado) roomNameConvidado.innerText = j2Nome || "Você";
-        if (roomAvatarConvidado && j2Avatar) roomAvatarConvidado.src = j2Avatar;
-    } else {
-        if (roomNameHost) roomNameHost.innerText = j1Nome || "Você";
-        if (roomAvatarHost && j1Avatar) roomAvatarHost.src = j1Avatar;
+        if(jogadorTipo === "convidado") { document.getElementById("room-avatar-convidado").src = j2Avatar; }
+        else { document.getElementById("room-avatar-host").src = j1Avatar; }
     }
 }
 
 function criarSalaOnline() {
-    if (modoDeJogo !== "batalha_online") return;
-    if (jogadorTipo === "convidado") return;
-
-    salaId = gerarCodigoSala();
-    jogadorTipo = "host";
-    salaListenerAtivo = false;
-    jogoListenerAtivo = false;
-    chatListenerAtivo = false;
-
+    if (modoDeJogo !== "batalha_online" || jogadorTipo === "convidado") return;
+    salaId = gerarCodigoSala(); jogadorTipo = "host"; salaListenerAtivo = jogoListenerAtivo = chatListenerAtivo = false;
     database.ref(`salas/${salaId}`).set({
-        status: "esperando",
-        host: { nome: "", avatar: "", pronto: false },
-        convidado: { nome: "", avatar: "", pronto: false },
-        jogo: {
-            turno: "host",
-            perguntaAtual: 0,
-            j1Pontos: 0,
-            j2Pontos: 0,
-            perguntas: [],
-            iniciada: false,
-            countdown: 0
-        }
+        status: "esperando", host: { nome: "", avatar: "", pronto: false }, convidado: { nome: "", avatar: "", pronto: false },
+        jogo: { turno: "host", perguntaAtual: 0, j1Pontos: 0, j2Pontos: 0, perguntas: [], iniciada: false, countdown: 0 }
     }).then(() => {
-        const urlSala = new URL(window.location.href);
-        urlSala.search = "";
-        urlSala.searchParams.set("sala", salaId);
-        linkSalaAtual = urlSala.toString();
-
-        const badge = document.getElementById("online-badge-status");
-        const status = document.getElementById("online-status-text");
-        const blocoLink = document.getElementById("bloco-link-sala");
-        const inputLink = document.getElementById("input-link-sala");
-        const btnZap = document.getElementById("btn-compartilhar-whatsapp");
-        const btnCopiar = document.getElementById("btn-copiar-link");
-
-        if (badge) badge.innerText = "Sala criada";
-        if (status) status.innerText = "Sala criada com sucesso. Agora confirme seu nome e avatar e compartilhe o link.";
-        if (blocoLink) blocoLink.classList.remove("escondido");
-        if (inputLink) inputLink.value = linkSalaAtual;
-        gerarQRCodeSala(linkSalaAtual);
-        if (btnZap) btnZap.classList.remove("escondido");
-        if (btnCopiar) btnCopiar.classList.remove("escondido");
-
-        const modal = document.getElementById("modal-compartilhar");
-        const statusSala = document.getElementById("status-sala");
-        if (statusSala) statusSala.innerText = "Aguardando o amigo entrar...";
-        if (modal) modal.classList.remove("escondido");
-
+        linkSalaAtual = new URL(window.location.href); linkSalaAtual.search = ""; linkSalaAtual.searchParams.set("sala", salaId); linkSalaAtual = linkSalaAtual.toString();
+        document.getElementById("online-badge-status").innerText = "Sala criada";
+        document.getElementById("bloco-link-sala").classList.remove("escondido"); document.getElementById("input-link-sala").value = linkSalaAtual;
+        document.getElementById("bloco-qrcode-sala").classList.remove("escondido");
+        const qrBox = document.getElementById("qrcode-sala-online"); qrBox.innerHTML = ""; new QRCode(qrBox, { text: linkSalaAtual, width: 120, height: 120 });
+        document.getElementById("btn-compartilhar-whatsapp")?.classList.remove("escondido"); document.getElementById("btn-copiar-link")?.classList.remove("escondido");
+        document.getElementById("modal-compartilhar").classList.remove("escondido");
         ouvirSalaOnline();
-    }).catch((erro) => {
-        console.error("Erro ao criar sala online:", erro);
-        alert("Não foi possível criar a sala online.");
     });
-}
-
-function iniciarContagemSala() {
-    let valor = 3;
-
-    const intervalo = setInterval(() => {
-        valor--;
-
-        if (valor <= 0) {
-            clearInterval(intervalo);
-            database.ref(`salas/${salaId}`).update({
-                status: "pronta",
-                "jogo/iniciada": true,
-                "jogo/countdown": 0
-            });
-        } else {
-            database.ref(`salas/${salaId}/jogo`).update({
-                countdown: valor
-            });
-        }
-    }, 1000);
-}
-
-function verificarSePodeIniciarSala() {
-    if (!salaId) return;
-
-    database.ref(`salas/${salaId}`).once("value").then(snap => {
-        const data = snap.val();
-        if (!data) return;
-
-        const hostPronto = !!data.host?.pronto;
-        const convidadoPronto = !!data.convidado?.pronto;
-
-        if (hostPronto && convidadoPronto && data.status !== "contagem" && data.status !== "pronta") {
-            const perguntasSorteadas = gerarPerguntasAleatorias(10);
-
-            database.ref(`salas/${salaId}`).update({
-                status: "contagem",
-                "jogo/perguntas": perguntasSorteadas,
-                "jogo/perguntaAtual": 0,
-                "jogo/turno": "host",
-                "jogo/j1Pontos": 0,
-                "jogo/j2Pontos": 0,
-                "jogo/iniciada": false,
-                "jogo/countdown": 3
-            });
-
-            iniciarContagemSala();
-        }
-    });
-}
-
-function atualizarPainelSalaOnline(data) {
-    const roomNameHost = document.getElementById("room-name-host");
-    const roomNameConvidado = document.getElementById("room-name-convidado");
-    const roomReadyHost = document.getElementById("room-ready-host");
-    const roomReadyConvidado = document.getElementById("room-ready-convidado");
-    const roomAvatarHost = document.getElementById("room-avatar-host");
-    const roomAvatarConvidado = document.getElementById("room-avatar-convidado");
-    const badge = document.getElementById("online-badge-status");
-    const status = document.getElementById("online-status-text");
-
-    if (roomNameHost) roomNameHost.innerText = data.host?.nome || "Aguardando...";
-    if (roomNameConvidado) roomNameConvidado.innerText = data.convidado?.nome || "Aguardando entrada...";
-    if (roomAvatarHost) roomAvatarHost.src = data.host?.avatar || "img/1.jpg";
-    if (roomAvatarConvidado) roomAvatarConvidado.src = data.convidado?.avatar || "img/2.jpg";
-
-    if (roomReadyHost) {
-        roomReadyHost.innerText = data.host?.pronto ? "Pronto" : "Escolhendo dados";
-        roomReadyHost.className = `room-ready ${data.host?.pronto ? "ready" : "pending"}`;
-    }
-
-    if (roomReadyConvidado) {
-        roomReadyConvidado.innerText = data.convidado?.pronto ? "Pronto" : (data.convidado?.nome ? "Escolhendo dados" : "Ainda não entrou");
-        roomReadyConvidado.className = `room-ready ${data.convidado?.pronto ? "ready" : "pending"}`;
-    }
-
-    if (badge) {
-        if (data.status === "esperando") badge.innerText = "Aguardando";
-        if (data.status === "contagem") badge.innerText = `Começa em ${data.jogo?.countdown || 3}`;
-        if (data.status === "pronta") badge.innerText = "Valendo";
-    }
-
-    if (status) {
-        if (data.status === "esperando") {
-            if (!data.convidado?.nome) {
-                status.innerText = "Sala pronta. Compartilhe o link e aguarde seu amigo entrar.";
-            } else if (!data.convidado?.pronto) {
-                status.innerText = `${data.convidado.nome} entrou. Aguardando confirmação do nome e avatar.`;
-            } else {
-                status.innerText = "Os dois estão quase prontos.";
-            }
-        }
-        if (data.status === "contagem") status.innerText = `Partida começa em ${data.jogo?.countdown || 3}...`;
-        if (data.status === "pronta") status.innerText = "Partida iniciada.";
-    }
 }
 
 function ouvirSalaOnline() {
-    if (!salaId || salaListenerAtivo) return;
-    salaListenerAtivo = true;
-
+    if (!salaId || salaListenerAtivo) return; salaListenerAtivo = true;
     database.ref(`salas/${salaId}`).on("value", snap => {
-        const data = snap.val();
-        if (!data) return;
-
-        onlineDataAtual = data;
-
-        j1Nome = data.host?.nome || "";
-        j1Avatar = data.host?.avatar || "img/1.jpg";
-        j2Nome = data.convidado?.nome || "";
-        j2Avatar = data.convidado?.avatar || "img/2.jpg";
-
-        atualizarPainelSalaOnline(data);
-
-        const statusSala = document.getElementById("status-sala");
-        const chatCard = document.getElementById("chat-card-online");
-        const btnCriarSala = document.getElementById("btn-criar-sala");
-        const btnZap = document.getElementById("btn-compartilhar-whatsapp");
-        const btnCopiar = document.getElementById("btn-copiar-link");
-
-        if (jogadorTipo === "convidado") {
-            if (btnCriarSala) btnCriarSala.classList.add("escondido");
-            if (btnZap) btnZap.classList.add("escondido");
-            if (btnCopiar) btnCopiar.classList.remove("escondido");
-        }
-
-        if (data.host?.nome && data.convidado?.nome) {
-            if (chatCard) chatCard.classList.remove("escondido");
-            ouvirChatSala();
-        } else {
-            if (chatCard) chatCard.classList.add("escondido");
-        }
-
-        if (statusSala) {
-            if (data.status === "esperando" && !data.convidado?.nome) {
-                statusSala.innerText = "Aguardando o amigo entrar...";
-            } else if (data.status === "esperando" && data.convidado?.nome && !data.convidado?.pronto) {
-                statusSala.innerText = `${data.convidado.nome} entrou e está se preparando.`;
-            } else if (data.status === "contagem") {
-                statusSala.innerText = `Partida começa em ${data.jogo?.countdown || 3}...`;
-            } else if (data.status === "pronta") {
-                statusSala.innerText = "Partida iniciada.";
-            }
-        }
-
+        const data = snap.val(); if (!data) return;
+        j1Nome = data.host?.nome || ""; j1Avatar = data.host?.avatar || "img/1.jpg"; j2Nome = data.convidado?.nome || ""; j2Avatar = data.convidado?.avatar || "img/2.jpg";
+        
+        document.getElementById("room-name-host").innerText = j1Nome || "Aguardando..."; document.getElementById("room-name-convidado").innerText = j2Nome || "Aguardando...";
+        document.getElementById("room-avatar-host").src = j1Avatar; document.getElementById("room-avatar-convidado").src = j2Avatar;
+        
+        if (data.host?.nome && data.convidado?.nome) { document.getElementById("chat-card-online")?.classList.remove("escondido"); ouvirChatSala(); }
+        
         if (data.status === "esperando") {
             const euPronto = jogadorTipo === "host" ? data.host?.pronto : data.convidado?.pronto;
             if (euPronto) {
-                const texto = data.convidado?.nome
-                    ? `${data.convidado.nome} entrou. Aguardando ficar pronto...`
-                    : "Aguardando o outro jogador...";
-                mostrarTelaAguardandoOnline(texto);
+                let texto = "Aguardando..."; let showBtn = false;
+                if (data.host?.pronto && data.convidado?.pronto) { if (jogadorTipo === "host") { texto = "Pronto para iniciar!"; showBtn = true; } else { texto = "Aguardando Host iniciar..."; } }
+                else if (data.convidado?.nome) texto = `${data.convidado.nome} entrou.`;
+                mostrarTelaAguardandoOnline(texto, showBtn);
             }
-            return;
-        }
+        } else if (data.status === "contagem") { mostrarTelaAguardandoOnline(`Iniciando em ${data.jogo?.countdown || 3}...`, false); }
+        else if (data.status === "pronta") { iniciarJogoOnline(data); }
+    });
+}
 
-        if (data.status === "contagem") {
-            mostrarTelaAguardandoOnline(`Partida começa em ${data.jogo?.countdown || 3}...`);
-            return;
-        }
+function iniciarContagemPeloHost() {
+    if (jogadorTipo !== "host" || !salaId) return;
+    document.getElementById("area-botao-iniciar-online").innerHTML = "";
+    database.ref(`salas/${salaId}`).update({ status: "contagem", "jogo/perguntas": gerarPerguntasAleatorias(10), "jogo/perguntaAtual": 0, "jogo/turno": "host", "jogo/j1Pontos": 0, "jogo/j2Pontos": 0, "jogo/countdown": 3 });
+    let valor = 3; const ival = setInterval(() => { valor--; if(valor<=0){ clearInterval(ival); database.ref(`salas/${salaId}`).update({ status: "pronta", "jogo/iniciada": true, "jogo/countdown": 0 }); } else { database.ref(`salas/${salaId}/jogo`).update({ countdown: valor }); } }, 1000);
+}
 
-        if (data.status === "pronta") {
-            iniciarJogoOnline(data);
-        }
+function confirmarEntradaOnline() {
+    const nome = document.getElementById("input-nome1").value.trim().toUpperCase(); const av = jogadorTipo === "convidado" ? j2Avatar : j1Avatar;
+    if (!nome || !av) return alert("Preencha nome e avatar."); if (!salaId) return alert("Sala não encontrada.");
+    const path = jogadorTipo === "convidado" ? "convidado" : "host";
+    if (jogadorTipo === "convidado") j2Nome = nome; else j1Nome = nome;
+    database.ref(`salas/${salaId}/${path}`).update({ nome, avatar: av, pronto: true }).then(() => {
+        document.getElementById("tela-inicial").classList.add("escondido"); mostrarTelaAguardandoOnline("Aguardando...", false); ouvirSalaOnline();
     });
 }
 
 function iniciarJogoOnline(data) {
-    esconderTelaAguardandoOnline();
-    fecharModalCompartilhar();
-
-    document.getElementById("tela-inicial").classList.add("escondido");
-    document.getElementById("tela-quiz").classList.remove("escondido");
-    document.getElementById("timer-container").classList.remove("escondido");
-
-    j1Nome = data.host?.nome || "JOGADOR 1";
-    j1Avatar = data.host?.avatar || "img/1.jpg";
-    j2Nome = data.convidado?.nome || "JOGADOR 2";
-    j2Avatar = data.convidado?.avatar || "img/2.jpg";
-
-    document.getElementById("placar-nome-j1").innerText = j1Nome;
-    document.getElementById("placar-nome-j2").innerText = j2Nome;
-    document.getElementById("img-avatar-placar1").src = j1Avatar;
-    document.getElementById("img-avatar-placar2").src = j2Avatar;
-
-    sincronizarJogoOnline();
-
-    musicaFundo.currentTime = 0;
-    musicaFundo.play().then(() => {
-        aplicarEstadoAudio();
-    }).catch(() => {
-        aplicarEstadoAudio();
-    });
+    esconderTelaAguardandoOnline(); fecharModalCompartilhar();
+    document.getElementById("tela-inicial").classList.add("escondido"); document.getElementById("tela-quiz").classList.remove("escondido"); document.getElementById("timer-container").classList.remove("escondido");
+    j1Nome = data.host?.nome || "JOGADOR 1"; j1Avatar = data.host?.avatar || "img/1.jpg"; j2Nome = data.convidado?.nome || "JOGADOR 2"; j2Avatar = data.convidado?.avatar || "img/2.jpg";
+    document.getElementById("placar-nome-j1").innerText = j1Nome; document.getElementById("placar-nome-j2").innerText = j2Nome; document.getElementById("img-avatar-placar1").src = j1Avatar; document.getElementById("img-avatar-placar2").src = j2Avatar;
+    sincronizarJogoOnline(); musicaFundo.currentTime = 0; musicaFundo.play().catch(()=>{});
 }
 
 function sincronizarJogoOnline() {
-    if (!salaId || jogoListenerAtivo) return;
-    jogoListenerAtivo = true;
-
+    if (!salaId || jogoListenerAtivo) return; jogoListenerAtivo = true;
     database.ref(`salas/${salaId}/jogo`).on("value", snap => {
-        const jogo = snap.val();
-        if (!jogo) return;
-
-        perguntaAtual = jogo.perguntaAtual || 0;
-        jogadorAtual = jogo.turno === "host" ? 1 : 2;
-        j1Pontos = jogo.j1Pontos || 0;
-        j2Pontos = jogo.j2Pontos || 0;
-        perguntasDaRodada = Array.isArray(jogo.perguntas) ? jogo.perguntas : [];
-
-        document.getElementById("placar-pts-j1").innerText = j1Pontos;
-        document.getElementById("placar-pts-j2").innerText = j2Pontos;
-
-        if (perguntaAtual >= 10) {
-            finalizarJogo();
-            return;
-        }
-
-        mostrarPergunta();
+        const jogo = snap.val(); if (!jogo) return;
+        perguntaAtual = jogo.perguntaAtual || 0; jogadorAtual = jogo.turno === "host" ? 1 : 2; j1Pontos = jogo.j1Pontos || 0; j2Pontos = jogo.j2Pontos || 0; perguntasDaRodada = jogo.perguntas || [];
+        document.getElementById("placar-pts-j1").innerText = j1Pontos; document.getElementById("placar-pts-j2").innerText = j2Pontos;
+        if (perguntaAtual >= 10) { finalizarJogo(); return; } mostrarPergunta();
     });
 }
-
-function podeResponder() {
-    if (modoDeJogo !== "batalha_online") return true;
-    if (jogadorTipo === "host" && jogadorAtual === 1) return true;
-    if (jogadorTipo === "convidado" && jogadorAtual === 2) return true;
-    return false;
-}
-
-// =========================
-// INICIAR PARTIDA
-// =========================
-function confirmarEntradaOnline() {
-    if (modoDeJogo !== "batalha_online") return;
-
-    const nomeDigitado = document.getElementById("input-nome1").value.trim().toUpperCase();
-    const avatarAtual = jogadorTipo === "convidado" ? j2Avatar : j1Avatar;
-
-    if (!nomeDigitado || !avatarAtual) {
-        alert("Preencha o nome e escolha um avatar.");
-        return;
-    }
-
-    if (!salaId) {
-        alert("Crie a sala online primeiro.");
-        return;
-    }
-
-    const caminhoJogador = jogadorTipo === "convidado" ? "convidado" : "host";
-
-    if (jogadorTipo === "convidado") {
-        j2Nome = nomeDigitado;
-    } else {
-        j1Nome = nomeDigitado;
-    }
-
-    database.ref(`salas/${salaId}/${caminhoJogador}`).update({
-        nome: nomeDigitado,
-        avatar: avatarAtual,
-        pronto: true
-    }).then(() => {
-        document.getElementById("tela-inicial").classList.add("escondido");
-        mostrarTelaAguardandoOnline("Aguardando o outro jogador...");
-        ouvirSalaOnline();
-
-        if (jogadorTipo === "host") {
-            verificarSePodeIniciarSala();
-        } else {
-            database.ref(`salas/${salaId}`).once("value").then((snap) => {
-                const data = snap.val();
-                if (data?.host?.pronto && data?.convidado?.pronto) {
-                    verificarSePodeIniciarSala();
-                }
-            });
-        }
-    });
-}
+function podeResponder() { return modoDeJogo !== "batalha_online" || (jogadorTipo === "host" && jogadorAtual === 1) || (jogadorTipo === "convidado" && jogadorAtual === 2); }
 
 function validarComeco() {
-    if (modoDeJogo === "batalha_online") {
-        confirmarEntradaOnline();
-        return;
-    }
-
-    const nomeDigitado = document.getElementById("input-nome1").value.trim().toUpperCase();
-
-    if (!nomeDigitado || !j1Avatar) {
-        alert("Preencha o nome e escolha um avatar.");
-        return;
-    }
-
-    j1Nome = nomeDigitado;
-
-    if (modoDeJogo === "solo") {
-        j2Nome = "REI DAS COPAS";
-        j2Avatar = "img/1.jpg";
-    }
-
-    if (modoDeJogo === "batalha_local") {
-        const nome2 = document.getElementById("input-nome2").value.trim().toUpperCase();
-
-        if (!nome2 || !j2Avatar) {
-            alert("Preencha o nome do jogador 2 e escolha um avatar.");
-            return;
-        }
-
-        j2Nome = nome2;
-    }
-
-    iniciarJogoLocal();
-}
-
-function iniciarJogoLocal() {
+    if (modoDeJogo === "batalha_online") return confirmarEntradaOnline();
+    j1Nome = document.getElementById("input-nome1").value.trim().toUpperCase();
+    if (!j1Nome || !j1Avatar) return alert("Preencha nome e avatar.");
+    if (modoDeJogo === "solo") { j2Nome = "REI DAS COPAS"; j2Avatar = "img/1.jpg"; }
+    else { j2Nome = document.getElementById("input-nome2").value.trim().toUpperCase(); if (!j2Nome || !j2Avatar) return alert("Preencha jogador 2."); }
     perguntasDaRodada = gerarPerguntasAleatorias(10);
-
-    document.getElementById("placar-nome-j1").innerText = j1Nome;
-    document.getElementById("placar-nome-j2").innerText = j2Nome;
-    document.getElementById("img-avatar-placar1").src = j1Avatar;
-    document.getElementById("img-avatar-placar2").src = j2Avatar;
-
-    document.getElementById("tela-inicial").classList.add("escondido");
-    document.getElementById("tela-quiz").classList.remove("escondido");
-    document.getElementById("timer-container").classList.remove("escondido");
-
-    musicaFundo.currentTime = 0;
-    musicaFundo.play().then(() => {
-        aplicarEstadoAudio();
-    }).catch(() => {
-        aplicarEstadoAudio();
-    });
-
-    mostrarPergunta();
-    iniciarCronometro();
+    document.getElementById("placar-nome-j1").innerText = j1Nome; document.getElementById("placar-nome-j2").innerText = j2Nome;
+    document.getElementById("img-avatar-placar1").src = j1Avatar; document.getElementById("img-avatar-placar2").src = j2Avatar;
+    document.getElementById("tela-inicial").classList.add("escondido"); document.getElementById("tela-quiz").classList.remove("escondido"); document.getElementById("timer-container").classList.remove("escondido");
+    musicaFundo.currentTime = 0; musicaFundo.play().catch(()=>{}); mostrarPergunta(); iniciarCronometro();
 }
 
-// =========================
-// QUIZ
-// =========================
 function mostrarPergunta() {
-    if (!perguntasDaRodada || !perguntasDaRodada[perguntaAtual]) return;
-
-    const d = perguntasDaRodada[perguntaAtual];
-    const quizContainer = document.querySelector(".quiz-container");
-
-    const avisoTurno = document.getElementById("aviso-turno-nome");
-    const onlineEsperaMsg = document.getElementById("online-espera-msg");
-
-    if (avisoTurno) {
-        avisoTurno.innerText = `VEZ DE: ${jogadorAtual === 1 ? j1Nome : j2Nome}`;
-    }
-
-    if (modoDeJogo === "batalha_online" && onlineEsperaMsg) {
-        if (podeResponder()) {
-            onlineEsperaMsg.classList.add("escondido");
-        } else {
-            onlineEsperaMsg.innerText = `Aguardando a resposta de ${jogadorAtual === 1 ? j1Nome : j2Nome}...`;
-            onlineEsperaMsg.classList.remove("escondido");
-        }
-    } else if (onlineEsperaMsg) {
-        onlineEsperaMsg.classList.add("escondido");
-    }
-
-    if (modoDeJogo === "batalha_local") {
-        const lado1 = document.querySelector(".placar-item-j1");
-        const lado2 = document.querySelector(".placar-item-j2");
-        if (lado1 && lado2) {
-            lado1.style.opacity = jogadorAtual === 1 ? "1" : "0.4";
-            lado2.style.opacity = jogadorAtual === 2 ? "1" : "0.4";
-        }
-    }
-
-    const errosAtuais = jogadorAtual === 1 ? errosSeguidosJ1 : errosSeguidosJ2;
-    ePerguntaOuro = errosAtuais >= 2;
-
-    if (ePerguntaOuro) {
-        quizContainer.classList.add("ouro-active");
-        document.getElementById("texto-pergunta").innerHTML =
-            `<span style="color:#DAA520;font-weight:900;display:block;margin-bottom:10px;">PERGUNTA DE OURO</span>${d.pergunta}`;
-    } else {
-        quizContainer.classList.remove("ouro-active");
-        document.getElementById("texto-pergunta").innerText = d.pergunta;
-    }
-
+    const d = perguntasDaRodada[perguntaAtual]; if(!d) return;
+    document.getElementById("aviso-turno-nome").innerText = `VEZ DE: ${jogadorAtual === 1 ? j1Nome : j2Nome}`;
+    if(modoDeJogo==="batalha_online") { const msg = document.getElementById("online-espera-msg"); if(msg) { msg.innerText = `Aguardando ${jogadorAtual===1?j1Nome:j2Nome}...`; podeResponder() ? msg.classList.add("escondido") : msg.classList.remove("escondido"); } }
+    if(modoDeJogo==="batalha_local") { document.querySelector(".placar-item-j1").style.opacity = jogadorAtual===1?"1":"0.4"; document.querySelector(".placar-item-j2").style.opacity = jogadorAtual===2?"1":"0.4"; }
+    ePerguntaOuro = (jogadorAtual===1?errosSeguidosJ1:errosSeguidosJ2) >= 2;
+    document.getElementById("texto-pergunta").innerHTML = ePerguntaOuro ? `<span style='color:#DAA520;'>PERGUNTA DE OURO</span><br>${d.pergunta}` : d.pergunta;
+    document.querySelector(".quiz-container").classList.toggle("ouro-active", ePerguntaOuro);
     document.getElementById("barra-progresso").innerText = `PERGUNTA ${perguntaAtual + 1} DE 10`;
-    document.getElementById("feedback-acerto").classList.add("escondido");
-    document.getElementById("feedback-erro").classList.add("escondido");
-    document.getElementById("streak-popup").innerText = "";
-
-    const area = document.getElementById("area-botoes");
-    area.innerHTML = "";
-
-    d.respostas.forEach((r, i) => {
-        const b = document.createElement("button");
-        b.className = "btn-resposta";
-        b.innerText = r;
-        b.onclick = () => verificarResposta(i, b);
-        area.appendChild(b);
-    });
-
-    atualizarBloqueioBotoes();
+    document.getElementById("feedback-acerto").classList.add("escondido"); document.getElementById("feedback-erro").classList.add("escondido"); document.getElementById("streak-popup").innerText = "";
+    const area = document.getElementById("area-botoes"); area.innerHTML = "";
+    d.respostas.forEach((r, i) => { const b = document.createElement("button"); b.className = "btn-resposta"; b.innerText = r; b.onclick = () => verificarResposta(i, b); area.appendChild(b); });
+    document.querySelectorAll(".btn-resposta").forEach(b => { b.disabled = !podeResponder(); b.style.opacity = podeResponder() ? "1" : "0.5"; });
     iniciarCronometro();
-}
-
-function atualizarBloqueioBotoes() {
-    const botoes = document.querySelectorAll(".btn-resposta");
-    const liberar = podeResponder();
-
-    botoes.forEach(btn => {
-        btn.disabled = !liberar;
-        btn.style.opacity = liberar ? "1" : "0.5";
-        btn.style.pointerEvents = liberar ? "auto" : "none";
-    });
-}
-
-function atualizarTela() {
-    const nomeDaVez = jogadorAtual === 1 ? j1Nome : j2Nome;
-    document.getElementById("aviso-turno-nome").innerText = "VEZ DE: " + nomeDaVez;
-    atualizarBloqueioBotoes();
 }
 
 function iniciarCronometro() {
-    if (modoDeJogo === "batalha_online" && !podeResponder()) {
-        document.getElementById("timer-display").innerText = `Aguardando ${jogadorAtual === 1 ? j1Nome : j2Nome}...`;
-        clearInterval(controleCronometro);
-        return;
-    }
-
-    tempoRestante = 30;
-    clearInterval(controleCronometro);
-
-    document.getElementById("timer-display").innerText = `Tempo: ${tempoRestante}s`;
-
-    controleCronometro = setInterval(() => {
-        tempoRestante--;
-        document.getElementById("timer-display").innerText = `Tempo: ${tempoRestante}s`;
-
-        if (tempoRestante <= 0) {
-            clearInterval(controleCronometro);
-            somErro.currentTime = 0;
-            somErro.play().catch(() => {});
-            verificarResposta(-1, null);
-        }
-    }, 1000);
+    if (modoDeJogo === "batalha_online" && !podeResponder()) { document.getElementById("timer-display").innerText = `Aguardando...`; clearInterval(controleCronometro); return; }
+    tempoRestante = 30; clearInterval(controleCronometro); document.getElementById("timer-display").innerText = `Tempo: 30s`;
+    controleCronometro = setInterval(() => { tempoRestante--; document.getElementById("timer-display").innerText = `Tempo: ${tempoRestante}s`; if(tempoRestante<=0) { clearInterval(controleCronometro); somErro.play().catch(()=>{}); verificarResposta(-1, null); } }, 1000);
 }
 
-function verificarResposta(idxSelecionado, botaoClicado) {
-    if (modoDeJogo === "batalha_online" && !podeResponder()) return;
-
-    clearInterval(controleCronometro);
-
-    const pergunta = perguntasDaRodada[perguntaAtual];
-    if (!pergunta) return;
-
-    const correta = pergunta.respostaCerta;
-    const botoes = document.querySelectorAll(".btn-resposta");
-    botoes.forEach(btn => btn.disabled = true);
-
-    if (idxSelecionado === correta) {
-        somAcerto.currentTime = 0;
-        somAcerto.play().catch(() => {});
-
-        if (botaoClicado) botaoClicado.classList.add("correta");
-        document.getElementById("feedback-acerto").classList.remove("escondido");
-
-        let streak = jogadorAtual === 1 ? ++j1Streak : ++j2Streak;
-        let ptsQuestao = ePerguntaOuro ? 2 : 1;
-        let bonus = getStreakData(streak).bonus;
-
-        if (jogadorAtual === 1) {
-            j1Pontos += ptsQuestao + bonus;
-            errosSeguidosJ1 = 0;
-            document.getElementById("placar-pts-j1").innerText = j1Pontos;
-        } else {
-            j2Pontos += ptsQuestao + bonus;
-            errosSeguidosJ2 = 0;
-            document.getElementById("placar-pts-j2").innerText = j2Pontos;
-        }
-
-        if (bonus > 0) {
-            document.getElementById("streak-popup").innerText = getStreakData(streak).msg;
-
-            if (typeof confetti !== "undefined") {
-                confetti({
-                    particleCount: 120,
-                    spread: 80,
-                    origin: { y: 0.6 }
-                });
-            }
-        }
+function verificarResposta(idx, btn) {
+    if (modoDeJogo === "batalha_online" && !podeResponder()) return; clearInterval(controleCronometro);
+    const d = perguntasDaRodada[perguntaAtual]; document.querySelectorAll(".btn-resposta").forEach(b => b.disabled = true);
+    if (idx === d.respostaCerta) {
+        somAcerto.play().catch(()=>{}); if(btn) btn.classList.add("correta"); document.getElementById("feedback-acerto").classList.remove("escondido");
+        let streak = jogadorAtual === 1 ? ++j1Streak : ++j2Streak; let pts = ePerguntaOuro ? 2 : 1; let bonus = getStreakData(streak).bonus;
+        if(jogadorAtual===1) { j1Pontos += pts+bonus; errosSeguidosJ1=0; document.getElementById("placar-pts-j1").innerText = j1Pontos; } else { j2Pontos += pts+bonus; errosSeguidosJ2=0; document.getElementById("placar-pts-j2").innerText = j2Pontos; }
+        if(bonus>0) { document.getElementById("streak-popup").innerText = getStreakData(streak).msg; if(typeof confetti!=="undefined") confetti({particleCount:120,spread:80,origin:{y:0.6}}); }
     } else {
-        somErro.currentTime = 0;
-        somErro.play().catch(() => {});
-
-        if (botaoClicado) botaoClicado.classList.add("errada");
-        if (botoes[correta]) botoes[correta].classList.add("correta");
-
-        document.getElementById("feedback-erro").classList.remove("escondido");
-
-        if (jogadorAtual === 1) {
-            j1Streak = 0;
-            errosSeguidosJ1++;
-
-            if (modoDeJogo === "solo") {
-                j2Pontos++;
-                document.getElementById("placar-pts-j2").innerText = j2Pontos;
-            }
-        } else {
-            j2Streak = 0;
-            errosSeguidosJ2++;
-        }
+        somErro.play().catch(()=>{}); if(btn) btn.classList.add("errada"); document.querySelectorAll(".btn-resposta")[d.respostaCerta]?.classList.add("correta"); document.getElementById("feedback-erro").classList.remove("escondido");
+        if(jogadorAtual===1) { j1Streak=0; errosSeguidosJ1++; if(modoDeJogo==="solo"){ j2Pontos++; document.getElementById("placar-pts-j2").innerText=j2Pontos; } } else { j2Streak=0; errosSeguidosJ2++; }
     }
-
-    controleTimeout = setTimeout(() => {
-        avancarRodada();
-    }, 1800);
+    controleTimeout = setTimeout(() => { perguntaAtual++; if(perguntaAtual>=10){ if(modoDeJogo==="batalha_online") database.ref(`salas/${salaId}/jogo`).update({perguntaAtual:10,j1Pontos,j2Pontos}); finalizarJogo(); } else { if(modoDeJogo!=="solo" && modoDeJogo!=="batalha_online") jogadorAtual = jogadorAtual===1?2:1; if(modoDeJogo==="batalha_online") database.ref(`salas/${salaId}/jogo`).update({turno:jogadorAtual===1?"convidado":"host",perguntaAtual,j1Pontos,j2Pontos}); if(modoDeJogo!=="batalha_online") mostrarPergunta(); } }, 1800);
 }
 
-function avancarRodada() {
-    perguntaAtual++;
-
-    if (perguntaAtual >= 10) {
-        if (modoDeJogo === "batalha_online") {
-            database.ref(`salas/${salaId}/jogo`).update({
-                perguntaAtual: 10,
-                j1Pontos,
-                j2Pontos
-            });
-        }
-        finalizarJogo();
-        return;
-    }
-
-    if (modoDeJogo === "solo") {
-        mostrarPergunta();
-        return;
-    }
-
-    if (modoDeJogo === "batalha_local") {
-        jogadorAtual = jogadorAtual === 1 ? 2 : 1;
-        mostrarPergunta();
-        return;
-    }
-
-    if (modoDeJogo === "batalha_online") {
-        const proximoTurno = jogadorAtual === 1 ? "convidado" : "host";
-
-        database.ref(`salas/${salaId}/jogo`).update({
-            turno: proximoTurno,
-            perguntaAtual,
-            j1Pontos,
-            j2Pontos
-        });
-    }
-}
-
-// =========================
-// FIM DE JOGO
-// =========================
-function ajustarPontuacaoGlobal(nome, avatar, delta, tituloHistorico = "Ajuste de pontuação") {
-    const nomeLimpo = (nome || "").trim().toUpperCase();
-    if (!nomeLimpo || !delta) return;
-
-    const ref = database.ref(`samininaRanking/${nomeLimpo}`);
-    ref.once("value").then((snap) => {
-        const data = snap.exists() ? snap.val() : {
-            nome: nomeLimpo,
-            avatar: avatar || "img/1.jpg",
-            pontosTotais: 0,
-            copas: 0
-        };
-
-        const atual = Number(data.pontosTotais) || 0;
-        data.pontosTotais = Math.max(0, atual + delta);
-        data.avatar = avatar || data.avatar || "img/1.jpg";
-
-        ref.set(data);
-
-        database.ref("historicoPartidas").push({
-            nome: nomeLimpo,
-            avatar: data.avatar,
-            pontos: delta,
-            titulo: tituloHistorico,
-            timestamp: firebase.database.ServerValue.TIMESTAMP
-        });
-    });
-}
-
-function salvarPreferenciasReplay() {
-    const replayData = {
-        modo: modoDeJogo,
-        j1Nome,
-        j1Avatar,
-        j2Nome,
-        j2Avatar
-    };
-    localStorage.setItem("copaSamininaReplay", JSON.stringify(replayData));
-}
-
-function abrirModalRepetir() {
-    document.getElementById("modal-repetir")?.classList.remove("escondido");
-}
-
-function fecharModalRepetir() {
-    document.getElementById("modal-repetir")?.classList.add("escondido");
-}
-
-function repetirMesmoJogador(usandoMesmo) {
-    fecharModalRepetir();
-
-    if (!usandoMesmo) {
-        localStorage.removeItem("copaSamininaReplay");
-        location.href = "index.html";
-        return;
-    }
-
-    const salvo = localStorage.getItem("copaSamininaReplay");
-    if (!salvo) {
-        location.href = "index.html";
-        return;
-    }
-
-    try {
-        const replayData = JSON.parse(salvo);
-
-        resetarEstadoPartida();
-        modoDeJogo = replayData.modo || "solo";
-
-        esconderTodasAsTelas();
-        document.getElementById("tela-inicial").classList.remove("escondido");
-
-        if (modoDeJogo === "batalha_local") {
-            document.getElementById("container-avatar2")?.classList.remove("escondido");
-        }
-
-        if (modoDeJogo === "batalha_online") {
-            document.getElementById("painel-online")?.classList.remove("escondido");
-            document.getElementById("btn-iniciar-local")?.classList.add("escondido");
-            document.getElementById("btn-confirmar-online")?.classList.remove("escondido");
-        }
-
-        document.getElementById("input-nome1").value = replayData.j1Nome || "";
-        j1Nome = replayData.j1Nome || "";
-        j1Avatar = replayData.j1Avatar || "";
-
-        if (modoDeJogo === "batalha_local") {
-            document.getElementById("input-nome2").value = replayData.j2Nome || "";
-            j2Nome = replayData.j2Nome || "";
-            j2Avatar = replayData.j2Avatar || "";
-        }
-
-        if (j1Avatar) {
-            const idx1 = listaAvatares.indexOf(j1Avatar);
-            if (idx1 >= 0) {
-                const el1 = document.querySelectorAll("#avatar-j1 .img-avatar-opcao")[idx1];
-                if (el1) el1.classList.add("selecionado");
-            }
-        }
-
-        if (j2Avatar) {
-            const idx2 = listaAvatares.indexOf(j2Avatar);
-            if (idx2 >= 0) {
-                const el2 = document.querySelectorAll("#avatar-j2 .img-avatar-opcao")[idx2];
-                if (el2) el2.classList.add("selecionado");
-            }
-        }
-    } catch (e) {
-        console.error("Erro ao repetir jogador:", e);
-        location.href = "index.html";
-    }
-}
+function ajustarPontuacaoGlobal(nome, av, delta, tit="Ajuste") { const nm=nome.trim().toUpperCase(); if(!nm) return; database.ref(`samininaRanking/${nm}`).once("value").then(s => { const dt = s.exists()?s.val():{nome:nm,avatar:av||"img/1.jpg",pontosTotais:0,copas:0}; dt.pontosTotais=Math.max(0, (Number(dt.pontosTotais)||0)+delta); database.ref(`samininaRanking/${nm}`).set(dt); database.ref("historicoPartidas").push({nome:nm,avatar:dt.avatar,pontos:delta,titulo:tit,timestamp:firebase.database.ServerValue.TIMESTAMP}); }); }
+function salvarNoRanking(n, av, pts, cup, tit) { const nm=n.trim().toUpperCase(); if(!nm)return; database.ref(`samininaRanking/${nm}`).once("value").then(s=>{ const dt=s.exists()?s.val():{nome:nm,avatar:av||"img/1.jpg",pontosTotais:0,copas:0}; dt.pontosTotais=(Number(dt.pontosTotais)||0)+Number(pts); dt.copas=(Number(dt.copas)||0)+(cup?1:0); database.ref(`samininaRanking/${nm}`).set(dt); database.ref("historicoPartidas").push({nome:nm,avatar:dt.avatar,pontos:pts,titulo:tit||calcularTitulo(pts),timestamp:firebase.database.ServerValue.TIMESTAMP}); }); }
 
 function finalizarJogo() {
-    musicaFundo.pause();
-    mostrarBotaoMuteSePreciso();
-
-    clearInterval(controleCronometro);
-    clearTimeout(controleTimeout);
-
-    document.getElementById("tela-quiz").classList.add("escondido");
-    document.getElementById("timer-container").classList.add("escondido");
-    document.getElementById("tela-resultado").classList.remove("escondido");
-
-    let vencedor;
-    let vAvatar;
-    let vPontos;
-    let perdedor = "";
-    let perdedorAvatar = "";
-
-    if (modoDeJogo === "solo") {
-        vencedor = j1Nome;
-        vAvatar = j1Avatar;
-        vPontos = j1Pontos;
-
-        if (j1Pontos >= 6) {
-            salvarNoRanking(j1Nome, j1Avatar, j1Pontos, true);
-        } else {
-            ajustarPontuacaoGlobal(j1Nome, j1Avatar, -6, "Perdeu 6 pontos");
-        }
-    } else {
-        vencedor = j1Pontos >= j2Pontos ? j1Nome : j2Nome;
-        vAvatar = j1Pontos >= j2Pontos ? j1Avatar : j2Avatar;
-        vPontos = Math.max(j1Pontos, j2Pontos);
-
-        if (j1Pontos !== j2Pontos) {
-            perdedor = j1Pontos < j2Pontos ? j1Nome : j2Nome;
-            perdedorAvatar = j1Pontos < j2Pontos ? j1Avatar : j2Avatar;
-
-            salvarNoRanking(vencedor, vAvatar, vPontos, true);
-            ajustarPontuacaoGlobal(perdedor, perdedorAvatar, -6, "Perdeu 6 pontos");
-        } else {
-            salvarNoRanking(vencedor, vAvatar, vPontos, false);
-        }
-    }
-
-    const imgV = document.getElementById("img-avatar-vencedor");
-    imgV.style.display = "block";
-    imgV.src = vAvatar;
-
-    document.getElementById("titulo-vencedor").innerText =
-        (modoDeJogo !== "solo" && j1Pontos === j2Pontos) ? "Empate!" : `${vencedor} Venceu!`;
-
-    document.getElementById("mensagem-final").innerText = `${vPontos} Pontos\n${calcularTitulo(vPontos)}`;
-
-    salvarEstadoResultado();
-    salvarPreferenciasReplay();
-
-    if (typeof confetti !== "undefined") {
-        if (modoDeJogo === "solo" && vPontos >= 6) {
-            confetti({ particleCount: 300, spread: 100, origin: { y: 0.6 } });
-        }
-
-        if (modoDeJogo !== "solo" && j1Pontos !== j2Pontos) {
-            confetti({ particleCount: 300, spread: 100, origin: { y: 0.6 } });
-        }
-    }
+    musicaFundo.pause(); document.getElementById("tela-quiz").classList.add("escondido"); document.getElementById("timer-container").classList.add("escondido"); document.getElementById("tela-resultado").classList.remove("escondido");
+    let v, vAv, vPts;
+    if(modoDeJogo==="solo"){ v=j1Nome; vAv=j1Avatar; vPts=j1Pontos; if(j1Pontos>=6) salvarNoRanking(j1Nome,j1Avatar,j1Pontos,true); else ajustarPontuacaoGlobal(j1Nome,j1Avatar,-6,"Perdeu 6 pontos"); }
+    else { v = j1Pontos>=j2Pontos?j1Nome:j2Nome; vAv = j1Pontos>=j2Pontos?j1Avatar:j2Avatar; vPts=Math.max(j1Pontos,j2Pontos); if(j1Pontos!==j2Pontos){ salvarNoRanking(v,vAv,vPts,true); ajustarPontuacaoGlobal(j1Pontos<j2Pontos?j1Nome:j2Nome, j1Pontos<j2Pontos?j1Avatar:j2Avatar, -6, "Perdeu 6 pontos"); } else salvarNoRanking(v,vAv,vPts,false); }
+    document.getElementById("img-avatar-vencedor").src = vAv; document.getElementById("titulo-vencedor").innerText = (modoDeJogo!=="solo" && j1Pontos===j2Pontos) ? "Empate!" : `${v} Venceu!`; document.getElementById("mensagem-final").innerText = `${vPts} Pontos\n${calcularTitulo(vPts)}`;
+    salvarEstadoResultado(); if(typeof confetti!=="undefined" && ((modoDeJogo==="solo"&&vPts>=6)||(modoDeJogo!=="solo"&&j1Pontos!==j2Pontos))) confetti({particleCount:300,spread:100,origin:{y:0.6}});
 }
 
-// =========================
-// DESISTÊNCIA
-// =========================
 function confirmarDesistencia() {
-    const nome = (modoDeJogo === "solo") ? j1Nome : (jogadorAtual === 1 ? j1Nome : j2Nome);
-
-    if (!confirm(`${nome}, deseja abandonar a partida?`)) {
-        if (modoDeJogo !== "batalha_online") iniciarCronometro();
-        return;
-    }
-
-    clearInterval(controleCronometro);
-    clearTimeout(controleTimeout);
-
-    musicaFundo.pause();
-    mostrarBotaoMuteSePreciso();
-
-    somErro.currentTime = 0;
-    somErro.play().catch(() => {});
-
-    let tit = "ABANDONOU!";
-    let msg = "";
-    let winAv = "";
-
-    if (modoDeJogo === "solo") {
-        msg = `${j1Nome} desistiu.\nTítulo: Perna de Pau`;
-        ajustarPontuacaoGlobal(j1Nome, j1Avatar, -6, "Arregou");
-    } else {
-        const vNome = jogadorAtual === 1 ? j2Nome : j1Nome;
-        const vAv = jogadorAtual === 1 ? j2Avatar : j1Avatar;
-        const pNome = jogadorAtual === 1 ? j1Nome : j2Nome;
-        const pAv = jogadorAtual === 1 ? j1Avatar : j2Avatar;
-
-        tit = `${vNome} VENCEU POR W.O.!`;
-        msg = `${nome} desistiu!\n${vNome} ganha uma copa automática.`;
-        winAv = vAv;
-
-        salvarNoRanking(vNome, vAv, 6, true, "Venceu por W.O.");
-        ajustarPontuacaoGlobal(pNome, pAv, -6, "Arregou");
-    }
-
-    document.getElementById("titulo-vencedor").innerText = tit;
-    document.getElementById("mensagem-final").innerText = msg;
-
-    const imgV = document.getElementById("img-avatar-vencedor");
-    if (winAv) {
-        imgV.src = winAv;
-        imgV.style.display = "block";
-    } else {
-        imgV.style.display = "none";
-    }
-
-    document.getElementById("tela-quiz").classList.add("escondido");
-    document.getElementById("timer-container").classList.add("escondido");
-    document.getElementById("tela-resultado").classList.remove("escondido");
-    document.getElementById("secao-pesquisa")?.classList.add("escondido");
-
-    salvarEstadoResultado();
-    salvarPreferenciasReplay();
+    if(!confirm(`${modoDeJogo==="solo"?j1Nome:(jogadorAtual===1?j1Nome:j2Nome)}, deseja abandonar a partida?`)) { if(modoDeJogo!=="batalha_online") iniciarCronometro(); return; }
+    clearInterval(controleCronometro); clearTimeout(controleTimeout); musicaFundo.pause(); somErro.play().catch(()=>{});
+    if(modoDeJogo==="solo"){ ajustarPontuacaoGlobal(j1Nome,j1Avatar,-6,"Arregou"); document.getElementById("titulo-vencedor").innerText="ABANDONOU!"; document.getElementById("mensagem-final").innerText=`${j1Nome} desistiu.\nTítulo: Perna de Pau`; document.getElementById("img-avatar-vencedor").style.display="none"; }
+    else { const vn = jogadorAtual===1?j2Nome:j1Nome; const va = jogadorAtual===1?j2Avatar:j1Avatar; salvarNoRanking(vn,va,6,true,"Venceu por W.O."); ajustarPontuacaoGlobal(jogadorAtual===1?j1Nome:j2Nome,jogadorAtual===1?j1Avatar:j2Avatar,-6,"Arregou"); document.getElementById("titulo-vencedor").innerText=`${vn} VENCEU POR W.O.!`; document.getElementById("mensagem-final").innerText=`Oponente desistiu!`; document.getElementById("img-avatar-vencedor").src=va; document.getElementById("img-avatar-vencedor").style.display="block"; }
+    document.getElementById("tela-quiz").classList.add("escondido"); document.getElementById("timer-container").classList.add("escondido"); document.getElementById("tela-resultado").classList.remove("escondido"); salvarEstadoResultado();
 }
 
+function enviarPesquisa(v) { database.ref("pesquisaSatisfacao").push({voto:v,timestamp:firebase.database.ServerValue.TIMESTAMP}); document.querySelector(".emoji-container")?.classList.add("escondido"); document.getElementById("feedback-agradecimento")?.classList.remove("escondido"); }
+function gerarDesafio() { document.getElementById("modal-desafio")?.classList.remove("escondido"); const qr=document.getElementById("qrcode-desafio"); if(qr){ qr.innerHTML=""; const p = modoDeJogo==="solo"?j1Pontos:Math.max(j1Pontos,j2Pontos); new QRCode(qr,{text:`https://wa.me/?text=${encodeURIComponent(`Fiz ${p} pts na Copa Saminina! Jogue agora: ${window.location.origin+window.location.pathname}`)}`,width:180,height:180}); } }
+function fecharModalDesafio() { document.getElementById("modal-desafio")?.classList.add("escondido"); }
+function abrirModalRepetir() { document.getElementById("modal-repetir")?.classList.remove("escondido"); }
+function fecharModalRepetir() { document.getElementById("modal-repetir")?.classList.add("escondido"); }
+function repetirMesmoJogador(sim) { if(sim) location.reload(); else { limparResultadoSalvo(); location.href="index.html"; } }
+
 // =========================
-// BANCO
+// ON LOAD (BLINDADO - GARANTE EXECUÇÃO)
 // =========================
-function salvarNoRanking(nome, avatar, pontos, ganhouCopa, tituloEspecial = null) {
-    const nomeLimpo = (nome || "").trim().toUpperCase();
-    if (!nomeLimpo) return;
+function inicializarJogo() {
+    try { gerarQRCodeInicial(); } catch(e) { console.error("Erro QR Inicial:", e); }
+    try { aplicarEstadoAudio(); } catch(e) { console.error("Erro Áudio:", e); }
+    try { iniciarFeedAoVivo(); } catch(e) { console.error("Erro Feed:", e); }
 
-    const ref = database.ref(`samininaRanking/${nomeLimpo}`);
+    try {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get("voltarResultado") === "1") { restaurarResultadoSeExistir(); return; }
 
-    ref.once("value").then(s => {
-        const data = s.exists() ? s.val() : {};
-        data.nome = nomeLimpo;
-        data.avatar = avatar;
-        data.pontosTotais = (Number(data.pontosTotais) || 0) + Number(pontos);
-        data.copas = (Number(data.copas) || 0) + (ganhouCopa ? 1 : 0);
-        ref.set(data);
-    });
+        if (params.get("sala")) {
+            salaId = params.get("sala");
+            limparResultadoSalvo(); resetarEstadoPartida();
+            salaId = params.get("sala"); // Retorna pq resetarEstadoPartida zera
+            jogadorTipo = "convidado"; modoDeJogo = "batalha_online";
 
-    database.ref("historicoPartidas").push({
-        nome: nomeLimpo,
-        avatar,
-        pontos,
-        titulo: tituloEspecial || calcularTitulo(pontos),
-        timestamp: firebase.database.ServerValue.TIMESTAMP
-    });
+            document.getElementById("tela-modo")?.classList.add("escondido");
+            document.getElementById("tela-inicial")?.classList.remove("escondido");
+            document.getElementById("painel-online")?.classList.remove("escondido");
+            document.getElementById("titulo-registro").innerText = "Entrar na Sala Online";
+            document.getElementById("online-badge-status").innerText = "Convidado";
+            document.getElementById("online-status-text").innerText = "Escolha seu nome e avatar para entrar na partida.";
+
+            const blocoL = document.getElementById("bloco-link-sala");
+            if (blocoL) blocoL.classList.remove("escondido");
+            const ipLink = document.getElementById("input-link-sala");
+            if (ipLink) ipLink.value = window.location.href;
+
+            document.getElementById("btn-criar-sala")?.classList.add("escondido");
+            document.getElementById("btn-compartilhar-whatsapp")?.classList.add("escondido");
+            document.getElementById("btn-copiar-link")?.classList.remove("escondido");
+            document.getElementById("btn-iniciar-local")?.classList.add("escondido");
+            document.getElementById("btn-confirmar-online")?.classList.remove("escondido");
+
+            ouvirSalaOnline();
+        }
+    } catch(e) { console.error("Erro Params Sala:", e); }
 }
 
-function enviarPesquisa(reacao) {
-    database.ref("pesquisaSatisfacao").push({
-        voto: reacao,
-        timestamp: firebase.database.ServerValue.TIMESTAMP
-    }).then(() => {
-        document.querySelector(".emoji-container")?.classList.add("escondido");
-        const feedback = document.getElementById("feedback-agradecimento");
-        if (feedback) feedback.classList.remove("escondido");
-    });
-}
-
-// =========================
-// DESAFIO
-// =========================
-function gerarDesafio() {
-    const modal = document.getElementById("modal-desafio");
-    const qr = document.getElementById("qrcode-desafio");
-    if (!modal || !qr || typeof QRCode === "undefined") return;
-
-    modal.classList.remove("escondido");
-    qr.innerHTML = "";
-
-    const nomeDesafiante = modoDeJogo === "solo"
-        ? j1Nome
-        : (j1Pontos >= j2Pontos ? j1Nome : j2Nome);
-
-    const pontosDesafiante = modoDeJogo === "solo"
-        ? j1Pontos
-        : Math.max(j1Pontos, j2Pontos);
-
-    const linkJogo = window.location.origin + window.location.pathname;
-    const mensagem = `Fiz ${pontosDesafiante} pontos na Copa Saminina! Meu título é ${calcularTitulo(pontosDesafiante)}. Duvido você bater meu recorde! Jogue agora: ${linkJogo}`;
-    const linkWhatsApp = `https://api.whatsapp.com/send?text=${encodeURIComponent(mensagem)}`;
-
-    new QRCode(qr, {
-        text: linkWhatsApp,
-        width: 180,
-        height: 180
-    });
-}
-
-function fecharModalDesafio() {
-    document.getElementById("modal-desafio")?.classList.add("escondido");
-}
-
-function gerarQRCodeSala(link) {
-    const box = document.getElementById("qrcode-sala-online");
-    const bloco = document.getElementById("bloco-qrcode-sala");
-
-    if (!box || typeof QRCode === "undefined") return;
-
-    box.innerHTML = "";
-
-    new QRCode(box, {
-        text: link,
-        width: 120,
-        height: 120,
-        colorDark: "#002266",
-        colorLight: "#ffffff"
-    });
-
-    if (bloco) bloco.classList.remove("escondido");
-}
-
-// =========================
-// INICIALIZAÇÃO
-// =========================
-document.addEventListener("DOMContentLoaded", () => {
-    gerarQRCodeInicial();
-    aplicarEstadoAudio();
-    mostrarBotaoMuteSePreciso();
-    iniciarFeedAoVivo();
-
-    const params = new URLSearchParams(window.location.search);
-
-    if (params.get("voltarResultado") === "1") {
-        restaurarResultadoSeExistir();
-        return;
-    }
-
-    if (params.get("sala")) {
-        salaId = params.get("sala");
-        jogadorTipo = "convidado";
-        modoDeJogo = "batalha_online";
-
-        limparResultadoSalvo();
-        resetarEstadoPartida();
-
-        document.getElementById("tela-modo").classList.add("escondido");
-        document.getElementById("tela-inicial").classList.remove("escondido");
-        document.getElementById("painel-online")?.classList.remove("escondido");
-        document.getElementById("titulo-registro").innerText = "Entrar na Sala Online";
-        document.getElementById("online-badge-status").innerText = "Convidado";
-        document.getElementById("online-status-text").innerText = "Escolha seu nome e avatar para entrar na partida.";
-
-        document.getElementById("bloco-link-sala")?.classList.remove("escondido");
-        document.getElementById("input-link-sala").value = window.location.href;
-
-        document.getElementById("btn-criar-sala")?.classList.add("escondido");
-        document.getElementById("btn-compartilhar-whatsapp")?.classList.add("escondido");
-        document.getElementById("btn-copiar-link")?.classList.remove("escondido");
-        document.getElementById("btn-iniciar-local")?.classList.add("escondido");
-        document.getElementById("btn-confirmar-online")?.classList.remove("escondido");
-
-        ouvirSalaOnline();
-    }
-});
+if (document.readyState === "loading") { document.addEventListener("DOMContentLoaded", inicializarJogo); } else { inicializarJogo(); }
