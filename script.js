@@ -693,6 +693,12 @@ function resetarEstadoPartida() {
     salaListenerAtivo = false;
     jogoListenerAtivo = false;
     chatListenerAtivo = false;
+
+    const blocoQrSala = document.getElementById("bloco-qrcode-sala");
+    const qrSala = document.getElementById("qrcode-sala-online");
+
+    if (blocoQrSala) blocoQrSala.classList.add("escondido");
+    if (qrSala) qrSala.innerHTML = "";
 }
 
 function selecionarModo(modo) {
@@ -808,6 +814,7 @@ function criarSalaOnline() {
         if (status) status.innerText = "Sala criada com sucesso. Agora confirme seu nome e avatar e compartilhe o link.";
         if (blocoLink) blocoLink.classList.remove("escondido");
         if (inputLink) inputLink.value = linkSalaAtual;
+        gerarQRCodeSala(linkSalaAtual);
         if (btnZap) btnZap.classList.remove("escondido");
         if (btnCopiar) btnCopiar.classList.remove("escondido");
 
@@ -1689,6 +1696,25 @@ function gerarDesafio() {
 
 function fecharModalDesafio() {
     document.getElementById("modal-desafio")?.classList.add("escondido");
+}
+
+function gerarQRCodeSala(link) {
+    const box = document.getElementById("qrcode-sala-online");
+    const bloco = document.getElementById("bloco-qrcode-sala");
+
+    if (!box || typeof QRCode === "undefined") return;
+
+    box.innerHTML = "";
+
+    new QRCode(box, {
+        text: link,
+        width: 120,
+        height: 120,
+        colorDark: "#002266",
+        colorLight: "#ffffff"
+    });
+
+    if (bloco) bloco.classList.remove("escondido");
 }
 
 // =========================

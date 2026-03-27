@@ -817,3 +817,20 @@ button:active { transform: scale(0.95); }
 .feed-ao-vivo .feed-item:hover {
     transform: translateY(-1px);
 }
+
+.qrcode-sala-box {
+    margin-top: 10px;
+    background: #fff;
+    border: 1px solid var(--color-border);
+    border-radius: 14px;
+    padding: 12px;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 120px;
+}
+
+#bloco-qrcode-sala {
+    margin-top: 8px;
+    text-align: center;
+}
