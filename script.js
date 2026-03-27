@@ -139,7 +139,14 @@ function aplicarEstadoAudio() {
 function mostrarBotaoMuteSePreciso() {
     const botaoMute = document.getElementById("btn-musica-toggle");
     if (!botaoMute) return;
-    botaoMute.classList.toggle("visivel", !musicaFundo.paused);
+    
+    // Garante que o botão apareça apenas quando a tela do quiz for ativada
+    const telaQuiz = document.getElementById("tela-quiz");
+    if (telaQuiz && !telaQuiz.classList.contains("escondido")) {
+        botaoMute.style.display = "flex";
+    } else {
+        botaoMute.style.display = "none";
+    }
 }
 
 function toggleMusica() { audioMutado = !audioMutado; aplicarEstadoAudio(); }
@@ -296,17 +303,35 @@ function ouvirChatSala() {
 }
 
 function enviarMensagemSala() {
-    if (!salaId) return; const input = document.getElementById("chat-online-input");
+    if (!salaId) return; 
+    const input = document.getElementById("chat-online-input");
     if (!input || !input.value.trim()) return;
-    const autor = (jogadorTipo === "host" ? j1Nome : j2Nome) || document.getElementById("input-nome1").value.trim() || "Jogador";
-    database.ref(`salas/${salaId}/chat`).push({ autor, texto: input.value.trim(), timestamp: firebase.database.ServerValue.TIMESTAMP });
+    
+    // Pega o nome exato que este jogador digitou no seu próprio dispositivo
+    const meuNome = document.getElementById("input-nome1").value.trim().toUpperCase();
+    const autor = meuNome || (jogadorTipo === "host" ? "Host" : "Convidado");
+    
+    database.ref(`salas/${salaId}/chat`).push({ 
+        autor: autor, 
+        texto: input.value.trim(), 
+        timestamp: firebase.database.ServerValue.TIMESTAMP 
+    });
+    
     input.value = "";
 }
 
 function enviarMensagemRapida(texto) {
     if (!salaId || !texto) return;
-    const autor = (jogadorTipo === "host" ? j1Nome : j2Nome) || document.getElementById("input-nome1").value.trim() || "Jogador";
-    database.ref(`salas/${salaId}/chat`).push({ autor, texto, timestamp: firebase.database.ServerValue.TIMESTAMP });
+    
+    // Mesma trava de segurança para as mensagens rápidas
+    const meuNome = document.getElementById("input-nome1").value.trim().toUpperCase();
+    const autor = meuNome || (jogadorTipo === "host" ? "Host" : "Convidado");
+    
+    database.ref(`salas/${salaId}/chat`).push({ 
+        autor: autor, 
+        texto: texto, 
+        timestamp: firebase.database.ServerValue.TIMESTAMP 
+    });
 }
 
 function resetarEstadoPartida() {
@@ -377,26 +402,55 @@ function criarSalaOnline() {
 }
 
 function ouvirSalaOnline() {
-    if (!salaId || salaListenerAtivo) return; salaListenerAtivo = true;
+    if (!salaId || salaListenerAtivo) return; 
+    salaListenerAtivo = true;
+
     database.ref(`salas/${salaId}`).on("value", snap => {
-        const data = snap.val(); if (!data) return;
-        j1Nome = data.host?.nome || ""; j1Avatar = data.host?.avatar || "img/1.jpg"; j2Nome = data.convidado?.nome || ""; j2Avatar = data.convidado?.avatar || "img/2.jpg";
+        const data = snap.val(); 
+        if (!data) return;
         
-        document.getElementById("room-name-host").innerText = j1Nome || "Aguardando..."; document.getElementById("room-name-convidado").innerText = j2Nome || "Aguardando...";
-        document.getElementById("room-avatar-host").src = j1Avatar; document.getElementById("room-avatar-convidado").src = j2Avatar;
+        j1Nome = data.host?.nome || ""; 
+        j1Avatar = data.host?.avatar || "img/1.jpg"; 
+        j2Nome = data.convidado?.nome || ""; 
+        j2Avatar = data.convidado?.avatar || "img/2.jpg";
         
-        if (data.host?.nome && data.convidado?.nome) { document.getElementById("chat-card-online")?.classList.remove("escondido"); ouvirChatSala(); }
+        document.getElementById("room-name-host").innerText = j1Nome || "Aguardando..."; 
+        document.getElementById("room-name-convidado").innerText = j2Nome || "Aguardando...";
+        document.getElementById("room-avatar-host").src = j1Avatar; 
+        document.getElementById("room-avatar-convidado").src = j2Avatar;
+        
+        if (data.host?.nome && data.convidado?.nome) { 
+            document.getElementById("chat-card-online")?.classList.remove("escondido"); 
+            ouvirChatSala(); 
+        }
         
         if (data.status === "esperando") {
             const euPronto = jogadorTipo === "host" ? data.host?.pronto : data.convidado?.pronto;
             if (euPronto) {
-                let texto = "Aguardando..."; let showBtn = false;
-                if (data.host?.pronto && data.convidado?.pronto) { if (jogadorTipo === "host") { texto = "Pronto para iniciar!"; showBtn = true; } else { texto = "Aguardando Host iniciar..."; } }
-                else if (data.convidado?.nome) texto = `${data.convidado.nome} entrou.`;
+                let texto = "Aguardando..."; 
+                let showBtn = false;
+                
+                if (data.host?.pronto && data.convidado?.pronto) { 
+                    if (jogadorTipo === "host") { 
+                        texto = "Pronto para iniciar!"; 
+                        showBtn = true; 
+                    } else { 
+                        texto = "Aguardando Host iniciar..."; 
+                    } 
+                } else if (data.convidado?.nome) {
+                    texto = `${data.convidado.nome} entrou.`;
+                }
                 mostrarTelaAguardandoOnline(texto, showBtn);
             }
-        } else if (data.status === "contagem") { mostrarTelaAguardandoOnline(`Iniciando em ${data.jogo?.countdown || 3}...`, false); }
-        else if (data.status === "pronta") { iniciarJogoOnline(data); }
+        } else if (data.status === "contagem") { 
+            mostrarTelaAguardandoOnline(`Iniciando em ${data.jogo?.countdown || 3}...`, false); 
+        } else if (data.status === "pronta") { 
+            // 👇 AQUI ESTÁ A CORREÇÃO DA MÚSICA 👇
+            // O jogo e a música só iniciam se a tela do Quiz ainda estiver fechada
+            if (document.getElementById("tela-quiz").classList.contains("escondido")) {
+                iniciarJogoOnline(data); 
+            }
+        }
     });
 }
 
@@ -418,11 +472,29 @@ function confirmarEntradaOnline() {
 }
 
 function iniciarJogoOnline(data) {
-    esconderTelaAguardandoOnline(); fecharModalCompartilhar();
-    document.getElementById("tela-inicial").classList.add("escondido"); document.getElementById("tela-quiz").classList.remove("escondido"); document.getElementById("timer-container").classList.remove("escondido");
-    j1Nome = data.host?.nome || "JOGADOR 1"; j1Avatar = data.host?.avatar || "img/1.jpg"; j2Nome = data.convidado?.nome || "JOGADOR 2"; j2Avatar = data.convidado?.avatar || "img/2.jpg";
-    document.getElementById("placar-nome-j1").innerText = j1Nome; document.getElementById("placar-nome-j2").innerText = j2Nome; document.getElementById("img-avatar-placar1").src = j1Avatar; document.getElementById("img-avatar-placar2").src = j2Avatar;
-    sincronizarJogoOnline(); musicaFundo.currentTime = 0; musicaFundo.play().catch(()=>{});
+    esconderTelaAguardandoOnline(); 
+    fecharModalCompartilhar();
+    
+    document.getElementById("tela-inicial").classList.add("escondido"); 
+    document.getElementById("tela-quiz").classList.remove("escondido"); 
+    document.getElementById("timer-container").classList.remove("escondido");
+    
+    j1Nome = data.host?.nome || "JOGADOR 1"; 
+    j1Avatar = data.host?.avatar || "img/1.jpg"; 
+    j2Nome = data.convidado?.nome || "JOGADOR 2"; 
+    j2Avatar = data.convidado?.avatar || "img/2.jpg";
+    
+    document.getElementById("placar-nome-j1").innerText = j1Nome; 
+    document.getElementById("placar-nome-j2").innerText = j2Nome; 
+    document.getElementById("img-avatar-placar1").src = j1Avatar; 
+    document.getElementById("img-avatar-placar2").src = j2Avatar;
+    
+    sincronizarJogoOnline(); 
+    
+    // 👇 GARANTE O BOTÃO MUTE E O LOOP DA MÚSICA 👇
+    mostrarBotaoMuteSePreciso();
+    musicaFundo.currentTime = 0; 
+    musicaFundo.play().catch(()=>{});
 }
 
 function sincronizarJogoOnline() {
@@ -438,15 +510,36 @@ function podeResponder() { return modoDeJogo !== "batalha_online" || (jogadorTip
 
 function validarComeco() {
     if (modoDeJogo === "batalha_online") return confirmarEntradaOnline();
+    
     j1Nome = document.getElementById("input-nome1").value.trim().toUpperCase();
     if (!j1Nome || !j1Avatar) return alert("Preencha nome e avatar.");
-    if (modoDeJogo === "solo") { j2Nome = "REI DAS COPAS"; j2Avatar = "img/1.jpg"; }
-    else { j2Nome = document.getElementById("input-nome2").value.trim().toUpperCase(); if (!j2Nome || !j2Avatar) return alert("Preencha jogador 2."); }
+    
+    if (modoDeJogo === "solo") { 
+        j2Nome = "REI DAS COPAS"; 
+        j2Avatar = "img/1.jpg"; 
+    } else { 
+        j2Nome = document.getElementById("input-nome2").value.trim().toUpperCase(); 
+        if (!j2Nome || !j2Avatar) return alert("Preencha jogador 2."); 
+    }
+    
     perguntasDaRodada = gerarPerguntasAleatorias(10);
-    document.getElementById("placar-nome-j1").innerText = j1Nome; document.getElementById("placar-nome-j2").innerText = j2Nome;
-    document.getElementById("img-avatar-placar1").src = j1Avatar; document.getElementById("img-avatar-placar2").src = j2Avatar;
-    document.getElementById("tela-inicial").classList.add("escondido"); document.getElementById("tela-quiz").classList.remove("escondido"); document.getElementById("timer-container").classList.remove("escondido");
-    musicaFundo.currentTime = 0; musicaFundo.play().catch(()=>{}); mostrarPergunta(); iniciarCronometro();
+    
+    document.getElementById("placar-nome-j1").innerText = j1Nome; 
+    document.getElementById("placar-nome-j2").innerText = j2Nome;
+    document.getElementById("img-avatar-placar1").src = j1Avatar; 
+    document.getElementById("img-avatar-placar2").src = j2Avatar;
+    
+    document.getElementById("tela-inicial").classList.add("escondido"); 
+    document.getElementById("tela-quiz").classList.remove("escondido"); 
+    document.getElementById("timer-container").classList.remove("escondido");
+    
+    // 👇 AQUI ENTRA A CORREÇÃO DO MUTE E DA MÚSICA 👇
+    mostrarBotaoMuteSePreciso();
+    musicaFundo.currentTime = 0; 
+    musicaFundo.play().catch(()=>{}); 
+    
+    mostrarPergunta(); 
+    iniciarCronometro();
 }
 
 function mostrarPergunta() {
