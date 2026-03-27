@@ -355,3 +355,67 @@ button:active { transform: scale(0.95); }
 .players-room-grid { 
     margin-top: 20px !important; 
 }
+
+/* ========================================= */
+/* CORREÇÃO DO RANKING MESTRE (LISTA)        */
+/* ========================================= */
+.lista-ranking-container {
+    max-height: 350px;
+    overflow-y: auto;
+    padding-right: 5px;
+    margin-bottom: 15px;
+}
+
+.lista-ranking-container::-webkit-scrollbar { width: 8px; }
+.lista-ranking-container::-webkit-scrollbar-thumb { background: var(--color-yellow); border-radius: 10px; }
+
+.ranking-item {
+    display: flex;
+    align-items: center;
+    background: #f8f9fa;
+    margin-bottom: 10px;
+    padding: 10px;
+    border-radius: 10px;
+    border: 1px solid #d9dfeb;
+    text-align: left;
+}
+
+.ranking-pos { 
+    width: 40px; 
+    font-weight: 900; 
+    color: var(--color-blue); 
+    text-align: center; 
+}
+
+.ranking-avatar {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    border: 2px solid var(--color-yellow);
+    margin: 0 15px;
+    object-fit: cover;
+}
+
+.ranking-info { 
+    flex-grow: 1; 
+    color: var(--color-blue); 
+    line-height: 1.3; 
+    font-size: 14px; 
+}
+
+.ranking-info b { 
+    font-size: 16px; 
+    text-transform: uppercase; 
+}
+
+.ranking-info span { 
+    color: #6b7280; 
+    font-size: 12px; 
+    font-weight: bold; 
+}
+
+.divisor { 
+    border: 0; 
+    border-top: 2px dashed #d9dfeb; 
+    margin: 15px 0; 
+}

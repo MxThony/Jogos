@@ -583,12 +583,53 @@ function ajustarPontuacaoGlobal(nome, av, delta, tit="Ajuste") { const nm=nome.t
 function salvarNoRanking(n, av, pts, cup, tit) { const nm=n.trim().toUpperCase(); if(!nm)return; database.ref(`samininaRanking/${nm}`).once("value").then(s=>{ const dt=s.exists()?s.val():{nome:nm,avatar:av||"img/1.jpg",pontosTotais:0,copas:0}; dt.pontosTotais=(Number(dt.pontosTotais)||0)+Number(pts); dt.copas=(Number(dt.copas)||0)+(cup?1:0); database.ref(`samininaRanking/${nm}`).set(dt); database.ref("historicoPartidas").push({nome:nm,avatar:dt.avatar,pontos:pts,titulo:tit||calcularTitulo(pts),timestamp:firebase.database.ServerValue.TIMESTAMP}); }); }
 
 function finalizarJogo() {
-    musicaFundo.pause(); document.getElementById("tela-quiz").classList.add("escondido"); document.getElementById("timer-container").classList.add("escondido"); document.getElementById("tela-resultado").classList.remove("escondido");
+    // 1ª Trava: Se a tela de resultado já está visível, o jogo já acabou. Não faça nada.
+    if (!document.getElementById("tela-resultado").classList.contains("escondido")) return;
+
+    musicaFundo.pause(); 
+    document.getElementById("tela-quiz").classList.add("escondido"); 
+    document.getElementById("timer-container").classList.add("escondido"); 
+    document.getElementById("tela-resultado").classList.remove("escondido");
+
     let v, vAv, vPts;
-    if(modoDeJogo==="solo"){ v=j1Nome; vAv=j1Avatar; vPts=j1Pontos; if(j1Pontos>=6) salvarNoRanking(j1Nome,j1Avatar,j1Pontos,true); else ajustarPontuacaoGlobal(j1Nome,j1Avatar,-6,"Perdeu 6 pontos"); }
-    else { v = j1Pontos>=j2Pontos?j1Nome:j2Nome; vAv = j1Pontos>=j2Pontos?j1Avatar:j2Avatar; vPts=Math.max(j1Pontos,j2Pontos); if(j1Pontos!==j2Pontos){ salvarNoRanking(v,vAv,vPts,true); ajustarPontuacaoGlobal(j1Pontos<j2Pontos?j1Nome:j2Nome, j1Pontos<j2Pontos?j1Avatar:j2Avatar, -6, "Perdeu 6 pontos"); } else salvarNoRanking(v,vAv,vPts,false); }
-    document.getElementById("img-avatar-vencedor").src = vAv; document.getElementById("titulo-vencedor").innerText = (modoDeJogo!=="solo" && j1Pontos===j2Pontos) ? "Empate!" : `${v} Venceu!`; document.getElementById("mensagem-final").innerText = `${vPts} Pontos\n${calcularTitulo(vPts)}`;
-    salvarEstadoResultado(); if(typeof confetti!=="undefined" && ((modoDeJogo==="solo"&&vPts>=6)||(modoDeJogo!=="solo"&&j1Pontos!==j2Pontos))) confetti({particleCount:300,spread:100,origin:{y:0.6}});
+    
+    // Define o vencedor
+    if (modoDeJogo === "solo") { 
+        v = j1Nome; vAv = j1Avatar; vPts = j1Pontos; 
+    } else { 
+        v = j1Pontos >= j2Pontos ? j1Nome : j2Nome; 
+        vAv = j1Pontos >= j2Pontos ? j1Avatar : j2Avatar; 
+        vPts = Math.max(j1Pontos, j2Pontos); 
+    }
+
+    // 👇 2ª Trava: A MÁGICA PARA NÃO DUPLICAR NO BANCO 👇
+    // Só salva se for modo Solo/Local, ou se for Online E for o Host.
+    const deveSalvarNoBanco = (modoDeJogo !== "batalha_online" || jogadorTipo === "host");
+
+    if (deveSalvarNoBanco) {
+        if (modoDeJogo === "solo") {
+            if (j1Pontos >= 6) salvarNoRanking(j1Nome, j1Avatar, j1Pontos, true);
+            else ajustarPontuacaoGlobal(j1Nome, j1Avatar, -6, "Perdeu 6 pontos");
+        } else {
+            if (j1Pontos !== j2Pontos) {
+                salvarNoRanking(v, vAv, vPts, true);
+                ajustarPontuacaoGlobal(j1Pontos < j2Pontos ? j1Nome : j2Nome, j1Pontos < j2Pontos ? j1Avatar : j2Avatar, -6, "Perdeu 6 pontos");
+            } else {
+                salvarNoRanking(v, vAv, vPts, false);
+            }
+        }
+    }
+
+    // Mostra na tela
+    document.getElementById("img-avatar-vencedor").src = vAv; 
+    document.getElementById("titulo-vencedor").innerText = (modoDeJogo !== "solo" && j1Pontos === j2Pontos) ? "Empate!" : `${v} Venceu!`; 
+    document.getElementById("mensagem-final").innerText = `${vPts} Pontos\n${calcularTitulo(vPts)}`;
+
+    salvarEstadoResultado(); 
+
+    if (typeof confetti !== "undefined" && ((modoDeJogo === "solo" && vPts >= 6) || (modoDeJogo !== "solo" && j1Pontos !== j2Pontos))) {
+        confetti({ particleCount: 300, spread: 100, origin: { y: 0.6 } });
+    }
 }
 
 function confirmarDesistencia() {
