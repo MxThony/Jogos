@@ -10,24 +10,40 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
-    <link rel="stylesheet" href="style.css?v=4.0">
+    <link rel="stylesheet" href="style.css?v=8.0">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
 </head>
 <body>
+    <div id="modal-compartilhar" class="escondido modal-overlay" onclick="fecharModalCompartilhar()">
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <span class="fechar-modal" onclick="fecharModalCompartilhar()">×</span>
+    <h3>Sala criada com sucesso</h3>
+    <p>Compartilhe o link com seu amigo para ele entrar na partida.</p>
+
+    <input type="text" id="input-link-sala" readonly>
+
+    <button onclick="copiarLinkSala()">Copiar link</button>
+    <button onclick="compartilharWhatsapp()" class="btn-desafio">Enviar no WhatsApp</button>
+
+    <p style="margin-top: 10px;">Aguardando o amigo entrar...</p>
+  </div>
+</div>
 
     <div class="main-wrapper">
         <div class="logo-container">
-            <img src="logo/samininacopa.svg" class="logo-marca" onclick="verificarSenhaReset()">
+            <img src="logo/samininacopa.svg" class="logo-marca" onclick="verificarSenhaReset()" alt="Copa Saminina">
         </div>
 
         <div class="quiz-container">
-            
             <div id="tela-modo">
                 <h2>Vamos jogar?</h2>
                 <div class="botoes-modo">
                     <button onclick="selecionarModo('solo')" class="btn-modo">Carreira Solo 🏃</button>
-                    <button onclick="selecionarModo('batalha')" class="btn-modo">Batalha Multiplayer ⚔️</button>
-                    <button onclick="abrirRankingMestreInicio()" class="btn-modo btn-ranking">🏆 Ranking e Títulos</button>
+
+<button onclick="selecionarModo('batalha_local')" class="btn-modo">Batalha Local ⚔️</button>
+
+<button onclick="selecionarModo('batalha_online')" class="btn-modo">Batalha Online 🌐</button>
+                    <button onclick="abrirRankingMestreInicio()" class="btn-modo btn-ranking">Ranking e Títulos</button>
                 </div>
                 <div class="qrcode-wrapper">
                     <p>Acompanhe o ranking no celular!</p>
@@ -37,19 +53,20 @@
 
             <div id="tela-inicial" class="escondido">
                 <div id="btn-voltar-registro" onclick="voltarParaModos()">✖</div>
-                
-                <h2>Registro dos Craques</h2>
+
+                <h2 id="titulo-registro">Registro dos Craques</h2>
+
                 <div class="campos-cadastro">
-                    <input type="text" id="input-nome1" placeholder="Nome Jogador 1" maxlength="18">
+                    <input type="text" id="input-nome1" placeholder="Nome do Jogador" maxlength="18">
                     <div class="botoes-avatar" id="avatar-j1">
                         <img src="img/1.jpg" class="img-avatar-opcao" onclick="selecionarAvatar(1, 0, this)">
                         <img src="img/2.jpg" class="img-avatar-opcao" onclick="selecionarAvatar(1, 1, this)">
                         <img src="img/3.jpg" class="img-avatar-opcao" onclick="selecionarAvatar(1, 2, this)">
                         <img src="img/4.jpg" class="img-avatar-opcao" onclick="selecionarAvatar(1, 3, this)">
                     </div>
-                    
+
                     <div id="container-avatar2" class="escondido">
-                        <input type="text" id="input-nome2" placeholder="Nome Jogador 2" maxlength="18">
+                        <input type="text" id="input-nome2" placeholder="Nome do Jogador 2" maxlength="18">
                         <div class="botoes-avatar" id="avatar-j2">
                             <img src="img/1.jpg" class="img-avatar-opcao" onclick="selecionarAvatar(2, 0, this)">
                             <img src="img/2.jpg" class="img-avatar-opcao" onclick="selecionarAvatar(2, 1, this)">
@@ -58,12 +75,32 @@
                         </div>
                     </div>
                 </div>
-                <button onclick="validarComeco()">Iniciar Partida</button>
+
+                <div id="painel-online" class="escondido online-panel">
+                    <p id="online-label-convite" class="online-status escondido"></p>
+                    <div id="online-acoes-entrada" class="online-actions escondido">
+                        <button id="btn-criar-sala" onclick="criarSalaOnline()" class="btn-modo">Criar sala online</button>
+                        <button id="btn-entrar-sala" onclick="entrarSalaOnline()" class="btn-modo escondido">Entrar na sala</button>
+                    </div>
+
+                    <div id="bloco-link-sala" class="escondido">
+                        <p id="online-status-text" class="online-status">Aguardando seu amigo entrar...</p>
+                        <div class="sala-link-box">
+                            <input type="text" id="input-link-sala" readonly>
+                        </div>
+                        <div class="online-actions two-buttons">
+                            <button onclick="compartilharSalaWhatsApp()" class="btn-desafio">Enviar no WhatsApp</button>
+                            <button onclick="copiarLinkSala()" class="btn-ranking">Copiar link</button>
+                        </div>
+                    </div>
+                </div>
+
+                <button id="btn-iniciar-local" onclick="validarComeco()">Iniciar Partida</button>
             </div>
 
             <div id="tela-quiz" class="escondido">
                 <div id="btn-desistir" onclick="confirmarDesistencia()">✖</div>
-                
+
                 <div class="placar-transmissao">
                     <div class="placar-item placar-item-j1">
                         <img id="img-avatar-placar1" src="" class="avatar-circular size-p">
@@ -81,11 +118,12 @@
                 </div>
 
                 <div id="quiz-content-area">
-                    <div id="aviso-turno-nome" class="turno-destaque" style="margin-bottom: 15px; font-size: 20px;">Vez de: JOGADOR</div>
+                    <div id="aviso-turno-nome" class="turno-destaque">Vez de: JOGADOR</div>
+                    <div id="online-espera-msg" class="online-espera escondido">Aguardando a resposta do outro jogador...</div>
                     <div id="streak-popup" class="streak-msg"></div>
                     <div class="progresso" id="barra-progresso">Pergunta 1 de 10</div>
                     <h3 id="texto-pergunta">Pergunta?</h3>
-                    <div id="feedback-acerto" class="escondido feedback-text">Gooooool! 🎉</div>
+                    <div id="feedback-acerto" class="escondido feedback-text">Gooooool!</div>
                     <div id="feedback-erro" class="escondido feedback-text">Para fora!</div>
                     <div id="area-botoes"></div>
                 </div>
@@ -95,7 +133,7 @@
                 <img id="img-avatar-vencedor" src="" class="avatar-circular size-g">
                 <h2 id="titulo-vencedor">Fim de Jogo!</h2>
                 <p id="mensagem-final" style="white-space: pre-line;"></p>
-                
+
                 <div id="secao-pesquisa">
                     <p style="margin-top: 15px; font-weight: 900; color: var(--color-blue);">O que achou da experiência?</p>
                     <div class="emoji-container">
@@ -105,10 +143,10 @@
                         <span class="emoji-btn" onclick="enviarPesquisa('nao-curti')">🙁</span>
                     </div>
                 </div>
-                
-                <button onclick="gerarDesafio()" class="btn-desafio">🔥 Desafiar Amigo</button>
-                <button onclick="abrirRankingMestreResultado()" class="btn-ranking">🏆 Ranking Completo</button>
-                <button onclick="location.reload()">Novo Jogo</button>
+
+                <button onclick="gerarDesafio()" class="btn-desafio">Desafiar amigo</button>
+                <button onclick="abrirRankingMestreResultado()" class="btn-ranking">Ranking completo</button>
+                <button onclick="location.href='index.html'">Novo jogo</button>
             </div>
         </div>
 
@@ -117,21 +155,23 @@
         </div>
     </div>
 
-    <div id="modal-desafio" class="escondido modal-overlay" onclick="fecharModalDesafio()">
-        <div class="modal-content" onclick="event.stopPropagation()">
-            <span class="fechar-modal" onclick="fecharModalDesafio()">×</span>
-            <h3>Duvido bater meu recorde! ⚽</h3>
-            <div id="qrcode-desafio"></div>
-        </div>
+   <div id="modal-compartilhar" class="escondido modal-overlay" onclick="fecharModalCompartilhar()">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <span class="fechar-modal" onclick="fecharModalCompartilhar()">×</span>
+        <h3>Sala criada com sucesso</h3>
+        <p>Compartilhe o link com seu amigo para ele entrar na partida.</p>
+
+        <input type="text" id="input-link-sala" readonly>
+
+        <button onclick="copiarLinkSala()">Copiar link</button>
+        <button onclick="compartilharWhatsapp()" class="btn-desafio">Enviar no WhatsApp</button>
+
+        <p style="margin-top: 10px;">Aguardando o amigo entrar...</p>
     </div>
+</div>
 
-    <button id="btn-musica-toggle" onclick="toggleMusica()">
-        <span id="musica-icone">🔊</span>
-    </button>
-
-    <button id="btn-fullscreen" onclick="toggleFullscreen()">
-        <span>↕️</span>
-    </button>
+    <button id="btn-musica-toggle" onclick="toggleMusica()"><span id="musica-icone">🔊</span></button>
+    <button id="btn-fullscreen" onclick="toggleFullscreen()"><span>↕️</span></button>
 
     <script src="script.js"></script>
 </body>

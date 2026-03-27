@@ -81,38 +81,70 @@ const bancoDePerguntas = [
     { pergunta: "Qual o mascote da Copa de 2014?", respostas: ["Fuleco", "Zakumi", "La'eeb"], respostaCerta: 0 },
     { pergunta: "Qual país venceu a Copa de 2022?", respostas: ["França", "Brasil", "Argentina"], respostaCerta: 2 },
     { pergunta: "Qual é a cor da camisa principal do Brasil?", respostas: ["Azul", "Branca", "Amarela"], respostaCerta: 2 },
-    { pergunta: "Quantos minutos dura um tempo normal?", respostas: ["45", "90", "100"], respostaCerta: 1 },
+    { pergunta: "Quantos minutos dura um tempo normal?", respostas: ["45", "90", "100"], respostaCerta: 0 },
     { pergunta: "Quem foi o capitão do Penta em 2002?", respostas: ["Dunga", "Cafu", "Lúcio"], respostaCerta: 1 },
-    { pergunta: "Qual cantor(a) gravou 'Waka Waka'?", respostas: ["Anitta", "Shakira", "Ivete"], respostaCerta: 1 },
-    { pergunta: "Qual animal 'previa' resultados em 2010?", respostas: ["Gato", "Polvo Paul", "Cachorro"], respostaCerta: 1 },
+    { pergunta: "Qual cantora gravou 'Waka Waka'?", respostas: ["Anitta", "Shakira", "Ivete"], respostaCerta: 1 },
+    { pergunta: "Qual animal ficou famoso por prever resultados em 2010?", respostas: ["Gato", "Polvo Paul", "Cachorro"], respostaCerta: 1 },
     { pergunta: "O que o juiz usa para marcar a barreira?", respostas: ["Giz", "Tinta", "Spray de espuma"], respostaCerta: 2 },
-    { pergunta: "Qual narrador diz 'Haja coração!'?", respostas: ["Galvão Bueno", "Cléber Machado", "Tiago Leifert"], respostaCerta: 0 },
-    { pergunta: "Qual o estádio da final de 2014?", respostas: ["Mineirão", "Arena Cora", "Maracanã"], respostaCerta: 2 },
-    { pergunta: "Quantas estrelas tem o escudo do Brasil?", respostas: ["4", "5", "6"], respostaCerta: 1 },
+    { pergunta: "Qual narrador dizia 'Haja coração!'?", respostas: ["Galvão Bueno", "Cléber Machado", "Tiago Leifert"], respostaCerta: 0 },
+    { pergunta: "Qual o estádio da final de 2014?", respostas: ["Mineirão", "Arena Corinthians", "Maracanã"], respostaCerta: 2 },
+    { pergunta: "Quantas estrelas tem o escudo da Seleção Brasileira?", respostas: ["4", "5", "6"], respostaCerta: 1 },
     { pergunta: "Em qual ano o Brasil ganhou o Tetra?", respostas: ["1990", "1994", "1998"], respostaCerta: 1 },
-    { pergunta: "Qual jogador francês deu uma cabeçada em 2006?", respostas: ["Henry", "Ribéry", "Zidane"], respostaCerta: 2 },
+    { pergunta: "Qual jogador francês deu uma cabeçada na final de 2006?", respostas: ["Henry", "Ribéry", "Zidane"], respostaCerta: 2 },
     { pergunta: "Qual seleção é chamada de 'Azzurra'?", respostas: ["França", "Itália", "Grécia"], respostaCerta: 1 },
-    { pergunta: "De quantos em quantos anos tem Copa?", respostas: ["2", "4", "5"], respostaCerta: 1 },
+    { pergunta: "De quantos em quantos anos acontece a Copa do Mundo?", respostas: ["2", "4", "5"], respostaCerta: 1 },
     { pergunta: "Quem é o 'Fenômeno' do Brasil?", respostas: ["Ronaldinho", "Neymar", "Ronaldo"], respostaCerta: 2 },
     { pergunta: "Qual país sediou a Copa de 2018?", respostas: ["Rússia", "Catar", "Brasil"], respostaCerta: 0 },
-    { pergunta: "Quantas substituições podem ser feitas hoje?", respostas: ["3", "4", "5"], respostaCerta: 2 },
-    { pergunta: "Qual prêmio recebe o melhor goleiro?", respostas: ["Luva de Ouro", "Bola", "Chuteira"], respostaCerta: 0 },
+    { pergunta: "Quantas substituições podem ser feitas no futebol atual?", respostas: ["3", "4", "5"], respostaCerta: 2 },
+    { pergunta: "Qual prêmio recebe o melhor goleiro da Copa?", respostas: ["Luva de Ouro", "Bola de Ouro", "Chuteira de Ouro"], respostaCerta: 0 },
     { pergunta: "Onde fica a sede da FIFA?", respostas: ["Suíça", "França", "EUA"], respostaCerta: 0 },
     { pergunta: "Qual país ganhou a Copa de 2010?", respostas: ["Holanda", "Alemanha", "Espanha"], respostaCerta: 2 },
     { pergunta: "Em 1950, o Brasil usava que cor de camisa?", respostas: ["Azul", "Verde", "Branca"], respostaCerta: 2 },
-    { pergunta: "Qual jogador é o 'CR7'?", respostas: ["Cristiano", "Ronaldinho", "Casemiro"], respostaCerta: 0 },
+    { pergunta: "Qual jogador é conhecido como CR7?", respostas: ["Cristiano Ronaldo", "Ronaldinho", "Casemiro"], respostaCerta: 0 },
     { pergunta: "Quantos jogadores cada time tem em campo?", respostas: ["10", "11", "12"], respostaCerta: 1 },
-    { pergunta: "O que significa VAR?", respostas: ["Juiz", "Árbitro de Vídeo", "Câmera"], respostaCerta: 1 },
-    { pergunta: "Qual jogador brasileiro é o 'Bruxo'?", respostas: ["Neymar", "Ronaldinho", "Rivaldo"], respostaCerta: 1 },
+    { pergunta: "O que significa VAR?", respostas: ["Video Assistant Referee", "Visual Arbitrage Replay", "Verified Action Replay"], respostaCerta: 0 },
+    { pergunta: "Qual jogador brasileiro é conhecido como 'Bruxo'?", respostas: ["Neymar", "Ronaldinho Gaúcho", "Rivaldo"], respostaCerta: 1 },
     { pergunta: "Qual foi a sede da Copa de 2022?", respostas: ["Dubai", "Catar", "Arábia Saudita"], respostaCerta: 1 },
     { pergunta: "Como se chama a bola da Copa de 1970?", respostas: ["Jabulani", "Brazuca", "Telstar"], respostaCerta: 2 },
-    { pergunta: "Qual seleção usa a cor Laranja?", respostas: ["Alemanha", "Holanda", "Bélgica"], respostaCerta: 1 },
-    { pergunta: "Quem era o técnico do Penta?", respostas: ["Tite", "Felipão", "Dunga"], respostaCerta: 1 },
-    { pergunta: "Qual país tem 4 títulos mundiais?", respostas: ["Itália", "Argentina", "Uruguai"], respostaCerta: 0 },
-    { pergunta: "Quem fez gol de mão (La Mano de Dios)?", respostas: ["Pelé", "Maradona", "Messi"], respostaCerta: 1 },
-    { pergunta: "Qual a maior goleada sofrida pelo Brasil?", respostas: ["3x0", "7x1", "5x2"], respostaCerta: 1 },
+    { pergunta: "Qual seleção usa tradicionalmente a cor laranja?", respostas: ["Alemanha", "Holanda", "Bélgica"], respostaCerta: 1 },
+    { pergunta: "Quem era o técnico do Penta em 2002?", respostas: ["Tite", "Felipão", "Dunga"], respostaCerta: 1 },
+{ pergunta: "Qual país tem 4 títulos e foi tetracampeão antes da Alemanha?", respostas: ["Itália", "Argentina", "Uruguai"], respostaCerta: 0 },
+    { pergunta: "Quem fez o gol de mão chamado 'La Mano de Dios'?", respostas: ["Pelé", "Maradona", "Messi"], respostaCerta: 1 },
+    { pergunta: "Qual a maior goleada sofrida pelo Brasil em Copa?", respostas: ["3x0", "7x1", "5x2"], respostaCerta: 1 },
     { pergunta: "Qual cidade NÃO sediou a Copa 2014?", respostas: ["Cuiabá", "Manaus", "Arcoverde"], respostaCerta: 2 },
-    { pergunta: "Qual a forma da taça da Copa?", respostas: ["Globo", "Dois atletas", "Chuteira"], respostaCerta: 1 }
+    { pergunta: "Qual a forma da taça da Copa?", respostas: ["Globo", "Dois atletas segurando o mundo", "Chuteira"], respostaCerta: 1 },
+
+    // +30 NOVAS
+    { pergunta: "Quem é o único jogador a conquistar 3 Copas do Mundo como atleta?", respostas: ["Ronaldo", "Pelé", "Zidane"], respostaCerta: 1 },
+    { pergunta: "Qual brasileiro era conhecido como 'Anjo das Pernas Tortas'?", respostas: ["Garrincha", "Romário", "Sócrates"], respostaCerta: 0 },
+    { pergunta: "Quem marcou dois gols na final da Copa de 2002?", respostas: ["Rivaldo", "Ronaldinho", "Ronaldo"], respostaCerta: 2 },
+    { pergunta: "Em que país aconteceu a Copa de 1994?", respostas: ["México", "Estados Unidos", "França"], respostaCerta: 1 },
+    { pergunta: "Qual ex-camisa 10 brasileiro era chamado de 'Galinho de Quintino'?", respostas: ["Zico", "Kaká", "Rivelino"], respostaCerta: 0 },
+    { pergunta: "Quem foi o capitão do Brasil no tetra de 1994?", respostas: ["Romário", "Dunga", "Bebeto"], respostaCerta: 1 },
+    { pergunta: "Qual jogador brasileiro ficou famoso pelo 'corta-luz' na final de 2002?", respostas: ["Rivaldo", "Kaká", "Juninho"], respostaCerta: 0 },
+    { pergunta: "Qual seleção eliminou o Brasil na Copa de 2006?", respostas: ["Itália", "França", "Portugal"], respostaCerta: 1 },
+    { pergunta: "Qual lendário jogador usava a camisa 11 no Brasil de 1970?", respostas: ["Jairzinho", "Tostão", "Rivelino"], respostaCerta: 0 },
+    { pergunta: "Quem é conhecido como 'Baixinho' no futebol brasileiro?", respostas: ["Romário", "Bebeto", "Careca"], respostaCerta: 0 },
+    { pergunta: "Qual seleção venceu a Copa de 1998?", respostas: ["Brasil", "França", "Alemanha"], respostaCerta: 1 },
+    { pergunta: "Quem foi o técnico da seleção brasileira no tetra de 1994?", respostas: ["Carlos Alberto Parreira", "Zagallo", "Felipão"], respostaCerta: 0 },
+    { pergunta: "Qual ídolo brasileiro era conhecido como 'Doutor'?", respostas: ["Sócrates", "Raí", "Falcão"], respostaCerta: 0 },
+    { pergunta: "Quem marcou o gol do título da Alemanha na final de 2014?", respostas: ["Müller", "Klose", "Götze"], respostaCerta: 2 },
+    { pergunta: "Qual jogador brasileiro fez parte do famoso ataque com Bebeto em 1994?", respostas: ["Romário", "Adriano", "Neymar"], respostaCerta: 0 },
+    { pergunta: "Quem foi o goleiro titular do Brasil no penta em 2002?", respostas: ["Taffarel", "Dida", "Marcos"], respostaCerta: 2 },
+    { pergunta: "Qual seleção venceu a Copa de 1986?", respostas: ["Alemanha", "Argentina", "Brasil"], respostaCerta: 1 },
+    { pergunta: "Quem era chamado de 'Capitão do Tetra'?", respostas: ["Dunga", "Cafu", "Lúcio"], respostaCerta: 0 },
+    { pergunta: "Qual brasileiro foi eleito melhor jogador da Copa de 1994?", respostas: ["Romário", "Bebeto", "Dunga"], respostaCerta: 0 },
+    { pergunta: "Qual camisa Pelé usava na Seleção Brasileira?", respostas: ["7", "9", "10"], respostaCerta: 2 },
+    { pergunta: "Qual país sediou a Copa de 1970?", respostas: ["México", "Chile", "Alemanha"], respostaCerta: 0 },
+    { pergunta: "Quem marcou um famoso gol de falta contra a Inglaterra em 2002?", respostas: ["Rivaldo", "Ronaldinho Gaúcho", "Cafu"], respostaCerta: 1 },
+   { pergunta: "Qual técnico brasileiro ganhou a Copa do Mundo como jogador e treinador?", respostas: ["Zagallo", "Parreira", "Felipão"], respostaCerta: 0 },
+    { pergunta: "Quem levantou a taça do penta como capitão?", respostas: ["Cafu", "Ronaldo", "Roberto Carlos"], respostaCerta: 0 },
+    { pergunta: "Qual seleção foi campeã da Copa de 1978?", respostas: ["Holanda", "Argentina", "Brasil"], respostaCerta: 1 },
+    { pergunta: "Quem marcou dois gols na final da Copa de 1958 pelo Brasil?", respostas: ["Vavá", "Pelé", "Garrincha"], respostaCerta: 1 },
+    { pergunta: "Quem foi o técnico do Brasil na Copa de 1970?", respostas: ["Zagallo", "Parreira", "Telê Santana"], respostaCerta: 0 },
+    { pergunta: "Qual ídolo brasileiro ficou famoso pela comemoração embalando o bebê?", respostas: ["Romário", "Bebeto", "Careca"], respostaCerta: 1 },
+    { pergunta: "Qual seleção eliminou o Brasil nos pênaltis em 1986?", respostas: ["França", "Itália", "Argentina"], respostaCerta: 0 },
+    { pergunta: "Quem era conhecido como 'Canhotinha de Ouro'?", respostas: ["Gérson", "Rivelino", "Zico"], respostaCerta: 0 }
 ];
 
 // =========================
@@ -142,8 +174,18 @@ function calcularTitulo(pts) {
     return "O Inevitável";
 }
 
+// mais aleatório que sort(() => 0.5 - Math.random())
 function shuffleArray(arr) {
-    return [...arr].sort(() => 0.5 - Math.random());
+    const copia = [...arr];
+    for (let i = copia.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copia[i], copia[j]] = [copia[j], copia[i]];
+    }
+    return copia;
+}
+
+function gerarPerguntasAleatorias(qtd = 10) {
+    return shuffleArray(bancoDePerguntas).slice(0, qtd);
 }
 
 function gerarCodigoSala() {
@@ -478,7 +520,7 @@ function verificarSePodeIniciarSala() {
         const convidadoPronto = !!data.convidado?.pronto;
 
         if (hostPronto && convidadoPronto && data.status !== "pronta") {
-            const perguntasSorteadas = shuffleArray(bancoDePerguntas).slice(0, 10);
+            const perguntasSorteadas = gerarPerguntasAleatorias(10);
 
             database.ref("salas/" + salaId).update({
                 status: "pronta",
@@ -639,7 +681,7 @@ function validarComeco() {
 }
 
 function iniciarJogoLocal() {
-    perguntasDaRodada = shuffleArray(bancoDePerguntas).slice(0, 10);
+    perguntasDaRodada = gerarPerguntasAleatorias(10);
 
     document.getElementById("placar-nome-j1").innerText = j1Nome;
     document.getElementById("placar-nome-j2").innerText = j2Nome;

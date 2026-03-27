@@ -1,5 +1,8 @@
-console.log("🚀 SCRIPT.JS DEFINITIVO COM PLACAR TV, ÁUDIO E FULLSCREEN");
+console.log("Copa Saminina carregada com modos solo, local e online");
 
+// =========================
+// FIREBASE
+// =========================
 const firebaseConfig = {
     apiKey: "AIzaSyDbvleD3CCVEOybvc7B-sKmzL1ugnHiMyk",
     authDomain: "copa-saminina.firebaseapp.com",
@@ -15,23 +18,40 @@ if (!firebase.apps.length) {
 }
 const database = firebase.database();
 
-const somAcerto = new Audio('audio/acerto.mp3');
-const somErro = new Audio('audio/erro.mp3');
-const musicaFundo = new Audio('audio/fundo.mp3');
+// =========================
+// ÁUDIO
+// =========================
+const somAcerto = new Audio("audio/acerto.mp3");
+const somErro = new Audio("audio/erro.mp3");
+const musicaFundo = new Audio("audio/fundo.mp3");
 
 somAcerto.volume = 0.5;
 somErro.volume = 0.4;
 musicaFundo.volume = 0.15;
 musicaFundo.loop = true;
 
-const listaAvatares = ['img/1.jpg', 'img/2.jpg', 'img/3.jpg', 'img/4.jpg'];
+let audioMutado = false;
+
+// =========================
+// ESTADO GERAL
+// =========================
+const listaAvatares = ["img/1.jpg", "img/2.jpg", "img/3.jpg", "img/4.jpg"];
+
+let modoDeJogo = "";
+let salaId = null;
+let jogadorTipo = null; // host | convidado
+let linkSalaAtual = "";
+let salaListenerAtivo = false;
+let jogoListenerAtivo = false;
 
 let j1Nome = "";
 let j2Nome = "";
-let j1Pontos = 0;
-let j2Pontos = 0;
 let j1Avatar = "";
 let j2Avatar = "";
+
+let j1Pontos = 0;
+let j2Pontos = 0;
+
 let j1Streak = 0;
 let j2Streak = 0;
 let errosSeguidosJ1 = 0;
@@ -41,12 +61,17 @@ let ePerguntaOuro = false;
 let perguntaAtual = 0;
 let jogadorAtual = 1;
 let perguntasDaRodada = [];
-let tempoRestante = 30;
-let controleCronometro;
-let controleTimeout;
-let modoDeJogo = "";
-let audioMutado = false;
 
+let tempoRestante = 30;
+let controleCronometro = null;
+let controleTimeout = null;
+
+let onlineDataAtual = null;
+let resultadoSalvoNaSessao = false;
+
+// =========================
+// PERGUNTAS
+// =========================
 const bancoDePerguntas = [
     { pergunta: "Quantas Copas o Brasil ganhou?", respostas: ["3", "4", "5"], respostaCerta: 2 },
     { pergunta: "Quem é o maior artilheiro das Copas?", respostas: ["Pelé", "Ronaldo", "Miroslav Klose"], respostaCerta: 2 },
@@ -87,77 +112,92 @@ const bancoDePerguntas = [
     { pergunta: "Quem fez gol de mão (La Mano de Dios)?", respostas: ["Pelé", "Maradona", "Messi"], respostaCerta: 1 },
     { pergunta: "Qual a maior goleada sofrida pelo Brasil?", respostas: ["3x0", "7x1", "5x2"], respostaCerta: 1 },
     { pergunta: "Qual cidade NÃO sediou a Copa 2014?", respostas: ["Cuiabá", "Manaus", "Arcoverde"], respostaCerta: 2 },
-    { pergunta: "Qual a forma da taça da Copa?", respostas: ["Globo", "Dois atletas", "Chuteira"], respostaCerta: 1 },
-    { pergunta: "Onde será a final da Copa de 2026?", respostas: ["Nova York/New Jersey", "Dallas", "Cidade do México"], respostaCerta: 0 },
-    { pergunta: "Quantas seleções participarão da Copa de 2026?", respostas: ["32", "48", "64"], respostaCerta: 1 },
-    { pergunta: "Quem marcou um golaço de bicicleta na Copa 2022?", respostas: ["Neymar", "Richarlison", "Vinícius Jr"], respostaCerta: 1 },
-    { pergunta: "Qual o único jogador a vencer 3 Copas do Mundo?", respostas: ["Maradona", "Zidane", "Pelé"], respostaCerta: 2 },
-    { pergunta: "Qual país sediará a Copa de 2026 junto com EUA e México?", respostas: ["Canadá", "Brasil", "Panamá"], respostaCerta: 0 },
-    { pergunta: "Qual a maior artilheira de todas as Copas?", respostas: ["Marta", "Cristiane", "Mia Hamm"], respostaCerta: 0 },
-    { pergunta: "Quem superou o recorde de gols de Pelé pela Seleção?", respostas: ["Ronaldo", "Neymar", "Romário"], respostaCerta: 1 },
-    { pergunta: "Em 2022, qual seleção africana chegou à semifinal?", respostas: ["Egito", "Nigéria", "Marrocos"], respostaCerta: 2 },
-    { pergunta: "Qual goleiro brilhou nos pênaltis na final de 2022?", respostas: ["Emiliano Martínez", "Lloris", "Alisson"], respostaCerta: 0 },
-    { pergunta: "Qual o apelido da bola da Copa de 2014?", respostas: ["Brazuca", "Jabulani", "Al Rihla"], respostaCerta: 0 },
-    { pergunta: "Quem é o jogador com mais partidas em Copas?", respostas: ["Messi", "Matthäus", "Klose"], respostaCerta: 0 },
-    { pergunta: "Quantos anos Pelé tinha quando ganhou sua 1ª Copa?", respostas: ["17", "18", "19"], respostaCerta: 0 },
-    { pergunta: "Qual seleção detém o título de 2022?", respostas: ["França", "Argentina", "Croácia"], respostaCerta: 1 },
-    { pergunta: "Quem marcou 3 gols na final da Copa de 2022?", respostas: ["Messi", "Mbappé", "Julián Álvarez"], respostaCerta: 1 },
-    { pergunta: "Onde aconteceu a Copa do Mundo de 2002?", respostas: ["Japão e Coreia do Sul", "China", "Alemanha"], respostaCerta: 0 },
-    { pergunta: "Qual o nome do troféu da Copa antes de 1974?", respostas: ["Taça FIFA", "Jules Rimet", "Copa Ouro"], respostaCerta: 1 },
-    { pergunta: "Qual foi a primeira Copa a usar o VAR?", respostas: ["2014", "2018", "2022"], respostaCerta: 1 },
-    { pergunta: "Em qual cidade o Brasil perdeu de 7x1?", respostas: ["Rio de Janeiro", "Belo Horizonte", "São Paulo"], respostaCerta: 1 },
-    { pergunta: "Quem é o técnico com mais jogos pelo Brasil?", respostas: ["Zagallo", "Tite", "Parreira"], respostaCerta: 0 },
-    { pergunta: "Qual jogador é conhecido como 'O Baixinho'?", respostas: ["Zico", "Romário", "Bebeto"], respostaCerta: 1 },
-    { pergunta: "Em que ano o Brasil sediou sua primeira Copa?", respostas: ["1930", "1950", "1962"], respostaCerta: 1 },
-    { pergunta: "Qual seleção jogou todas as Copas do Mundo?", respostas: ["Alemanha", "Itália", "Brasil"], respostaCerta: 2 },
-    { pergunta: "Quem fez o gol do título do Tetra em 1994?", respostas: ["Baggio", "Romário", "Dunga"], respostaCerta: 0 },
-    { pergunta: "Qual era a cor da camisa do Brasil antes da amarela?", respostas: ["Branca", "Verde", "Azul"], respostaCerta: 0 },
-    { pergunta: "Quem marcou o gol do título da Alemanha em 2014?", respostas: ["Müller", "Klose", "Götze"], respostaCerta: 2 },
-    { pergunta: "Qual o estádio com maior capacidade da Copa 2026?", respostas: ["Azteca", "MetLife", "AT&T Stadium"], respostaCerta: 0 },
-    { pergunta: "Qual jogador brasileiro jogou 3 finais seguidas?", respostas: ["Pelé", "Cafu", "Ronaldo"], respostaCerta: 1 },
-    { pergunta: "Qual país venceu a Copa de 1998?", respostas: ["Brasil", "França", "Alemanha"], respostaCerta: 1 },
-    { pergunta: "Quem é o maior artilheiro em uma única edição?", respostas: ["Just Fontaine", "Pelé", "Ronaldo"], respostaCerta: 0 },
-    { pergunta: "Qual seleção tem o apelido de 'La Roja'?", respostas: ["Espanha", "Portugal", "Bélgica"], respostaCerta: 0 }
+    { pergunta: "Qual a forma da taça da Copa?", respostas: ["Globo", "Dois atletas", "Chuteira"], respostaCerta: 1 }
 ];
 
+// =========================
+// UTILITÁRIOS
+// =========================
 function getStreakData(streak) {
     const msgs = {
-        3: "Hat-trick! 🎩",
-        4: "Chocolate! 🍫",
-        5: "Pentaaaa! 🖐️",
-        6: "Calma lá, paizão! 🛑",
-        7: "Alemanha de 2014? 🇩🇪",
-        8: "Bayern de Munique 🏰",
-        9: "Fora de Controle! 🚨",
-        10: "Aí virou bagunça! 🤪"
+        3: "Hat-trick!",
+        4: "Chocolate!",
+        5: "Pentaaaa!",
+        6: "Calma lá, paizão!",
+        7: "Alemanha de 2014?",
+        8: "Bayern de Munique",
+        9: "Fora de Controle!",
+        10: "Aí virou bagunça!"
     };
     return { msg: msgs[streak] || "", bonus: streak >= 3 ? 1 : 0 };
 }
 
 function calcularTitulo(pts) {
-    if (pts <= 2) return "Perna de Pau 🦵";
-    if (pts <= 5) return "Reserva de Luxo 🪑";
-    if (pts <= 8) return "Titular Absoluto 🏃‍♂️";
-    if (pts <= 11) return "Craque da Rodada 🌟";
-    if (pts <= 14) return "Lenda do Penta 🏆";
-    if (pts <= 17) return "Fenômeno das Copas 🇧🇷";
-    return "O Inevitável 🤖";
+    if (pts <= 2) return "Perna de Pau";
+    if (pts <= 5) return "Reserva de Luxo";
+    if (pts <= 8) return "Titular Absoluto";
+    if (pts <= 11) return "Craque da Rodada";
+    if (pts <= 14) return "Lenda do Penta";
+    if (pts <= 17) return "Fenômeno das Copas";
+    return "O Inevitável";
 }
 
+function shuffleArray(arr) {
+    return [...arr].sort(() => 0.5 - Math.random());
+}
+
+function gerarCodigoSala() {
+    return Math.random().toString(36).substring(2, 7);
+}
+
+// =========================
+// ÁUDIO
+// =========================
+function aplicarEstadoAudio() {
+    somAcerto.muted = audioMutado;
+    somErro.muted = audioMutado;
+    musicaFundo.muted = audioMutado;
+
+    const icone = document.getElementById("musica-icone");
+    if (icone) {
+        icone.innerText = audioMutado ? "🔇" : "🔊";
+    }
+
+    mostrarBotaoMuteSePreciso();
+}
+
+function mostrarBotaoMuteSePreciso() {
+    const botaoMute = document.getElementById("btn-musica-toggle");
+    if (!botaoMute) return;
+    botaoMute.classList.toggle("visivel", !musicaFundo.paused);
+}
+
+function toggleMusica() {
+    audioMutado = !audioMutado;
+    aplicarEstadoAudio();
+}
+
+function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+    } else {
+        document.exitFullscreen().catch(() => {});
+    }
+}
+
+// =========================
+// RESULTADO SALVO
+// =========================
 function salvarEstadoResultado() {
     const dadosResultado = {
         titulo: document.getElementById("titulo-vencedor")?.innerText || "Fim de Jogo!",
         mensagem: document.getElementById("mensagem-final")?.innerText || "",
         avatar: document.getElementById("img-avatar-vencedor")?.src || "",
-        mostrarAvatar: document.getElementById("img-avatar-vencedor")?.style.display !== "none",
-        modoDeJogo,
-        j1Nome,
-        j2Nome,
-        j1Pontos,
-        j2Pontos
+        mostrarAvatar: document.getElementById("img-avatar-vencedor")?.style.display !== "none"
     };
 
     sessionStorage.setItem("resultadoCopaSaminina", JSON.stringify(dadosResultado));
+    resultadoSalvoNaSessao = true;
 }
 
 function restaurarResultadoSeExistir() {
@@ -167,10 +207,7 @@ function restaurarResultadoSeExistir() {
     try {
         const dados = JSON.parse(salvo);
 
-        document.getElementById("tela-modo").classList.add("escondido");
-        document.getElementById("tela-inicial").classList.add("escondido");
-        document.getElementById("tela-quiz").classList.add("escondido");
-        document.getElementById("timer-container").classList.add("escondido");
+        esconderTodasAsTelas();
         document.getElementById("tela-resultado").classList.remove("escondido");
 
         document.getElementById("titulo-vencedor").innerText = dados.titulo || "Fim de Jogo!";
@@ -190,46 +227,113 @@ function restaurarResultadoSeExistir() {
 
 function limparResultadoSalvo() {
     sessionStorage.removeItem("resultadoCopaSaminina");
+    resultadoSalvoNaSessao = false;
 }
 
-function aplicarEstadoAudio() {
-    somAcerto.muted = audioMutado;
-    somErro.muted = audioMutado;
-    musicaFundo.muted = audioMutado;
+// =========================
+// TELAS
+// =========================
+function esconderTodasAsTelas() {
+    const ids = [
+        "tela-modo",
+        "tela-inicial",
+        "tela-quiz",
+        "tela-resultado",
+        "timer-container",
+        "tela-espera-online"
+    ];
 
-    const icone = document.getElementById("musica-icone");
-    if (icone) {
-        icone.innerText = audioMutado ? "🔇" : "🔊";
+    ids.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.add("escondido");
+    });
+}
+
+function mostrarTelaAguardandoOnline(texto = "Aguardando o outro jogador...") {
+    let tela = document.getElementById("tela-espera-online");
+
+    if (!tela) {
+        tela = document.createElement("div");
+        tela.id = "tela-espera-online";
+        tela.className = "quiz-container";
+        tela.innerHTML = `
+            <h2 id="texto-espera-online">Aguardando o outro jogador...</h2>
+            <p style="margin-top: 10px; color: var(--color-blue); font-weight: bold;">
+                Assim que os dois estiverem prontos, a partida começa.
+            </p>
+        `;
+        const wrapper = document.querySelector(".main-wrapper");
+        if (wrapper) wrapper.appendChild(tela);
     }
 
-    mostrarBotaoMuteSePreciso();
+    const textoEl = document.getElementById("texto-espera-online");
+    if (textoEl) textoEl.innerText = texto;
+
+    tela.classList.remove("escondido");
 }
 
-function mostrarBotaoMuteSePreciso() {
-    const botaoMute = document.getElementById("btn-musica-toggle");
-    if (!botaoMute) return;
-
-    const deveMostrar = !musicaFundo.paused;
-    botaoMute.classList.toggle("visivel", deveMostrar);
+function esconderTelaAguardandoOnline() {
+    const tela = document.getElementById("tela-espera-online");
+    if (tela) tela.classList.add("escondido");
 }
 
-function toggleMusica() {
-    audioMutado = !audioMutado;
-    aplicarEstadoAudio();
+// =========================
+// COMPARTILHAMENTO
+// =========================
+function copiarLinkSala() {
+    if (!linkSalaAtual) return;
+    navigator.clipboard.writeText(linkSalaAtual).then(() => {
+        alert("Link copiado!");
+    }).catch(() => {
+        alert("Não foi possível copiar o link.");
+    });
 }
 
-function toggleFullscreen() {
-    if (!document.fullscreenElement) {
-        document.documentElement.requestFullscreen().catch(err => {
-            console.log("Erro ao entrar em tela cheia:", err);
-        });
-    } else {
-        document.exitFullscreen().catch(err => {
-            console.log("Erro ao sair da tela cheia:", err);
-        });
+function compartilharWhatsapp() {
+    if (!linkSalaAtual) return;
+    const mensagem = `Entre na minha partida da Copa Saminina: ${linkSalaAtual}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(mensagem)}`, "_blank");
+}
+
+function fecharModalCompartilhar() {
+    const modal = document.getElementById("modal-compartilhar");
+    if (modal) modal.classList.add("escondido");
+}
+
+// =========================
+// QRCODE E RESET
+// =========================
+function gerarQRCodeInicial() {
+    const container = document.getElementById("qrcode-container");
+    if (!container || typeof QRCode === "undefined") return;
+
+    container.innerHTML = "";
+    new QRCode(container, {
+        text: "https://mxthony.github.io/Jogos/ranking.html",
+        width: 120,
+        height: 120,
+        colorDark: "#003399",
+        colorLight: "#ffffff"
+    });
+}
+
+function verificarSenhaReset() {
+    const senha = prompt("Digite a senha para limpar o banco:");
+    if (senha === "321") {
+        if (confirm("Deseja limpar todo o banco de dados?")) {
+            database.ref().remove().then(() => {
+                alert("Banco limpo!");
+                location.reload();
+            });
+        }
+    } else if (senha !== null) {
+        alert("Senha incorreta!");
     }
 }
 
+// =========================
+// RANKING
+// =========================
 function abrirRankingMestreInicio() {
     window.location.href = "ranking-mestre.html?fs=1";
 }
@@ -239,123 +343,345 @@ function abrirRankingMestreResultado() {
     window.location.href = "ranking-mestre.html?fs=1&origem=resultado";
 }
 
-function selecionarModo(m) {
-    limparResultadoSalvo();
-
-    modoDeJogo = m;
-
-    document.getElementById("tela-modo").classList.add("escondido");
-    document.getElementById("tela-inicial").classList.remove("escondido");
-    document.getElementById("container-avatar2").classList.toggle("escondido", m === "solo");
-
-    j1Pontos = 0;
-    j2Pontos = 0;
-    j1Streak = 0;
-    j2Streak = 0;
-    errosSeguidosJ1 = 0;
-    errosSeguidosJ2 = 0;
-    perguntaAtual = 0;
-    jogadorAtual = 1;
+// =========================
+// SELEÇÃO DE MODO
+// =========================
+function resetarEstadoPartida() {
     j1Nome = "";
     j2Nome = "";
     j1Avatar = "";
     j2Avatar = "";
+
+    j1Pontos = 0;
+    j2Pontos = 0;
+
+    j1Streak = 0;
+    j2Streak = 0;
+    errosSeguidosJ1 = 0;
+    errosSeguidosJ2 = 0;
     ePerguntaOuro = false;
+
+    perguntaAtual = 0;
+    jogadorAtual = 1;
+    perguntasDaRodada = [];
+
+    clearInterval(controleCronometro);
+    clearTimeout(controleTimeout);
 
     document.getElementById("placar-pts-j1").innerText = "0";
     document.getElementById("placar-pts-j2").innerText = "0";
 
-    document.querySelectorAll(".img-avatar-opcao").forEach(img => img.classList.remove("selecionado"));
-    document.getElementById("input-nome1").value = "";
-    document.getElementById("input-nome2").value = "";
+    const input1 = document.getElementById("input-nome1");
+    const input2 = document.getElementById("input-nome2");
+    if (input1) input1.value = "";
+    if (input2) input2.value = "";
 
+    document.querySelectorAll(".img-avatar-opcao").forEach(img => {
+        img.classList.remove("selecionado");
+    });
+
+    document.getElementById("container-avatar2")?.classList.add("escondido");
+    document.getElementById("secao-pesquisa")?.classList.remove("escondido");
     document.querySelector(".emoji-container")?.classList.remove("escondido");
     document.getElementById("feedback-agradecimento")?.classList.add("escondido");
-    document.getElementById("secao-pesquisa")?.classList.remove("escondido");
+}
+
+function selecionarModo(modo) {
+    limparResultadoSalvo();
+    resetarEstadoPartida();
+
+    modoDeJogo = modo;
+
+    document.getElementById("tela-modo").classList.add("escondido");
+    document.getElementById("tela-inicial").classList.remove("escondido");
+
+    if (modo === "batalha_local") {
+        document.getElementById("container-avatar2")?.classList.remove("escondido");
+    }
+
+    if (modo === "batalha_online") {
+        iniciarSalaOnline();
+    }
 }
 
 function voltarParaModos() {
     limparResultadoSalvo();
+    esconderTelaAguardandoOnline();
+    fecharModalCompartilhar();
+
     document.getElementById("tela-inicial").classList.add("escondido");
     document.getElementById("tela-modo").classList.remove("escondido");
 }
 
 function selecionarAvatar(j, i, el) {
-    const av = listaAvatares[i];
-    if (j === 1) {
-        j1Avatar = av;
+    const avatarEscolhido = listaAvatares[i];
+
+    if (modoDeJogo === "batalha_online") {
+        j1Avatar = avatarEscolhido;
     } else {
-        j2Avatar = av;
+        if (j === 1) j1Avatar = avatarEscolhido;
+        if (j === 2) j2Avatar = avatarEscolhido;
     }
 
     el.parentElement.querySelectorAll("img").forEach(img => img.classList.remove("selecionado"));
     el.classList.add("selecionado");
 }
 
-function validarComeco() {
-    limparResultadoSalvo();
+// =========================
+// ONLINE
+// =========================
+function iniciarSalaOnline() {
+    salaId = gerarCodigoSala();
+    jogadorTipo = "host";
+    salaListenerAtivo = false;
+    jogoListenerAtivo = false;
 
-    j1Nome = document.getElementById("input-nome1").value.trim().toUpperCase();
+    database.ref("salas/" + salaId).set({
+        status: "esperando",
+        host: {
+            nome: "",
+            avatar: "",
+            pronto: false
+        },
+        convidado: {
+            nome: "",
+            avatar: "",
+            pronto: false
+        },
+        jogo: {
+            turno: "host",
+            perguntaAtual: 0,
+            j1Pontos: 0,
+            j2Pontos: 0,
+            perguntas: [],
+            iniciada: false
+        }
+    }).then(() => {
+        linkSalaAtual = window.location.origin + window.location.pathname + "?sala=" + salaId;
+
+        const inputLink = document.getElementById("input-link-sala");
+        if (inputLink) inputLink.value = linkSalaAtual;
+
+        const modal = document.getElementById("modal-compartilhar");
+        if (modal) modal.classList.remove("escondido");
+
+        ouvirSalaOnline();
+    });
+}
+
+function verificarSePodeIniciarSala() {
+    database.ref("salas/" + salaId).once("value").then(snap => {
+        const data = snap.val();
+        if (!data) return;
+
+        const hostPronto = !!data.host?.pronto;
+        const convidadoPronto = !!data.convidado?.pronto;
+
+        if (hostPronto && convidadoPronto && data.status !== "pronta") {
+            const perguntasSorteadas = shuffleArray(bancoDePerguntas).slice(0, 10);
+
+            database.ref("salas/" + salaId).update({
+                status: "pronta",
+                "jogo/perguntas": perguntasSorteadas,
+                "jogo/perguntaAtual": 0,
+                "jogo/turno": "host",
+                "jogo/j1Pontos": 0,
+                "jogo/j2Pontos": 0,
+                "jogo/iniciada": true
+            });
+        }
+    });
+}
+
+function ouvirSalaOnline() {
+    if (!salaId || salaListenerAtivo) return;
+    salaListenerAtivo = true;
+
+    database.ref("salas/" + salaId).on("value", snap => {
+        const data = snap.val();
+        if (!data) return;
+
+        onlineDataAtual = data;
+
+        const hostNome = data.host?.nome || "";
+        const hostAvatar = data.host?.avatar || "";
+        const convidadoNome = data.convidado?.nome || "";
+        const convidadoAvatar = data.convidado?.avatar || "";
+
+        j1Nome = hostNome;
+        j1Avatar = hostAvatar || "img/1.jpg";
+        j2Nome = convidadoNome;
+        j2Avatar = convidadoAvatar || "img/2.jpg";
+
+        if (data.status === "esperando") {
+            const euPronto = jogadorTipo === "host" ? data.host?.pronto : data.convidado?.pronto;
+            if (euPronto) {
+                mostrarTelaAguardandoOnline("Aguardando o outro jogador...");
+            }
+            return;
+        }
+
+        if (data.status === "pronta") {
+            iniciarJogoOnline(data);
+        }
+    });
+}
+
+function iniciarJogoOnline(data) {
+    esconderTelaAguardandoOnline();
+    fecharModalCompartilhar();
+
+    document.getElementById("tela-inicial").classList.add("escondido");
+    document.getElementById("tela-quiz").classList.remove("escondido");
+    document.getElementById("timer-container").classList.remove("escondido");
+
+    j1Nome = data.host?.nome || "JOGADOR 1";
+    j1Avatar = data.host?.avatar || "img/1.jpg";
+    j2Nome = data.convidado?.nome || "JOGADOR 2";
+    j2Avatar = data.convidado?.avatar || "img/2.jpg";
+
+    document.getElementById("placar-nome-j1").innerText = j1Nome;
+    document.getElementById("placar-nome-j2").innerText = j2Nome;
+    document.getElementById("img-avatar-placar1").src = j1Avatar;
+    document.getElementById("img-avatar-placar2").src = j2Avatar;
+
+    sincronizarJogoOnline();
+
+    musicaFundo.currentTime = 0;
+    musicaFundo.play().then(() => {
+        aplicarEstadoAudio();
+    }).catch(() => {
+        aplicarEstadoAudio();
+    });
+}
+
+function sincronizarJogoOnline() {
+    if (!salaId || jogoListenerAtivo) return;
+    jogoListenerAtivo = true;
+
+    database.ref("salas/" + salaId + "/jogo").on("value", snap => {
+        const jogo = snap.val();
+        if (!jogo) return;
+
+        perguntaAtual = jogo.perguntaAtual || 0;
+        jogadorAtual = jogo.turno === "host" ? 1 : 2;
+        j1Pontos = jogo.j1Pontos || 0;
+        j2Pontos = jogo.j2Pontos || 0;
+        perguntasDaRodada = Array.isArray(jogo.perguntas) ? jogo.perguntas : [];
+
+        document.getElementById("placar-pts-j1").innerText = j1Pontos;
+        document.getElementById("placar-pts-j2").innerText = j2Pontos;
+
+        if (perguntaAtual >= 10) {
+            finalizarJogo();
+            return;
+        }
+
+        mostrarPergunta();
+    });
+}
+
+function podeResponder() {
+    if (modoDeJogo !== "batalha_online") return true;
+    if (jogadorTipo === "host" && jogadorAtual === 1) return true;
+    if (jogadorTipo === "convidado" && jogadorAtual === 2) return true;
+    return false;
+}
+
+// =========================
+// INICIAR PARTIDA
+// =========================
+function validarComeco() {
+    const nomeDigitado = document.getElementById("input-nome1").value.trim().toUpperCase();
+
+    if (!nomeDigitado || !j1Avatar) {
+        alert("Preencha o nome e escolha um avatar.");
+        return;
+    }
+
+    if (modoDeJogo === "batalha_online") {
+        const caminhoJogador = jogadorTipo === "host" ? "host" : "convidado";
+
+        database.ref("salas/" + salaId + "/" + caminhoJogador).update({
+            nome: nomeDigitado,
+            avatar: j1Avatar,
+            pronto: true
+        }).then(() => {
+            const telaInicial = document.getElementById("tela-inicial");
+            if (telaInicial) telaInicial.classList.add("escondido");
+
+            mostrarTelaAguardandoOnline("Aguardando o outro jogador...");
+            verificarSePodeIniciarSala();
+        });
+
+        return;
+    }
+
+    j1Nome = nomeDigitado;
 
     if (modoDeJogo === "solo") {
         j2Nome = "REI DAS COPAS";
         j2Avatar = "img/1.jpg";
-    } else {
-        j2Nome = document.getElementById("input-nome2").value.trim().toUpperCase();
     }
 
-    if (!j1Nome || !j1Avatar || (modoDeJogo === "batalha" && (!j2Nome || !j2Avatar))) {
-        alert("Preencha os craques e escolha os avatares!");
-        return;
+    if (modoDeJogo === "batalha_local") {
+        const nome2 = document.getElementById("input-nome2").value.trim().toUpperCase();
+
+        if (!nome2 || !j2Avatar) {
+            alert("Preencha o nome do jogador 2 e escolha um avatar.");
+            return;
+        }
+
+        j2Nome = nome2;
     }
+
+    iniciarJogoLocal();
+}
+
+function iniciarJogoLocal() {
+    perguntasDaRodada = shuffleArray(bancoDePerguntas).slice(0, 10);
 
     document.getElementById("placar-nome-j1").innerText = j1Nome;
-    document.getElementById("img-avatar-placar1").src = j1Avatar;
     document.getElementById("placar-nome-j2").innerText = j2Nome;
+    document.getElementById("img-avatar-placar1").src = j1Avatar;
     document.getElementById("img-avatar-placar2").src = j2Avatar;
-
-    perguntasDaRodada = [...bancoDePerguntas].sort(() => 0.5 - Math.random()).slice(0, 10);
 
     document.getElementById("tela-inicial").classList.add("escondido");
     document.getElementById("tela-quiz").classList.remove("escondido");
     document.getElementById("timer-container").classList.remove("escondido");
 
     musicaFundo.currentTime = 0;
-    musicaFundo.play()
-        .then(() => {
-            aplicarEstadoAudio();
-        })
-        .catch(err => {
-            console.log("Não foi possível iniciar o áudio automaticamente:", err);
-            aplicarEstadoAudio();
-        });
+    musicaFundo.play().then(() => {
+        aplicarEstadoAudio();
+    }).catch(() => {
+        aplicarEstadoAudio();
+    });
 
     mostrarPergunta();
     iniciarCronometro();
 }
 
+// =========================
+// PERGUNTA / UI
+// =========================
 function mostrarPergunta() {
+    if (!perguntasDaRodada || !perguntasDaRodada[perguntaAtual]) return;
+
     const d = perguntasDaRodada[perguntaAtual];
     const quizContainer = document.querySelector(".quiz-container");
 
     const avisoTurno = document.getElementById("aviso-turno-nome");
     if (avisoTurno) {
-        avisoTurno.innerText = `Vez de: ${(jogadorAtual === 1 ? j1Nome : j2Nome).toUpperCase()}`;
+        avisoTurno.innerText = `VEZ DE: ${jogadorAtual === 1 ? j1Nome : j2Nome}`;
     }
 
-    if (modoDeJogo === "batalha") {
+    if (modoDeJogo === "batalha_local") {
         const lado1 = document.querySelector(".placar-item-j1");
         const lado2 = document.querySelector(".placar-item-j2");
-
         if (lado1 && lado2) {
             lado1.style.opacity = jogadorAtual === 1 ? "1" : "0.4";
             lado2.style.opacity = jogadorAtual === 2 ? "1" : "0.4";
         }
-    } else {
-        const lado1 = document.querySelector(".placar-item-j1");
-        const lado2 = document.querySelector(".placar-item-j2");
-        if (lado1) lado1.style.opacity = "1";
-        if (lado2) lado2.style.opacity = "1";
     }
 
     const errosAtuais = jogadorAtual === 1 ? errosSeguidosJ1 : errosSeguidosJ2;
@@ -364,13 +690,13 @@ function mostrarPergunta() {
     if (ePerguntaOuro) {
         quizContainer.classList.add("ouro-active");
         document.getElementById("texto-pergunta").innerHTML =
-            `<span style="color: #DAA520; font-weight: 900; display: block; margin-bottom: 10px;">⭐ PERGUNTA DE OURO ⭐</span>${d.pergunta}`;
+            `<span style="color:#DAA520;font-weight:900;display:block;margin-bottom:10px;">PERGUNTA DE OURO</span>${d.pergunta}`;
     } else {
         quizContainer.classList.remove("ouro-active");
         document.getElementById("texto-pergunta").innerText = d.pergunta;
     }
 
-    document.getElementById("barra-progresso").innerText = `Pergunta ${perguntaAtual + 1} de 10`;
+    document.getElementById("barra-progresso").innerText = `PERGUNTA ${perguntaAtual + 1} DE 10`;
     document.getElementById("feedback-acerto").classList.add("escondido");
     document.getElementById("feedback-erro").classList.add("escondido");
     document.getElementById("streak-popup").innerText = "";
@@ -385,9 +711,38 @@ function mostrarPergunta() {
         b.onclick = () => verificarResposta(i, b);
         area.appendChild(b);
     });
+
+    atualizarBloqueioBotoes();
+    iniciarCronometro();
 }
 
+function atualizarBloqueioBotoes() {
+    const botoes = document.querySelectorAll(".btn-resposta");
+    const liberar = podeResponder();
+
+    botoes.forEach(btn => {
+        btn.disabled = !liberar;
+        btn.style.opacity = liberar ? "1" : "0.5";
+        btn.style.pointerEvents = liberar ? "auto" : "none";
+    });
+}
+
+function atualizarTela() {
+    const nomeDaVez = jogadorAtual === 1 ? j1Nome : j2Nome;
+    document.getElementById("aviso-turno-nome").innerText = "VEZ DE: " + nomeDaVez;
+    atualizarBloqueioBotoes();
+}
+
+// =========================
+// TIMER
+// =========================
 function iniciarCronometro() {
+    if (modoDeJogo === "batalha_online" && !podeResponder()) {
+        document.getElementById("timer-display").innerText = "Aguardando...";
+        clearInterval(controleCronometro);
+        return;
+    }
+
     tempoRestante = 30;
     clearInterval(controleCronometro);
 
@@ -406,22 +761,26 @@ function iniciarCronometro() {
     }, 1000);
 }
 
+// =========================
+// RESPOSTA
+// =========================
 function verificarResposta(idxSelecionado, botaoClicado) {
+    if (modoDeJogo === "batalha_online" && !podeResponder()) return;
+
     clearInterval(controleCronometro);
 
-    const correta = perguntasDaRodada[perguntaAtual].respostaCerta;
-    const botoes = document.querySelectorAll(".btn-resposta");
+    const pergunta = perguntasDaRodada[perguntaAtual];
+    if (!pergunta) return;
 
+    const correta = pergunta.respostaCerta;
+    const botoes = document.querySelectorAll(".btn-resposta");
     botoes.forEach(btn => btn.disabled = true);
 
     if (idxSelecionado === correta) {
         somAcerto.currentTime = 0;
         somAcerto.play().catch(() => {});
 
-        if (botaoClicado) {
-            botaoClicado.classList.add("correta");
-        }
-
+        if (botaoClicado) botaoClicado.classList.add("correta");
         document.getElementById("feedback-acerto").classList.remove("escondido");
 
         let streak = jogadorAtual === 1 ? ++j1Streak : ++j2Streak;
@@ -445,13 +804,8 @@ function verificarResposta(idxSelecionado, botaoClicado) {
         somErro.currentTime = 0;
         somErro.play().catch(() => {});
 
-        if (botaoClicado) {
-            botaoClicado.classList.add("errada");
-        }
-
-        if (botoes[correta]) {
-            botoes[correta].classList.add("correta");
-        }
+        if (botaoClicado) botaoClicado.classList.add("errada");
+        if (botoes[correta]) botoes[correta].classList.add("correta");
 
         document.getElementById("feedback-erro").classList.remove("escondido");
 
@@ -470,23 +824,57 @@ function verificarResposta(idxSelecionado, botaoClicado) {
     }
 
     controleTimeout = setTimeout(() => {
-        perguntaAtual++;
-
-        if (perguntaAtual >= 10) {
-            finalizarJogo();
-        } else {
-            if (modoDeJogo === "batalha") {
-                jogadorAtual = jogadorAtual === 1 ? 2 : 1;
-            }
-            mostrarPergunta();
-            iniciarCronometro();
-        }
-    }, 2500);
+        avancarRodada();
+    }, 1800);
 }
 
+function avancarRodada() {
+    perguntaAtual++;
+
+    if (perguntaAtual >= 10) {
+        if (modoDeJogo === "batalha_online") {
+            database.ref("salas/" + salaId + "/jogo").update({
+                perguntaAtual: 10,
+                j1Pontos,
+                j2Pontos
+            });
+        }
+        finalizarJogo();
+        return;
+    }
+
+    if (modoDeJogo === "solo") {
+        mostrarPergunta();
+        return;
+    }
+
+    if (modoDeJogo === "batalha_local") {
+        jogadorAtual = jogadorAtual === 1 ? 2 : 1;
+        mostrarPergunta();
+        return;
+    }
+
+    if (modoDeJogo === "batalha_online") {
+        const proximoTurno = jogadorAtual === 1 ? "convidado" : "host";
+
+        database.ref("salas/" + salaId + "/jogo").update({
+            turno: proximoTurno,
+            perguntaAtual,
+            j1Pontos,
+            j2Pontos
+        });
+    }
+}
+
+// =========================
+// FIM DE JOGO
+// =========================
 function finalizarJogo() {
     musicaFundo.pause();
     mostrarBotaoMuteSePreciso();
+
+    clearInterval(controleCronometro);
+    clearTimeout(controleTimeout);
 
     document.getElementById("tela-quiz").classList.add("escondido");
     document.getElementById("timer-container").classList.add("escondido");
@@ -495,16 +883,19 @@ function finalizarJogo() {
     let vencedor;
     let vAvatar;
     let vPontos;
+    let ganhouCopa = false;
 
     if (modoDeJogo === "solo") {
         vencedor = j1Nome;
         vAvatar = j1Avatar;
         vPontos = j1Pontos;
-        salvarNoRanking(j1Nome, j1Avatar, j1Pontos, j1Pontos >= 6);
+        ganhouCopa = j1Pontos >= 6;
+        salvarNoRanking(j1Nome, j1Avatar, j1Pontos, ganhouCopa);
     } else {
         vencedor = j1Pontos >= j2Pontos ? j1Nome : j2Nome;
         vAvatar = j1Pontos >= j2Pontos ? j1Avatar : j2Avatar;
         vPontos = Math.max(j1Pontos, j2Pontos);
+        ganhouCopa = j1Pontos !== j2Pontos;
 
         if (j1Pontos !== j2Pontos) {
             salvarNoRanking(vencedor, vAvatar, vPontos, true);
@@ -513,79 +904,92 @@ function finalizarJogo() {
         }
     }
 
-    document.getElementById("img-avatar-vencedor").style.display = "block";
-    document.getElementById("img-avatar-vencedor").src = vAvatar;
+    const imgV = document.getElementById("img-avatar-vencedor");
+    imgV.style.display = "block";
+    imgV.src = vAvatar;
+
     document.getElementById("titulo-vencedor").innerText =
-        modoDeJogo === "batalha" && j1Pontos === j2Pontos ? "Empate!" : `${vencedor} Venceu!`;
+        (modoDeJogo !== "solo" && j1Pontos === j2Pontos) ? "Empate!" : `${vencedor} Venceu!`;
+
     document.getElementById("mensagem-final").innerText = `${vPontos} Pontos\n${calcularTitulo(vPontos)}`;
 
     salvarEstadoResultado();
 
-    if (vPontos >= 10) {
-        confetti({ particleCount: 300, spread: 100 });
+    if ((modoDeJogo === "solo" && vPontos >= 6) || (modoDeJogo !== "solo" && vPontos >= 10)) {
+        if (typeof confetti !== "undefined") {
+            confetti({ particleCount: 300, spread: 100 });
+        }
     }
 }
 
+// =========================
+// DESISTÊNCIA
+// =========================
 function confirmarDesistencia() {
-    const nome = (modoDeJogo === "solo" ? j1Nome : (jogadorAtual === 1 ? j1Nome : j2Nome)).toUpperCase();
+    const nome = (modoDeJogo === "solo") ? j1Nome : (jogadorAtual === 1 ? j1Nome : j2Nome);
 
-    if (confirm(`${nome}, deseja abandonar a partida?`)) {
-        clearInterval(controleCronometro);
-        clearTimeout(controleTimeout);
-
-        musicaFundo.pause();
-        mostrarBotaoMuteSePreciso();
-
-        somErro.currentTime = 0;
-        somErro.play().catch(() => {});
-
-        let tit = "ABANDONOU! 🏳️";
-        let msg = "";
-        let winAv = "";
-
-        if (modoDeJogo === "solo") {
-            msg = `${j1Nome} desistiu.\nTítulo: Perna de Pau 🪵`;
-            salvarNoRanking(j1Nome, j1Avatar, 0, false, "Arregou 🏳️");
-        } else {
-            const vNome = jogadorAtual === 1 ? j2Nome : j1Nome;
-            const vAv = jogadorAtual === 1 ? j2Avatar : j1Avatar;
-
-            tit = `${vNome.toUpperCase()} VENCEU POR W.O.! 🏆`;
-            msg = `${nome} desistiu!\n${vNome} ganha uma Copa automática.`;
-            winAv = vAv;
-
-            salvarNoRanking(vNome, vAv, 10, true, "Venceu por W.O. 🏆");
-        }
-
-        document.getElementById("titulo-vencedor").innerText = tit;
-        document.getElementById("mensagem-final").innerText = msg;
-
-        const imgV = document.getElementById("img-avatar-vencedor");
-        if (winAv) {
-            imgV.src = winAv;
-            imgV.style.display = "block";
-        } else {
-            imgV.style.display = "none";
-        }
-
-        document.querySelector(".quiz-container").classList.remove("ouro-active");
-        document.getElementById("tela-quiz").classList.add("escondido");
-        document.getElementById("timer-container").classList.add("escondido");
-        document.getElementById("secao-pesquisa").classList.add("escondido");
-        document.getElementById("tela-resultado").classList.remove("escondido");
-
-        salvarEstadoResultado();
-    } else {
-        iniciarCronometro();
+    if (!confirm(`${nome}, deseja abandonar a partida?`)) {
+        if (modoDeJogo !== "batalha_online") iniciarCronometro();
+        return;
     }
+
+    clearInterval(controleCronometro);
+    clearTimeout(controleTimeout);
+
+    musicaFundo.pause();
+    mostrarBotaoMuteSePreciso();
+
+    somErro.currentTime = 0;
+    somErro.play().catch(() => {});
+
+    let tit = "ABANDONOU!";
+    let msg = "";
+    let winAv = "";
+
+    if (modoDeJogo === "solo") {
+        msg = `${j1Nome} desistiu.\nTítulo: Perna de Pau`;
+        salvarNoRanking(j1Nome, j1Avatar, 0, false, "Arregou");
+    } else {
+        const vNome = jogadorAtual === 1 ? j2Nome : j1Nome;
+        const vAv = jogadorAtual === 1 ? j2Avatar : j1Avatar;
+
+        tit = `${vNome} VENCEU POR W.O.!`;
+        msg = `${nome} desistiu!\n${vNome} ganha uma copa automática.`;
+        winAv = vAv;
+
+        salvarNoRanking(vNome, vAv, 6, true, "Venceu por W.O.");
+    }
+
+    document.getElementById("titulo-vencedor").innerText = tit;
+    document.getElementById("mensagem-final").innerText = msg;
+
+    const imgV = document.getElementById("img-avatar-vencedor");
+    if (winAv) {
+        imgV.src = winAv;
+        imgV.style.display = "block";
+    } else {
+        imgV.style.display = "none";
+    }
+
+    document.getElementById("tela-quiz").classList.add("escondido");
+    document.getElementById("timer-container").classList.add("escondido");
+    document.getElementById("tela-resultado").classList.remove("escondido");
+    document.getElementById("secao-pesquisa")?.classList.add("escondido");
+
+    salvarEstadoResultado();
 }
 
+// =========================
+// BANCO
+// =========================
 function salvarNoRanking(nome, avatar, pontos, ganhouCopa, tituloEspecial = null) {
-    const nomeLimpo = nome.trim().toUpperCase();
+    const nomeLimpo = (nome || "").trim().toUpperCase();
+    if (!nomeLimpo) return;
+
     const ref = database.ref("samininaRanking/" + nomeLimpo);
 
     ref.once("value").then(s => {
-        let data = s.exists() ? s.val() : {};
+        const data = s.exists() ? s.val() : {};
         data.nome = nomeLimpo;
         data.avatar = avatar;
         data.pontosTotais = (Number(data.pontosTotais) || 0) + Number(pontos);
@@ -607,26 +1011,36 @@ function enviarPesquisa(reacao) {
         voto: reacao,
         timestamp: firebase.database.ServerValue.TIMESTAMP
     }).then(() => {
-        document.querySelector(".emoji-container").classList.add("escondido");
+        document.querySelector(".emoji-container")?.classList.add("escondido");
         const feedback = document.getElementById("feedback-agradecimento");
-        if (feedback) {
-            feedback.classList.remove("escondido");
-        }
+        if (feedback) feedback.classList.remove("escondido");
     });
 }
 
+// =========================
+// DESAFIO
+// =========================
 function gerarDesafio() {
-    document.getElementById("modal-desafio").classList.remove("escondido");
-    document.getElementById("qrcode-desafio").innerHTML = "";
+    const modal = document.getElementById("modal-desafio");
+    const qr = document.getElementById("qrcode-desafio");
+    if (!modal || !qr || typeof QRCode === "undefined") return;
 
-    const nomeDesafiante = modoDeJogo === "solo" ? j1Nome : (j1Pontos >= j2Pontos ? j1Nome : j2Nome);
-    const pontosDesafiante = modoDeJogo === "solo" ? j1Pontos : Math.max(j1Pontos, j2Pontos);
+    modal.classList.remove("escondido");
+    qr.innerHTML = "";
+
+    const nomeDesafiante = modoDeJogo === "solo"
+        ? j1Nome
+        : (j1Pontos >= j2Pontos ? j1Nome : j2Nome);
+
+    const pontosDesafiante = modoDeJogo === "solo"
+        ? j1Pontos
+        : Math.max(j1Pontos, j2Pontos);
 
     const linkJogo = window.location.origin + window.location.pathname;
-    const mensagem = `Fiz ${pontosDesafiante} pontos na Copa Saminina! Meu título é ${calcularTitulo(pontosDesafiante)}. 🏆⚽ Duvido você bater meu recorde! Jogue agora: ${linkJogo}`;
+    const mensagem = `Fiz ${pontosDesafiante} pontos na Copa Saminina! Meu título é ${calcularTitulo(pontosDesafiante)}. Duvido você bater meu recorde! Jogue agora: ${linkJogo}`;
     const linkWhatsApp = `https://api.whatsapp.com/send?text=${encodeURIComponent(mensagem)}`;
 
-    new QRCode(document.getElementById("qrcode-desafio"), {
+    new QRCode(qr, {
         text: linkWhatsApp,
         width: 180,
         height: 180
@@ -634,46 +1048,35 @@ function gerarDesafio() {
 }
 
 function fecharModalDesafio() {
-    document.getElementById("modal-desafio").classList.add("escondido");
+    document.getElementById("modal-desafio")?.classList.add("escondido");
 }
 
-function gerarQRCodeInicial() {
-    const container = document.getElementById("qrcode-container");
-    if (!container) return;
-
-    container.innerHTML = "";
-
-    new QRCode(container, {
-        text: "https://mxthony.github.io/Jogos/ranking.html",
-        width: 120,
-        height: 120,
-        colorDark: "#003399",
-        colorLight: "#ffffff"
-    });
-}
-
-function verificarSenhaReset() {
-    let senha = prompt("🔐 ACESSO RESTRITO\nDigite a senha para ver o relatório ou zerar o banco:");
-
-    if (senha === "321") {
-        if (confirm("Deseja limpar todo o banco de dados?")) {
-            database.ref().remove().then(() => {
-                alert("Limpo!");
-                location.reload();
-            });
-        }
-    } else if (senha !== null) {
-        alert("Senha incorreta!");
-    }
-}
-
+// =========================
+// INICIALIZAÇÃO
+// =========================
 document.addEventListener("DOMContentLoaded", () => {
     gerarQRCodeInicial();
     aplicarEstadoAudio();
     mostrarBotaoMuteSePreciso();
 
     const params = new URLSearchParams(window.location.search);
+
     if (params.get("voltarResultado") === "1") {
         restaurarResultadoSeExistir();
+        return;
+    }
+
+    if (params.get("sala")) {
+        salaId = params.get("sala");
+        jogadorTipo = "convidado";
+        modoDeJogo = "batalha_online";
+
+        limparResultadoSalvo();
+        resetarEstadoPartida();
+
+        document.getElementById("tela-modo").classList.add("escondido");
+        document.getElementById("tela-inicial").classList.remove("escondido");
+
+        ouvirSalaOnline();
     }
 });
