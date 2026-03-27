@@ -10,25 +10,10 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
-    <link rel="stylesheet" href="style.css?v=8.0">
+    <link rel="stylesheet" href="style.css?v=10.0">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div id="modal-compartilhar" class="escondido modal-overlay" onclick="fecharModalCompartilhar()">
-  <div class="modal-content" onclick="event.stopPropagation()">
-    <span class="fechar-modal" onclick="fecharModalCompartilhar()">×</span>
-    <h3>Sala criada com sucesso</h3>
-    <p>Compartilhe o link com seu amigo para ele entrar na partida.</p>
-
-    <input type="text" id="input-link-sala" readonly>
-
-    <button onclick="copiarLinkSala()">Copiar link</button>
-    <button onclick="compartilharWhatsapp()" class="btn-desafio">Enviar no WhatsApp</button>
-
-    <p style="margin-top: 10px;">Aguardando o amigo entrar...</p>
-  </div>
-</div>
-
     <div class="main-wrapper">
         <div class="logo-container">
             <img src="logo/samininacopa.svg" class="logo-marca" onclick="verificarSenhaReset()" alt="Copa Saminina">
@@ -39,21 +24,35 @@
                 <h2>Vamos jogar?</h2>
                 <div class="botoes-modo">
                     <button onclick="selecionarModo('solo')" class="btn-modo">Carreira Solo 🏃</button>
-
-<button onclick="selecionarModo('batalha_local')" class="btn-modo">Batalha Local ⚔️</button>
-
-<button onclick="selecionarModo('batalha_online')" class="btn-modo">Batalha Online 🌐</button>
-                    <button onclick="abrirRankingMestreInicio()" class="btn-modo btn-ranking">Ranking e Títulos</button>
+                    <button onclick="selecionarModo('batalha_local')" class="btn-modo">Batalha Local ⚔️</button>
+                    <button onclick="selecionarModo('batalha_online')" class="btn-modo">Batalha Online 🌐</button>
+                    <button onclick="abrirRankingMestreInicio()" class="btn-modo btn-ranking">Ranking e Títulos 🏆</button>
                 </div>
+
                 <div class="qrcode-wrapper">
                     <p>Acompanhe o ranking no celular!</p>
                     <div id="qrcode-container"></div>
+                </div>
+
+                <div class="feed-card">
+                    <div class="feed-header">
+                        <h3>Ao vivo</h3>
+                    </div>
+                    <div class="live-mini-grid">
+                        <div>
+                            <div class="mini-title">Top 3</div>
+                            <div id="mini-top3" class="mini-feed-list">Carregando...</div>
+                        </div>
+                        <div>
+                            <div class="mini-title">Últimos jogadores</div>
+                            <div id="mini-ultimos" class="mini-feed-list">Carregando...</div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
             <div id="tela-inicial" class="escondido">
                 <div id="btn-voltar-registro" onclick="voltarParaModos()">✖</div>
-
                 <h2 id="titulo-registro">Registro dos Craques</h2>
 
                 <div class="campos-cadastro">
@@ -76,21 +75,82 @@
                     </div>
                 </div>
 
-                <div id="painel-online" class="escondido online-panel">
-                    <p id="online-label-convite" class="online-status escondido"></p>
-                    <div id="online-acoes-entrada" class="online-actions escondido">
-                        <button id="btn-criar-sala" onclick="criarSalaOnline()" class="btn-modo">Criar sala online</button>
-                        <button id="btn-entrar-sala" onclick="entrarSalaOnline()" class="btn-modo escondido">Entrar na sala</button>
+                <div id="painel-online" class="online-panel escondido">
+                    <div class="feed-card compact-card">
+                        <div class="feed-header between">
+                            <h3>Sala online</h3>
+                            <span id="online-badge-status" class="status-pill">Preparando</span>
+                        </div>
+                        <p id="online-status-text" class="online-status">Crie uma sala, compartilhe o link e espere seu amigo entrar.</p>
+
+                        <div id="online-acoes-criacao" class="online-actions">
+                            <button id="btn-criar-sala" onclick="criarSalaOnline()" class="btn-modo">Criar sala online</button>
+                            <button id="btn-compartilhar-whatsapp" onclick="compartilharSalaWhatsApp()" class="btn-desafio escondido">Enviar no WhatsApp</button>
+                            <button id="btn-copiar-link" onclick="copiarLinkSala()" class="btn-ranking escondido">Copiar link</button>
+                        </div>
+
+                        <div id="bloco-link-sala" class="escondido">
+                            <div class="sala-link-box">
+                                <input type="text" id="input-link-sala" readonly>
+                            </div>
+                        </div>
+
+                        <div class="players-room-grid">
+                            <div class="player-room-card">
+                                <div class="room-title">Você</div>
+                                <div class="room-player-row">
+                                    <img id="room-avatar-host" src="img/1.jpg" class="room-avatar" alt="Você">
+                                    <div>
+                                        <div id="room-name-host" class="room-name">Aguardando...</div>
+                                        <div id="room-ready-host" class="room-ready pending">Escolhendo dados</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="player-room-card">
+                                <div class="room-title">Amigo</div>
+                                <div class="room-player-row">
+                                    <img id="room-avatar-convidado" src="img/2.jpg" class="room-avatar" alt="Amigo">
+                                    <div>
+                                        <div id="room-name-convidado" class="room-name">Aguardando entrada...</div>
+                                        <div id="room-ready-convidado" class="room-ready pending">Ainda não entrou</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
-                    <div id="bloco-link-sala" class="escondido">
-                        <p id="online-status-text" class="online-status">Aguardando seu amigo entrar...</p>
-                        <div class="sala-link-box">
-                            <input type="text" id="input-link-sala" readonly>
+                    <div class="feed-card compact-card">
+                        <div class="feed-header between">
+                            <h3>Mensagens rápidas</h3>
+                            <span class="mini-title">até 40 caracteres</span>
                         </div>
-                        <div class="online-actions two-buttons">
-                            <button onclick="compartilharSalaWhatsApp()" class="btn-desafio">Enviar no WhatsApp</button>
-                            <button onclick="copiarLinkSala()" class="btn-ranking">Copiar link</button>
+                        <div id="chat-online-lista" class="chat-lista">Sem mensagens ainda.</div>
+                        <div class="chat-form">
+                            <input type="text" id="chat-online-input" maxlength="40" placeholder="Escreva algo curto...">
+                            <button type="button" onclick="enviarMensagemSala()" class="btn-modo">Enviar</button>
+                        </div>
+                        <div class="quick-messages">
+                            <button type="button" onclick="enviarMensagemRapida('Tô pronto!')">Tô pronto!</button>
+                            <button type="button" onclick="enviarMensagemRapida('Boa sorte!')">Boa sorte!</button>
+                            <button type="button" onclick="enviarMensagemRapida('Já vou entrar')">Já vou entrar</button>
+                            <button type="button" onclick="enviarMensagemRapida('Partiu!')">Partiu!</button>
+                        </div>
+                    </div>
+
+                    <div class="feed-card compact-card">
+                        <div class="feed-header">
+                            <h3>Feed ao vivo</h3>
+                        </div>
+                        <div class="live-mini-grid">
+                            <div>
+                                <div class="mini-title">Top 3</div>
+                                <div id="mini-top3-online" class="mini-feed-list">Carregando...</div>
+                            </div>
+                            <div>
+                                <div class="mini-title">Últimos jogadores</div>
+                                <div id="mini-ultimos-online" class="mini-feed-list">Carregando...</div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -103,7 +163,7 @@
 
                 <div class="placar-transmissao">
                     <div class="placar-item placar-item-j1">
-                        <img id="img-avatar-placar1" src="" class="avatar-circular size-p">
+                        <img id="img-avatar-placar1" src="" class="avatar-circular size-p" alt="Jogador 1">
                         <div class="placar-time" id="placar-nome-j1">JOGADOR 1</div>
                     </div>
                     <div class="placar-score">
@@ -113,24 +173,24 @@
                     </div>
                     <div class="placar-item placar-item-j2">
                         <div class="placar-time" id="placar-nome-j2">JOGADOR 2</div>
-                        <img id="img-avatar-placar2" src="" class="avatar-circular size-p">
+                        <img id="img-avatar-placar2" src="" class="avatar-circular size-p" alt="Jogador 2">
                     </div>
                 </div>
 
                 <div id="quiz-content-area">
-                    <div id="aviso-turno-nome" class="turno-destaque">Vez de: JOGADOR</div>
+                    <div id="aviso-turno-nome" class="turno-destaque">VEZ DE: JOGADOR</div>
                     <div id="online-espera-msg" class="online-espera escondido">Aguardando a resposta do outro jogador...</div>
                     <div id="streak-popup" class="streak-msg"></div>
-                    <div class="progresso" id="barra-progresso">Pergunta 1 de 10</div>
+                    <div class="progresso" id="barra-progresso">PERGUNTA 1 DE 10</div>
                     <h3 id="texto-pergunta">Pergunta?</h3>
-                    <div id="feedback-acerto" class="escondido feedback-text">Gooooool!</div>
-                    <div id="feedback-erro" class="escondido feedback-text">Para fora!</div>
+                    <div id="feedback-acerto" class="escondido feedback-text">GOOOOOL!</div>
+                    <div id="feedback-erro" class="escondido feedback-text">PARA FORA!</div>
                     <div id="area-botoes"></div>
                 </div>
             </div>
 
             <div id="tela-resultado" class="escondido">
-                <img id="img-avatar-vencedor" src="" class="avatar-circular size-g">
+                <img id="img-avatar-vencedor" src="" class="avatar-circular size-g" alt="Vencedor">
                 <h2 id="titulo-vencedor">Fim de Jogo!</h2>
                 <p id="mensagem-final" style="white-space: pre-line;"></p>
 
@@ -141,6 +201,23 @@
                         <span class="emoji-btn" onclick="enviarPesquisa('curti')">🙂</span>
                         <span class="emoji-btn" onclick="enviarPesquisa('mais-ou-menos')">😐</span>
                         <span class="emoji-btn" onclick="enviarPesquisa('nao-curti')">🙁</span>
+                    </div>
+                    <div id="feedback-agradecimento" class="escondido thank-you-text">Obrigado pelo feedback!</div>
+                </div>
+
+                <div class="feed-card compact-card result-feed-card">
+                    <div class="feed-header">
+                        <h3>Feed ao vivo</h3>
+                    </div>
+                    <div class="live-mini-grid">
+                        <div>
+                            <div class="mini-title">Top 3</div>
+                            <div id="mini-top3-resultado" class="mini-feed-list">Carregando...</div>
+                        </div>
+                        <div>
+                            <div class="mini-title">Últimos jogadores</div>
+                            <div id="mini-ultimos-resultado" class="mini-feed-list">Carregando...</div>
+                        </div>
                     </div>
                 </div>
 
@@ -155,20 +232,13 @@
         </div>
     </div>
 
-   <div id="modal-compartilhar" class="escondido modal-overlay" onclick="fecharModalCompartilhar()">
-    <div class="modal-content" onclick="event.stopPropagation()">
-        <span class="fechar-modal" onclick="fecharModalCompartilhar()">×</span>
-        <h3>Sala criada com sucesso</h3>
-        <p>Compartilhe o link com seu amigo para ele entrar na partida.</p>
-
-        <input type="text" id="input-link-sala" readonly>
-
-        <button onclick="copiarLinkSala()">Copiar link</button>
-        <button onclick="compartilharWhatsapp()" class="btn-desafio">Enviar no WhatsApp</button>
-
-        <p style="margin-top: 10px;">Aguardando o amigo entrar...</p>
+    <div id="modal-desafio" class="escondido modal-overlay" onclick="fecharModalDesafio()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <span class="fechar-modal" onclick="fecharModalDesafio()">×</span>
+            <h3>Duvido bater meu recorde!</h3>
+            <div id="qrcode-desafio"></div>
+        </div>
     </div>
-</div>
 
     <button id="btn-musica-toggle" onclick="toggleMusica()"><span id="musica-icone">🔊</span></button>
     <button id="btn-fullscreen" onclick="toggleFullscreen()"><span>↕️</span></button>
