@@ -10,7 +10,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
-    <link rel="stylesheet" href="style.css?v=10.0">
+    <link rel="stylesheet" href="style.css?v=11.0">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -22,6 +22,7 @@
         <div class="quiz-container">
             <div id="tela-modo">
                 <h2>Vamos jogar?</h2>
+
                 <div class="botoes-modo">
                     <button onclick="selecionarModo('solo')" class="btn-modo">Carreira Solo 🏃</button>
                     <button onclick="selecionarModo('batalha_local')" class="btn-modo">Batalha Local ⚔️</button>
@@ -34,21 +35,7 @@
                     <div id="qrcode-container"></div>
                 </div>
 
-                <div class="feed-card">
-                    <div class="feed-header">
-                        <h3>Ao vivo</h3>
-                    </div>
-                    <div class="live-mini-grid">
-                        <div>
-                            <div class="mini-title">Top 3</div>
-                            <div id="mini-top3" class="mini-feed-list">Carregando...</div>
-                        </div>
-                        <div>
-                            <div class="mini-title">Últimos jogadores</div>
-                            <div id="mini-ultimos" class="mini-feed-list">Carregando...</div>
-                        </div>
-                    </div>
-                </div>
+                <div id="feed-inicio" class="feed-ao-vivo"></div>
             </div>
 
             <div id="tela-inicial" class="escondido">
@@ -57,20 +44,22 @@
 
                 <div class="campos-cadastro">
                     <input type="text" id="input-nome1" placeholder="Nome do Jogador" maxlength="18">
+
                     <div class="botoes-avatar" id="avatar-j1">
-                        <img src="img/1.jpg" class="img-avatar-opcao" onclick="selecionarAvatar(1, 0, this)">
-                        <img src="img/2.jpg" class="img-avatar-opcao" onclick="selecionarAvatar(1, 1, this)">
-                        <img src="img/3.jpg" class="img-avatar-opcao" onclick="selecionarAvatar(1, 2, this)">
-                        <img src="img/4.jpg" class="img-avatar-opcao" onclick="selecionarAvatar(1, 3, this)">
+                        <img src="img/1.jpg" class="img-avatar-opcao" onclick="selecionarAvatar(1, 0, this)" alt="Avatar 1">
+                        <img src="img/2.jpg" class="img-avatar-opcao" onclick="selecionarAvatar(1, 1, this)" alt="Avatar 2">
+                        <img src="img/3.jpg" class="img-avatar-opcao" onclick="selecionarAvatar(1, 2, this)" alt="Avatar 3">
+                        <img src="img/4.jpg" class="img-avatar-opcao" onclick="selecionarAvatar(1, 3, this)" alt="Avatar 4">
                     </div>
 
                     <div id="container-avatar2" class="escondido">
                         <input type="text" id="input-nome2" placeholder="Nome do Jogador 2" maxlength="18">
+
                         <div class="botoes-avatar" id="avatar-j2">
-                            <img src="img/1.jpg" class="img-avatar-opcao" onclick="selecionarAvatar(2, 0, this)">
-                            <img src="img/2.jpg" class="img-avatar-opcao" onclick="selecionarAvatar(2, 1, this)">
-                            <img src="img/3.jpg" class="img-avatar-opcao" onclick="selecionarAvatar(2, 2, this)">
-                            <img src="img/4.jpg" class="img-avatar-opcao" onclick="selecionarAvatar(2, 3, this)">
+                            <img src="img/1.jpg" class="img-avatar-opcao" onclick="selecionarAvatar(2, 0, this)" alt="Avatar 1">
+                            <img src="img/2.jpg" class="img-avatar-opcao" onclick="selecionarAvatar(2, 1, this)" alt="Avatar 2">
+                            <img src="img/3.jpg" class="img-avatar-opcao" onclick="selecionarAvatar(2, 2, this)" alt="Avatar 3">
+                            <img src="img/4.jpg" class="img-avatar-opcao" onclick="selecionarAvatar(2, 3, this)" alt="Avatar 4">
                         </div>
                     </div>
                 </div>
@@ -81,7 +70,10 @@
                             <h3>Sala online</h3>
                             <span id="online-badge-status" class="status-pill">Preparando</span>
                         </div>
-                        <p id="online-status-text" class="online-status">Crie uma sala, compartilhe o link e espere seu amigo entrar.</p>
+
+                        <p id="online-status-text" class="online-status">
+                            Crie uma sala, compartilhe o link e espere seu amigo entrar.
+                        </p>
 
                         <div id="online-acoes-criacao" class="online-actions">
                             <button id="btn-criar-sala" onclick="criarSalaOnline()" class="btn-modo">Criar sala online</button>
@@ -125,32 +117,19 @@
                             <h3>Mensagens rápidas</h3>
                             <span class="mini-title">até 40 caracteres</span>
                         </div>
+
                         <div id="chat-online-lista" class="chat-lista">Sem mensagens ainda.</div>
+
                         <div class="chat-form">
                             <input type="text" id="chat-online-input" maxlength="40" placeholder="Escreva algo curto...">
                             <button type="button" onclick="enviarMensagemSala()" class="btn-modo">Enviar</button>
                         </div>
+
                         <div class="quick-messages">
                             <button type="button" onclick="enviarMensagemRapida('Tô pronto!')">Tô pronto!</button>
                             <button type="button" onclick="enviarMensagemRapida('Boa sorte!')">Boa sorte!</button>
                             <button type="button" onclick="enviarMensagemRapida('Já vou entrar')">Já vou entrar</button>
                             <button type="button" onclick="enviarMensagemRapida('Partiu!')">Partiu!</button>
-                        </div>
-                    </div>
-
-                    <div class="feed-card compact-card">
-                        <div class="feed-header">
-                            <h3>Feed ao vivo</h3>
-                        </div>
-                        <div class="live-mini-grid">
-                            <div>
-                                <div class="mini-title">Top 3</div>
-                                <div id="mini-top3-online" class="mini-feed-list">Carregando...</div>
-                            </div>
-                            <div>
-                                <div class="mini-title">Últimos jogadores</div>
-                                <div id="mini-ultimos-online" class="mini-feed-list">Carregando...</div>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -166,11 +145,13 @@
                         <img id="img-avatar-placar1" src="" class="avatar-circular size-p" alt="Jogador 1">
                         <div class="placar-time" id="placar-nome-j1">JOGADOR 1</div>
                     </div>
+
                     <div class="placar-score">
                         <span id="placar-pts-j1">0</span>
                         <span class="placar-vs">X</span>
                         <span id="placar-pts-j2">0</span>
                     </div>
+
                     <div class="placar-item placar-item-j2">
                         <div class="placar-time" id="placar-nome-j2">JOGADOR 2</div>
                         <img id="img-avatar-placar2" src="" class="avatar-circular size-p" alt="Jogador 2">
@@ -205,21 +186,7 @@
                     <div id="feedback-agradecimento" class="escondido thank-you-text">Obrigado pelo feedback!</div>
                 </div>
 
-                <div class="feed-card compact-card result-feed-card">
-                    <div class="feed-header">
-                        <h3>Feed ao vivo</h3>
-                    </div>
-                    <div class="live-mini-grid">
-                        <div>
-                            <div class="mini-title">Top 3</div>
-                            <div id="mini-top3-resultado" class="mini-feed-list">Carregando...</div>
-                        </div>
-                        <div>
-                            <div class="mini-title">Últimos jogadores</div>
-                            <div id="mini-ultimos-resultado" class="mini-feed-list">Carregando...</div>
-                        </div>
-                    </div>
-                </div>
+                <div id="feed-resultado" class="feed-ao-vivo" style="margin: 16px 0;"></div>
 
                 <button onclick="gerarDesafio()" class="btn-desafio">Desafiar amigo</button>
                 <button onclick="abrirRankingMestreResultado()" class="btn-ranking">Ranking completo</button>
@@ -240,8 +207,28 @@
         </div>
     </div>
 
-    <button id="btn-musica-toggle" onclick="toggleMusica()"><span id="musica-icone">🔊</span></button>
-    <button id="btn-fullscreen" onclick="toggleFullscreen()"><span>↕️</span></button>
+    <div id="modal-compartilhar" class="escondido modal-overlay" onclick="fecharModalCompartilhar()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <span class="fechar-modal" onclick="fecharModalCompartilhar()">×</span>
+            <h3>Sala criada com sucesso</h3>
+            <p>Compartilhe o link com seu amigo para ele entrar na partida.</p>
+
+            <input type="text" id="input-link-sala" readonly>
+
+            <button onclick="copiarLinkSala()">Copiar link</button>
+            <button onclick="compartilharWhatsapp()" class="btn-desafio">Enviar no WhatsApp</button>
+
+            <p id="status-sala" style="margin-top: 10px;">Aguardando o amigo entrar...</p>
+        </div>
+    </div>
+
+    <button id="btn-musica-toggle" onclick="toggleMusica()">
+        <span id="musica-icone">🔊</span>
+    </button>
+
+    <button id="btn-fullscreen" onclick="toggleFullscreen()">
+        <span>↕️</span>
+    </button>
 
     <script src="script.js"></script>
 </body>

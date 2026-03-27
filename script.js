@@ -323,24 +323,31 @@ function esconderTelaAguardandoOnline() {
 // =========================
 // COMPARTILHAMENTO
 // =========================
-function copiarLinkSala() {
-    if (!linkSalaAtual) return;
-    navigator.clipboard.writeText(linkSalaAtual).then(() => {
-        alert("Link copiado!");
-    }).catch(() => {
-        alert("Não foi possível copiar o link.");
-    });
+function compartilharWhatsapp() {
+    if (!linkSalaAtual) {
+        alert("Link da sala não encontrado.");
+        return;
+    }
+
+    const mensagem = `Entre na minha partida da Copa Saminina: ${linkSalaAtual}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(mensagem)}`, "_blank");
 }
 
 function compartilharWhatsapp() {
-    if (!linkSalaAtual) return;
+    if (!linkSalaAtual) {
+        alert("Link da sala não encontrado.");
+        return;
+    }
+
     const mensagem = `Entre na minha partida da Copa Saminina: ${linkSalaAtual}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(mensagem)}`, "_blank");
 }
 
 function fecharModalCompartilhar() {
     const modal = document.getElementById("modal-compartilhar");
-    if (modal) modal.classList.add("escondido");
+    if (modal) {
+        modal.classList.add("escondido");
+    }
 }
 
 // =========================
@@ -378,13 +385,13 @@ function verificarSenhaReset() {
 // FEED AO VIVO
 // =========================
 function iniciarFeedAoVivo() {
-    if (feedListenerAtivo) return;
-    feedListenerAtivo = true;
-
     const atualizarFeed = async () => {
         try {
             const rankingSnap = await database.ref("samininaRanking").once("value");
-            const historicoSnap = await database.ref("historicoPartidas").orderByChild("timestamp").limitToLast(5).once("value");
+            const historicoSnap = await database.ref("historicoPartidas")
+                .orderByChild("timestamp")
+                .limitToLast(5)
+                .once("value");
 
             let ranking = [];
             rankingSnap.forEach(c => {
@@ -404,12 +411,24 @@ function iniciarFeedAoVivo() {
 
             const top3Html = ranking.slice(0, 3).map((j, i) => {
                 const medalha = i === 0 ? "🥇" : i === 1 ? "🥈" : "🥉";
-                return `<div>${medalha} ${j.nome} — ${j.copas || 0} copas</div>`;
+                return `<div class="feed-item">${medalha} ${j.nome} — ${j.copas || 0} copas</div>`;
             }).join("");
 
             const ultimosHtml = historico.slice(0, 3).map(p => {
-                return `<div>${p.nome} — ${p.titulo}</div>`;
+                return `<div class="feed-item">${p.nome} — ${p.titulo}</div>`;
             }).join("");
+
+            const htmlFinal = `
+                <div class="feed-box">
+                    <div class="feed-titulo">Ao vivo</div>
+
+                    <div class="feed-subtitulo">Top 3</div>
+                    ${top3Html || '<div class="feed-vazio">Ainda sem ranking.</div>'}
+
+                    <div class="feed-subtitulo">Últimos jogadores</div>
+                    ${ultimosHtml || '<div class="feed-vazio">Aguardando novas partidas.</div>'}
+                </div>
+            `;
 
             const blocos = [
                 document.getElementById("feed-inicio"),
@@ -418,23 +437,35 @@ function iniciarFeedAoVivo() {
             ];
 
             blocos.forEach(bloco => {
-                if (!bloco) return;
-                bloco.innerHTML = `
-                    <div style="text-align:left;background:#f7f7f7;border-radius:12px;padding:12px;">
-                        <div style="font-weight:900;color:var(--color-blue);margin-bottom:8px;">Top 3</div>
-                        ${top3Html || "<div>Ainda sem ranking.</div>"}
-                        <div style="font-weight:900;color:var(--color-blue);margin:12px 0 8px;">Últimos jogadores</div>
-                        ${ultimosHtml || "<div>Aguardando novas partidas.</div>"}
-                    </div>
-                `;
+                if (bloco) bloco.innerHTML = htmlFinal;
             });
+
         } catch (e) {
-            console.log("Erro no feed ao vivo:", e);
+            console.error("Erro no feed ao vivo:", e);
+
+            const blocos = [
+                document.getElementById("feed-inicio"),
+                document.getElementById("feed-espera"),
+                document.getElementById("feed-resultado")
+            ];
+
+            blocos.forEach(bloco => {
+                if (bloco) {
+                    bloco.innerHTML = `
+                        <div class="feed-box">
+                            <div class="feed-titulo">Ao vivo</div>
+                            <div class="feed-vazio">Não foi possível carregar agora.</div>
+                        </div>
+                    `;
+                }
+            });
         }
     };
 
     atualizarFeed();
-    setInterval(atualizarFeed, 10000);
+
+    database.ref("samininaRanking").on("value", atualizarFeed);
+    database.ref("historicoPartidas").limitToLast(5).on("value", atualizarFeed);
 }
 
 // =========================
@@ -568,103 +599,28 @@ function iniciarSalaOnline() {
     }).then(() => {
         linkSalaAtual = window.location.origin + window.location.pathname + "?sala=" + salaId;
 
-        const inputLink = document.getElementById("input-link-sala");
-        if (inputLink) inputLink.value = linkSalaAtual;
-
         const modal = document.getElementById("modal-compartilhar");
-        if (modal) modal.classList.remove("escondido");
+        const inputLink = document.getElementById("input-link-sala");
+        const statusSala = document.getElementById("status-sala");
+
+        if (inputLink) {
+            inputLink.value = linkSalaAtual;
+        }
+
+        if (statusSala) {
+            statusSala.innerText = "Aguardando o amigo entrar...";
+        }
+
+        if (modal) {
+            modal.classList.remove("escondido");
+        } else {
+            alert("Modal de compartilhamento não encontrado no HTML.");
+        }
 
         ouvirSalaOnline();
-    });
-}
-
-function verificarSePodeIniciarSala() {
-    database.ref("salas/" + salaId).once("value").then(snap => {
-        const data = snap.val();
-        if (!data) return;
-
-        const hostPronto = !!data.host?.pronto;
-        const convidadoPronto = !!data.convidado?.pronto;
-
-        if (hostPronto && convidadoPronto && data.status !== "contagem" && data.status !== "pronta") {
-            const perguntasSorteadas = gerarPerguntasAleatorias(10);
-
-            database.ref("salas/" + salaId).update({
-                status: "contagem",
-                "jogo/perguntas": perguntasSorteadas,
-                "jogo/perguntaAtual": 0,
-                "jogo/turno": "host",
-                "jogo/j1Pontos": 0,
-                "jogo/j2Pontos": 0,
-                "jogo/iniciada": false,
-                "jogo/countdown": 3
-            });
-
-            iniciarContagemSala();
-        }
-    });
-}
-
-function iniciarContagemSala() {
-    let valor = 3;
-
-    const intervalo = setInterval(() => {
-        valor--;
-
-        if (valor <= 0) {
-            clearInterval(intervalo);
-            database.ref("salas/" + salaId).update({
-                status: "pronta",
-                "jogo/iniciada": true,
-                "jogo/countdown": 0
-            });
-        } else {
-            database.ref("salas/" + salaId).update({
-                "jogo/countdown": valor
-            });
-        }
-    }, 1000);
-}
-
-function ouvirSalaOnline() {
-    if (!salaId || salaListenerAtivo) return;
-    salaListenerAtivo = true;
-
-    database.ref("salas/" + salaId).on("value", snap => {
-        const data = snap.val();
-        if (!data) return;
-
-        onlineDataAtual = data;
-
-        const hostNome = data.host?.nome || "";
-        const hostAvatar = data.host?.avatar || "";
-        const convidadoNome = data.convidado?.nome || "";
-        const convidadoAvatar = data.convidado?.avatar || "";
-
-        j1Nome = hostNome;
-        j1Avatar = hostAvatar || "img/1.jpg";
-        j2Nome = convidadoNome;
-        j2Avatar = convidadoAvatar || "img/2.jpg";
-
-        if (data.status === "esperando") {
-            const euPronto = jogadorTipo === "host" ? data.host?.pronto : data.convidado?.pronto;
-            if (euPronto) {
-                const texto = data.convidado?.nome
-                    ? `${data.convidado.nome} entrou. Aguardando ficar pronto...`
-                    : "Aguardando o outro jogador...";
-                mostrarTelaAguardandoOnline(texto);
-            }
-            return;
-        }
-
-        if (data.status === "contagem") {
-            mostrarTelaAguardandoOnline(`Partida começa em ${data.jogo?.countdown || 3}...`);
-            return;
-        }
-
-        if (data.status === "pronta") {
-            iniciarJogoOnline(data);
-        }
+    }).catch((erro) => {
+        console.error("Erro ao criar sala:", erro);
+        alert("Não foi possível criar a sala online.");
     });
 }
 
