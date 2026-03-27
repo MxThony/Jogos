@@ -43,6 +43,8 @@ let jogadorTipo = null; // host | convidado
 let linkSalaAtual = "";
 let salaListenerAtivo = false;
 let jogoListenerAtivo = false;
+let chatListenerAtivo = false;
+let feedIntervalId = null;
 
 let j1Nome = "";
 let j2Nome = "";
@@ -67,52 +69,83 @@ let controleCronometro = null;
 let controleTimeout = null;
 
 let onlineDataAtual = null;
-let resultadoSalvoNaSessao = false;
 
 // =========================
-// PERGUNTAS
+// BANCO DE PERGUNTAS
 // =========================
 const bancoDePerguntas = [
     { pergunta: "Quantas Copas o Brasil ganhou?", respostas: ["3", "4", "5"], respostaCerta: 2 },
-    { pergunta: "Quem é o maior artilheiro das Copas?", respostas: ["Pelé", "Ronaldo", "Miroslav Klose"], respostaCerta: 2 },
-    { pergunta: "Onde foi a primeira Copa em 1930?", respostas: ["Argentina", "Brasil", "Uruguai"], respostaCerta: 2 },
-    { pergunta: "Qual jogador é o 'Rei do Futebol'?", respostas: ["Garrincha", "Zico", "Pelé"], respostaCerta: 2 },
-    { pergunta: "Em qual Copa o Brasil sofreu o 7x1?", respostas: ["2010", "2014", "2018"], respostaCerta: 1 },
-    { pergunta: "Qual o mascote da Copa de 2014?", respostas: ["Fuleco", "Zakumi", "La'eeb"], respostaCerta: 0 },
+    { pergunta: "Quem é o maior artilheiro da história das Copas?", respostas: ["Pelé", "Ronaldo", "Miroslav Klose"], respostaCerta: 2 },
+    { pergunta: "Onde foi a primeira Copa do Mundo, em 1930?", respostas: ["Argentina", "Brasil", "Uruguai"], respostaCerta: 2 },
+    { pergunta: "Qual jogador é conhecido como o Rei do Futebol?", respostas: ["Garrincha", "Zico", "Pelé"], respostaCerta: 2 },
+    { pergunta: "Em qual Copa o Brasil sofreu o 7 a 1?", respostas: ["2010", "2014", "2018"], respostaCerta: 1 },
+    { pergunta: "Qual foi o mascote da Copa de 2014?", respostas: ["Fuleco", "Zakumi", "La'eeb"], respostaCerta: 0 },
     { pergunta: "Qual país venceu a Copa de 2022?", respostas: ["França", "Brasil", "Argentina"], respostaCerta: 2 },
     { pergunta: "Qual é a cor da camisa principal do Brasil?", respostas: ["Azul", "Branca", "Amarela"], respostaCerta: 2 },
-    { pergunta: "Quantos minutos dura um tempo normal?", respostas: ["45", "90", "100"], respostaCerta: 1 },
-    { pergunta: "Quem foi o capitão do Penta em 2002?", respostas: ["Dunga", "Cafu", "Lúcio"], respostaCerta: 1 },
-    { pergunta: "Qual cantor(a) gravou 'Waka Waka'?", respostas: ["Anitta", "Shakira", "Ivete"], respostaCerta: 1 },
-    { pergunta: "Qual animal 'previa' resultados em 2010?", respostas: ["Gato", "Polvo Paul", "Cachorro"], respostaCerta: 1 },
+    { pergunta: "Quantos minutos dura um tempo de jogo?", respostas: ["45", "90", "100"], respostaCerta: 0 },
+    { pergunta: "Quem foi o capitão do penta em 2002?", respostas: ["Dunga", "Cafu", "Lúcio"], respostaCerta: 1 },
+    { pergunta: "Qual cantora gravou Waka Waka, música da Copa de 2010?", respostas: ["Anitta", "Shakira", "Ivete"], respostaCerta: 1 },
+    { pergunta: "Qual animal ficou famoso por prever resultados em 2010?", respostas: ["Gato", "Polvo Paul", "Cachorro"], respostaCerta: 1 },
     { pergunta: "O que o juiz usa para marcar a barreira?", respostas: ["Giz", "Tinta", "Spray de espuma"], respostaCerta: 2 },
-    { pergunta: "Qual narrador diz 'Haja coração!'?", respostas: ["Galvão Bueno", "Cléber Machado", "Tiago Leifert"], respostaCerta: 0 },
-    { pergunta: "Qual o estádio da final de 2014?", respostas: ["Mineirão", "Arena Cora", "Maracanã"], respostaCerta: 2 },
-    { pergunta: "Quantas estrelas tem o escudo do Brasil?", respostas: ["4", "5", "6"], respostaCerta: 1 },
-    { pergunta: "Em qual ano o Brasil ganhou o Tetra?", respostas: ["1990", "1994", "1998"], respostaCerta: 1 },
-    { pergunta: "Qual jogador francês deu uma cabeçada em 2006?", respostas: ["Henry", "Ribéry", "Zidane"], respostaCerta: 2 },
-    { pergunta: "Qual seleção é chamada de 'Azzurra'?", respostas: ["França", "Itália", "Grécia"], respostaCerta: 1 },
-    { pergunta: "De quantos em quantos anos tem Copa?", respostas: ["2", "4", "5"], respostaCerta: 1 },
-    { pergunta: "Quem é o 'Fenômeno' do Brasil?", respostas: ["Ronaldinho", "Neymar", "Ronaldo"], respostaCerta: 2 },
+    { pergunta: "Qual narrador ficou famoso pelo bordão Haja coração?", respostas: ["Galvão Bueno", "Cléber Machado", "Tiago Leifert"], respostaCerta: 0 },
+    { pergunta: "Qual foi o estádio da final da Copa de 2014?", respostas: ["Mineirão", "Arena Corinthians", "Maracanã"], respostaCerta: 2 },
+    { pergunta: "Quantas estrelas tem o escudo da Seleção Brasileira?", respostas: ["4", "5", "6"], respostaCerta: 1 },
+    { pergunta: "Em qual ano o Brasil ganhou o tetra?", respostas: ["1990", "1994", "1998"], respostaCerta: 1 },
+    { pergunta: "Qual jogador francês deu a cabeçada na final de 2006?", respostas: ["Henry", "Ribéry", "Zidane"], respostaCerta: 2 },
+    { pergunta: "Qual seleção é chamada de Azzurra?", respostas: ["França", "Itália", "Grécia"], respostaCerta: 1 },
+    { pergunta: "De quantos em quantos anos acontece a Copa do Mundo?", respostas: ["2", "4", "5"], respostaCerta: 1 },
+    { pergunta: "Quem é conhecido como o Fenômeno?", respostas: ["Ronaldinho", "Neymar", "Ronaldo"], respostaCerta: 2 },
     { pergunta: "Qual país sediou a Copa de 2018?", respostas: ["Rússia", "Catar", "Brasil"], respostaCerta: 0 },
-    { pergunta: "Quantas substituições podem ser feitas hoje?", respostas: ["3", "4", "5"], respostaCerta: 2 },
-    { pergunta: "Qual prêmio recebe o melhor goleiro?", respostas: ["Luva de Ouro", "Bola", "Chuteira"], respostaCerta: 0 },
-    { pergunta: "Onde fica a sede da FIFA?", respostas: ["Suíça", "França", "EUA"], respostaCerta: 0 },
+    { pergunta: "Quantas substituições podem ser feitas no futebol atual?", respostas: ["3", "4", "5"], respostaCerta: 2 },
+    { pergunta: "Qual prêmio recebe o melhor goleiro da Copa?", respostas: ["Luva de Ouro", "Bola de Ouro", "Chuteira de Ouro"], respostaCerta: 0 },
+    { pergunta: "Onde fica a sede da FIFA?", respostas: ["Suíça", "França", "Estados Unidos"], respostaCerta: 0 },
     { pergunta: "Qual país ganhou a Copa de 2010?", respostas: ["Holanda", "Alemanha", "Espanha"], respostaCerta: 2 },
-    { pergunta: "Em 1950, o Brasil usava que cor de camisa?", respostas: ["Azul", "Verde", "Branca"], respostaCerta: 2 },
-    { pergunta: "Qual jogador é o 'CR7'?", respostas: ["Cristiano", "Ronaldinho", "Casemiro"], respostaCerta: 0 },
+    { pergunta: "Em 1950, o Brasil usava qual cor de camisa?", respostas: ["Azul", "Verde", "Branca"], respostaCerta: 2 },
+    { pergunta: "Qual jogador é conhecido como CR7?", respostas: ["Cristiano Ronaldo", "Ronaldinho", "Casemiro"], respostaCerta: 0 },
     { pergunta: "Quantos jogadores cada time tem em campo?", respostas: ["10", "11", "12"], respostaCerta: 1 },
-    { pergunta: "O que significa VAR?", respostas: ["Juiz", "Árbitro de Vídeo", "Câmera"], respostaCerta: 1 },
-    { pergunta: "Qual jogador brasileiro é o 'Bruxo'?", respostas: ["Neymar", "Ronaldinho", "Rivaldo"], respostaCerta: 1 },
+    { pergunta: "O que significa VAR?", respostas: ["Video Assistant Referee", "Visual Auto Replay", "Verified Action Review"], respostaCerta: 0 },
+    { pergunta: "Qual jogador brasileiro é conhecido como Bruxo?", respostas: ["Neymar", "Ronaldinho Gaúcho", "Rivaldo"], respostaCerta: 1 },
     { pergunta: "Qual foi a sede da Copa de 2022?", respostas: ["Dubai", "Catar", "Arábia Saudita"], respostaCerta: 1 },
     { pergunta: "Como se chama a bola da Copa de 1970?", respostas: ["Jabulani", "Brazuca", "Telstar"], respostaCerta: 2 },
-    { pergunta: "Qual seleção usa a cor Laranja?", respostas: ["Alemanha", "Holanda", "Bélgica"], respostaCerta: 1 },
-    { pergunta: "Quem era o técnico do Penta?", respostas: ["Tite", "Felipão", "Dunga"], respostaCerta: 1 },
-    { pergunta: "Qual país tem 4 títulos mundiais?", respostas: ["Itália", "Argentina", "Uruguai"], respostaCerta: 0 },
-    { pergunta: "Quem fez gol de mão (La Mano de Dios)?", respostas: ["Pelé", "Maradona", "Messi"], respostaCerta: 1 },
-    { pergunta: "Qual a maior goleada sofrida pelo Brasil?", respostas: ["3x0", "7x1", "5x2"], respostaCerta: 1 },
-    { pergunta: "Qual cidade NÃO sediou a Copa 2014?", respostas: ["Cuiabá", "Manaus", "Arcoverde"], respostaCerta: 2 },
-    { pergunta: "Qual a forma da taça da Copa?", respostas: ["Globo", "Dois atletas", "Chuteira"], respostaCerta: 1 }
+    { pergunta: "Qual seleção usa tradicionalmente a cor laranja?", respostas: ["Alemanha", "Holanda", "Bélgica"], respostaCerta: 1 },
+    { pergunta: "Quem era o técnico do penta em 2002?", respostas: ["Tite", "Felipão", "Dunga"], respostaCerta: 1 },
+    { pergunta: "Qual país foi tetracampeão antes da Alemanha?", respostas: ["Itália", "Argentina", "Uruguai"], respostaCerta: 0 },
+    { pergunta: "Quem fez o gol de mão conhecido como La Mano de Dios?", respostas: ["Pelé", "Maradona", "Messi"], respostaCerta: 1 },
+    { pergunta: "Qual foi a maior goleada sofrida pelo Brasil em Copas?", respostas: ["3 a 0", "7 a 1", "5 a 2"], respostaCerta: 1 },
+    { pergunta: "Qual cidade não sediou a Copa de 2014?", respostas: ["Cuiabá", "Manaus", "Arcoverde"], respostaCerta: 2 },
+    { pergunta: "A taça da Copa mostra o quê?", respostas: ["Um globo", "Dois atletas sustentando o mundo", "Uma chuteira"], respostaCerta: 1 },
+
+    { pergunta: "Quem é o único jogador tricampeão mundial como atleta?", respostas: ["Ronaldo", "Pelé", "Zidane"], respostaCerta: 1 },
+    { pergunta: "Qual brasileiro era chamado de Anjo das Pernas Tortas?", respostas: ["Garrincha", "Romário", "Sócrates"], respostaCerta: 0 },
+    { pergunta: "Quem marcou os dois gols do Brasil na final de 2002?", respostas: ["Rivaldo", "Ronaldo", "Ronaldinho"], respostaCerta: 1 },
+    { pergunta: "Em que país aconteceu a Copa de 1994?", respostas: ["México", "Estados Unidos", "França"], respostaCerta: 1 },
+    { pergunta: "Qual ex-camisa 10 brasileiro era chamado de Galinho de Quintino?", respostas: ["Zico", "Kaká", "Rivelino"], respostaCerta: 0 },
+    { pergunta: "Quem foi o capitão do Brasil no tetra de 1994?", respostas: ["Romário", "Dunga", "Bebeto"], respostaCerta: 1 },
+    { pergunta: "Qual jogador brasileiro fez o famoso corta-luz na final de 2002?", respostas: ["Rivaldo", "Kaká", "Juninho"], respostaCerta: 0 },
+    { pergunta: "Qual seleção eliminou o Brasil na Copa de 2006?", respostas: ["Itália", "França", "Portugal"], respostaCerta: 1 },
+    { pergunta: "Qual lendário jogador usava a camisa 11 no Brasil de 1970?", respostas: ["Jairzinho", "Tostão", "Rivelino"], respostaCerta: 0 },
+    { pergunta: "Quem é conhecido como Baixinho no futebol brasileiro?", respostas: ["Romário", "Bebeto", "Careca"], respostaCerta: 0 },
+    { pergunta: "Qual seleção venceu a Copa de 1998?", respostas: ["Brasil", "França", "Alemanha"], respostaCerta: 1 },
+    { pergunta: "Quem foi o técnico da seleção brasileira no tetra de 1994?", respostas: ["Parreira", "Zagallo", "Felipão"], respostaCerta: 0 },
+    { pergunta: "Qual ídolo brasileiro era conhecido como Doutor?", respostas: ["Sócrates", "Raí", "Falcão"], respostaCerta: 0 },
+    { pergunta: "Quem marcou o gol do título da Alemanha em 2014?", respostas: ["Müller", "Klose", "Götze"], respostaCerta: 2 },
+    { pergunta: "Qual jogador brasileiro formou dupla de ataque com Bebeto em 1994?", respostas: ["Romário", "Adriano", "Neymar"], respostaCerta: 0 },
+    { pergunta: "Quem foi o goleiro titular do Brasil no penta?", respostas: ["Taffarel", "Dida", "Marcos"], respostaCerta: 2 },
+    { pergunta: "Qual seleção venceu a Copa de 1986?", respostas: ["Alemanha", "Argentina", "Brasil"], respostaCerta: 1 },
+    { pergunta: "Qual brasileiro foi eleito melhor jogador da Copa de 1994?", respostas: ["Romário", "Bebeto", "Dunga"], respostaCerta: 0 },
+    { pergunta: "Qual camisa Pelé usava na Seleção Brasileira?", respostas: ["7", "9", "10"], respostaCerta: 2 },
+    { pergunta: "Qual país sediou a Copa de 1970?", respostas: ["México", "Chile", "Alemanha"], respostaCerta: 0 },
+    { pergunta: "Quem marcou o gol de falta contra a Inglaterra em 2002?", respostas: ["Rivaldo", "Ronaldinho Gaúcho", "Cafu"], respostaCerta: 1 },
+    { pergunta: "Qual técnico brasileiro ganhou a Copa como jogador e treinador?", respostas: ["Zagallo", "Parreira", "Felipão"], respostaCerta: 0 },
+    { pergunta: "Quem levantou a taça do penta como capitão?", respostas: ["Cafu", "Ronaldo", "Roberto Carlos"], respostaCerta: 0 },
+    { pergunta: "Qual seleção foi campeã da Copa de 1978?", respostas: ["Holanda", "Argentina", "Brasil"], respostaCerta: 1 },
+    { pergunta: "Quem marcou dois gols na final da Copa de 1958 pelo Brasil?", respostas: ["Vavá", "Pelé", "Garrincha"], respostaCerta: 1 },
+    { pergunta: "Quem foi o técnico do Brasil campeão em 1970?", respostas: ["Zagallo", "Telê Santana", "Parreira"], respostaCerta: 0 },
+    { pergunta: "Qual jogador brasileiro ficou famoso pela comemoração embalando o bebê?", respostas: ["Romário", "Bebeto", "Careca"], respostaCerta: 1 },
+    { pergunta: "Qual seleção eliminou o Brasil nos pênaltis em 1986?", respostas: ["França", "Itália", "Argentina"], respostaCerta: 0 },
+    { pergunta: "Quem era conhecido como Canhotinha de Ouro?", respostas: ["Gérson", "Rivelino", "Zico"], respostaCerta: 0 },
+    { pergunta: "Contra qual seleção o Brasil venceu a final da Copa de 1994?", respostas: ["Alemanha", "Itália", "Argentina"], respostaCerta: 1 },
+    { pergunta: "Quem foi o goleiro titular do Brasil no tetra de 1994?", respostas: ["Taffarel", "Marcos", "Dida"], respostaCerta: 0 }
 ];
 
 // =========================
@@ -123,10 +156,10 @@ function getStreakData(streak) {
         3: "Hat-trick!",
         4: "Chocolate!",
         5: "Pentaaaa!",
-        6: "Calma lá, paizão!",
-        7: "Alemanha de 2014?",
-        8: "Bayern de Munique",
-        9: "Fora de Controle!",
+        6: "Calma lá!",
+        7: "Virou passeio!",
+        8: "Domínio total!",
+        9: "Sem freio!",
         10: "Aí virou bagunça!"
     };
     return { msg: msgs[streak] || "", bonus: streak >= 3 ? 1 : 0 };
@@ -143,7 +176,16 @@ function calcularTitulo(pts) {
 }
 
 function shuffleArray(arr) {
-    return [...arr].sort(() => 0.5 - Math.random());
+    const copia = [...arr];
+    for (let i = copia.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copia[i], copia[j]] = [copia[j], copia[i]];
+    }
+    return copia;
+}
+
+function gerarPerguntasAleatorias(qtd = 10) {
+    return shuffleArray(bancoDePerguntas).slice(0, qtd);
 }
 
 function gerarCodigoSala() {
@@ -197,7 +239,6 @@ function salvarEstadoResultado() {
     };
 
     sessionStorage.setItem("resultadoCopaSaminina", JSON.stringify(dadosResultado));
-    resultadoSalvoNaSessao = true;
 }
 
 function restaurarResultadoSeExistir() {
@@ -227,7 +268,6 @@ function restaurarResultadoSeExistir() {
 
 function limparResultadoSalvo() {
     sessionStorage.removeItem("resultadoCopaSaminina");
-    resultadoSalvoNaSessao = false;
 }
 
 // =========================
@@ -261,6 +301,7 @@ function mostrarTelaAguardandoOnline(texto = "Aguardando o outro jogador...") {
             <p style="margin-top: 10px; color: var(--color-blue); font-weight: bold;">
                 Assim que os dois estiverem prontos, a partida começa.
             </p>
+            <div id="feed-espera" class="feed-ao-vivo" style="margin-top:16px;"></div>
         `;
         const wrapper = document.querySelector(".main-wrapper");
         if (wrapper) wrapper.appendChild(tela);
@@ -281,18 +322,35 @@ function esconderTelaAguardandoOnline() {
 // COMPARTILHAMENTO
 // =========================
 function copiarLinkSala() {
-    if (!linkSalaAtual) return;
+    if (!linkSalaAtual) {
+        alert("Link da sala não encontrado.");
+        return;
+    }
+
     navigator.clipboard.writeText(linkSalaAtual).then(() => {
-        alert("Link copiado!");
+        const statusSala = document.getElementById("status-sala");
+        if (statusSala) {
+            statusSala.innerText = "Link copiado! Agora envie para seu amigo.";
+        } else {
+            alert("Link copiado!");
+        }
     }).catch(() => {
         alert("Não foi possível copiar o link.");
     });
 }
 
 function compartilharWhatsapp() {
-    if (!linkSalaAtual) return;
+    if (!linkSalaAtual) {
+        alert("Link da sala não encontrado.");
+        return;
+    }
+
     const mensagem = `Entre na minha partida da Copa Saminina: ${linkSalaAtual}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(mensagem)}`, "_blank");
+}
+
+function compartilharSalaWhatsApp() {
+    compartilharWhatsapp();
 }
 
 function fecharModalCompartilhar() {
@@ -332,6 +390,123 @@ function verificarSenhaReset() {
 }
 
 // =========================
+// FEED AO VIVO
+// =========================
+function gerarFeedHtml(ranking, historico) {
+    const top3Html = ranking.slice(0, 3).map((j, i) => {
+        const medalha = i === 0 ? "🥇" : i === 1 ? "🥈" : "🥉";
+        const linhaExtra = i === 0 ? "Líder absoluto" : i === 1 ? "Na cola do topo" : "Fechando o pódio";
+        return `
+            <div class="feed-item" style="display:flex;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid #e6e6e6;">
+                <div>
+                    <div style="font-weight:900;color:var(--color-blue);">${medalha} ${j.nome}</div>
+                    <div style="font-size:12px;color:#6a7280;">${linhaExtra}</div>
+                </div>
+                <div style="text-align:right;">
+                    <div style="font-weight:900;color:#1f1f1f;">${j.copas || 0} copas</div>
+                    <div style="font-size:12px;color:#6a7280;">${j.pontosTotais || 0} pts</div>
+                </div>
+            </div>
+        `;
+    }).join("");
+
+    const ultimosHtml = historico.slice(0, 3).map((p, i) => {
+        const destaque = i === 0 ? "Agora há pouco" : "Recente";
+        return `
+            <div class="feed-item" style="padding:10px 0;border-bottom:1px solid #e6e6e6;">
+                <div style="font-weight:900;color:var(--color-blue);">${p.nome}</div>
+                <div style="font-size:13px;color:#333;margin-top:2px;">${p.titulo}</div>
+                <div style="font-size:11px;color:#7a7f89;margin-top:3px;">${destaque}</div>
+            </div>
+        `;
+    }).join("");
+
+    return `
+        <div class="feed-box" style="background:linear-gradient(180deg,#fbfcff 0%,#f3f6fb 100%);border:1px solid #dbe3ef;">
+            <div class="feed-titulo" style="display:flex;align-items:center;justify-content:space-between;">
+                <span>Ao vivo</span>
+                <span style="font-size:11px;background:#eaf3ff;color:var(--color-blue);padding:4px 8px;border-radius:999px;font-weight:900;">Atualizando</span>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr;gap:14px;">
+                <div style="background:#fff;border:1px solid #e3e8f1;border-radius:12px;padding:12px;">
+                    <div class="feed-subtitulo" style="margin-top:0;">Top 3 da arena</div>
+                    ${top3Html || '<div class="feed-vazio">Ainda sem ranking.</div>'}
+                </div>
+
+                <div style="background:#fff;border:1px solid #e3e8f1;border-radius:12px;padding:12px;">
+                    <div class="feed-subtitulo" style="margin-top:0;">Últimos jogadores</div>
+                    ${ultimosHtml || '<div class="feed-vazio">Aguardando novas partidas.</div>'}
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function iniciarFeedAoVivo() {
+    const atualizarFeed = async () => {
+        try {
+            const rankingSnap = await database.ref("samininaRanking").once("value");
+            const historicoSnap = await database.ref("historicoPartidas")
+                .orderByChild("timestamp")
+                .limitToLast(5)
+                .once("value");
+
+            let ranking = [];
+            rankingSnap.forEach(c => {
+                if (c.val() && c.val().nome) ranking.push(c.val());
+            });
+
+            ranking.sort((a, b) =>
+                (Number(b.copas) || 0) - (Number(a.copas) || 0) ||
+                (Number(b.pontosTotais) || 0) - (Number(a.pontosTotais) || 0)
+            );
+
+            let historico = [];
+            historicoSnap.forEach(c => {
+                if (c.val() && c.val().nome) historico.push(c.val());
+            });
+            historico.reverse();
+
+            const htmlFinal = gerarFeedHtml(ranking, historico);
+
+            [
+                document.getElementById("feed-inicio"),
+                document.getElementById("feed-espera"),
+                document.getElementById("feed-resultado")
+            ].forEach(bloco => {
+                if (bloco) bloco.innerHTML = htmlFinal;
+            });
+        } catch (e) {
+            console.error("Erro no feed ao vivo:", e);
+
+            [
+                document.getElementById("feed-inicio"),
+                document.getElementById("feed-espera"),
+                document.getElementById("feed-resultado")
+            ].forEach(bloco => {
+                if (bloco) {
+                    bloco.innerHTML = `
+                        <div class="feed-box">
+                            <div class="feed-titulo">Ao vivo</div>
+                            <div class="feed-vazio">Não foi possível carregar agora.</div>
+                        </div>
+                    `;
+                }
+            });
+        }
+    };
+
+    atualizarFeed();
+
+    database.ref("samininaRanking").on("value", atualizarFeed);
+    database.ref("historicoPartidas").limitToLast(5).on("value", atualizarFeed);
+
+    if (feedIntervalId) clearInterval(feedIntervalId);
+    feedIntervalId = setInterval(atualizarFeed, 12000);
+}
+
+// =========================
 // RANKING
 // =========================
 function abrirRankingMestreInicio() {
@@ -344,7 +519,76 @@ function abrirRankingMestreResultado() {
 }
 
 // =========================
-// SELEÇÃO DE MODO
+// CHAT ONLINE
+// =========================
+function ouvirChatSala() {
+    if (!salaId || chatListenerAtivo) return;
+    chatListenerAtivo = true;
+
+    database.ref(`salas/${salaId}/chat`).limitToLast(20).on("value", (snap) => {
+        const lista = document.getElementById("chat-online-lista");
+        if (!lista) return;
+
+        const itens = [];
+        snap.forEach((c) => {
+            const val = c.val();
+            if (val && val.autor && val.texto) itens.push(val);
+        });
+
+        if (!itens.length) {
+            lista.innerHTML = "Sem mensagens ainda.";
+            return;
+        }
+
+        lista.innerHTML = itens.map((m) => `
+            <div class="chat-msg">
+                <div class="chat-autor">${m.autor}</div>
+                <div>${m.texto}</div>
+            </div>
+        `).join("");
+
+        lista.scrollTop = lista.scrollHeight;
+    });
+}
+
+function enviarMensagemSala() {
+    if (!salaId) return;
+
+    const input = document.getElementById("chat-online-input");
+    if (!input) return;
+
+    const texto = input.value.trim();
+    if (!texto) return;
+
+    const autor = jogadorTipo === "host"
+        ? (j1Nome || "Host")
+        : (jogadorTipo === "convidado" ? (j2Nome || "Convidado") : "Jogador");
+
+    database.ref(`salas/${salaId}/chat`).push({
+        autor,
+        texto,
+        timestamp: firebase.database.ServerValue.TIMESTAMP
+    });
+
+    input.value = "";
+}
+
+function enviarMensagemRapida(texto) {
+    if (!salaId || !texto) return;
+
+    const autor = jogadorTipo === "host"
+        ? (j1Nome || "Host")
+        : (jogadorTipo === "convidado" ? (j2Nome || "Convidado") : "Jogador");
+
+    database.ref(`salas/${salaId}/chat`).push({
+        autor,
+        texto,
+        timestamp: firebase.database.ServerValue.TIMESTAMP
+    });
+}
+
+// =========================
+// MODOS
 // =========================
 function resetarEstadoPartida() {
     j1Nome = "";
@@ -384,6 +628,61 @@ function resetarEstadoPartida() {
     document.getElementById("secao-pesquisa")?.classList.remove("escondido");
     document.querySelector(".emoji-container")?.classList.remove("escondido");
     document.getElementById("feedback-agradecimento")?.classList.add("escondido");
+
+    const painelOnline = document.getElementById("painel-online");
+    if (painelOnline) painelOnline.classList.add("escondido");
+
+    const btnIniciar = document.getElementById("btn-iniciar-local");
+    if (btnIniciar) btnIniciar.classList.remove("escondido");
+
+    const tituloRegistro = document.getElementById("titulo-registro");
+    if (tituloRegistro) tituloRegistro.innerText = "Registro dos Craques";
+
+    const badge = document.getElementById("online-badge-status");
+    if (badge) badge.innerText = "Preparando";
+
+    const status = document.getElementById("online-status-text");
+    if (status) status.innerText = "Crie uma sala, compartilhe o link e espere seu amigo entrar.";
+
+    const blocoLink = document.getElementById("bloco-link-sala");
+    if (blocoLink) blocoLink.classList.add("escondido");
+
+    const btnZap = document.getElementById("btn-compartilhar-whatsapp");
+    const btnCopiar = document.getElementById("btn-copiar-link");
+    if (btnZap) btnZap.classList.add("escondido");
+    if (btnCopiar) btnCopiar.classList.add("escondido");
+
+    const roomNameHost = document.getElementById("room-name-host");
+    const roomNameConvidado = document.getElementById("room-name-convidado");
+    const roomReadyHost = document.getElementById("room-ready-host");
+    const roomReadyConvidado = document.getElementById("room-ready-convidado");
+    const roomAvatarHost = document.getElementById("room-avatar-host");
+    const roomAvatarConvidado = document.getElementById("room-avatar-convidado");
+
+    if (roomNameHost) roomNameHost.innerText = "Aguardando...";
+    if (roomNameConvidado) roomNameConvidado.innerText = "Aguardando entrada...";
+    if (roomReadyHost) {
+        roomReadyHost.innerText = "Escolhendo dados";
+        roomReadyHost.className = "room-ready pending";
+    }
+    if (roomReadyConvidado) {
+        roomReadyConvidado.innerText = "Ainda não entrou";
+        roomReadyConvidado.className = "room-ready pending";
+    }
+    if (roomAvatarHost) roomAvatarHost.src = "img/1.jpg";
+    if (roomAvatarConvidado) roomAvatarConvidado.src = "img/2.jpg";
+
+    const chatLista = document.getElementById("chat-online-lista");
+    const chatInput = document.getElementById("chat-online-input");
+    if (chatLista) chatLista.innerHTML = "Sem mensagens ainda.";
+    if (chatInput) chatInput.value = "";
+
+    salaId = null;
+    jogadorTipo = null;
+    linkSalaAtual = "";
+    salaListenerAtivo = false;
+    jogoListenerAtivo = false;
+    chatListenerAtivo = false;
 }
 
 function selecionarModo(modo) {
@@ -400,7 +699,10 @@ function selecionarModo(modo) {
     }
 
     if (modo === "batalha_online") {
-        iniciarSalaOnline();
+        document.getElementById("painel-online")?.classList.remove("escondido");
+        document.getElementById("btn-iniciar-local")?.classList.remove("escondido");
+        document.getElementById("titulo-registro").innerText = "Registro da Sala Online";
+        document.getElementById("online-status-text").innerText = "Primeiro crie a sala, compartilhe o link e depois confirme seu nome e avatar.";
     }
 }
 
@@ -408,6 +710,7 @@ function voltarParaModos() {
     limparResultadoSalvo();
     esconderTelaAguardandoOnline();
     fecharModalCompartilhar();
+    resetarEstadoPartida();
 
     document.getElementById("tela-inicial").classList.add("escondido");
     document.getElementById("tela-modo").classList.remove("escondido");
@@ -417,7 +720,11 @@ function selecionarAvatar(j, i, el) {
     const avatarEscolhido = listaAvatares[i];
 
     if (modoDeJogo === "batalha_online") {
-        j1Avatar = avatarEscolhido;
+        if (jogadorTipo === "convidado") {
+            j2Avatar = avatarEscolhido;
+        } else {
+            j1Avatar = avatarEscolhido;
+        }
     } else {
         if (j === 1) j1Avatar = avatarEscolhido;
         if (j === 2) j2Avatar = avatarEscolhido;
@@ -425,18 +732,40 @@ function selecionarAvatar(j, i, el) {
 
     el.parentElement.querySelectorAll("img").forEach(img => img.classList.remove("selecionado"));
     el.classList.add("selecionado");
+
+    if (modoDeJogo === "batalha_online") {
+        atualizarPainelSalaLocal();
+    }
 }
 
 // =========================
 // ONLINE
 // =========================
-function iniciarSalaOnline() {
+function atualizarPainelSalaLocal() {
+    const roomNameHost = document.getElementById("room-name-host");
+    const roomNameConvidado = document.getElementById("room-name-convidado");
+    const roomAvatarHost = document.getElementById("room-avatar-host");
+    const roomAvatarConvidado = document.getElementById("room-avatar-convidado");
+
+    if (jogadorTipo === "convidado") {
+        if (roomNameConvidado) roomNameConvidado.innerText = j2Nome || "Você";
+        if (roomAvatarConvidado && j2Avatar) roomAvatarConvidado.src = j2Avatar;
+    } else {
+        if (roomNameHost) roomNameHost.innerText = j1Nome || "Você";
+        if (roomAvatarHost && j1Avatar) roomAvatarHost.src = j1Avatar;
+    }
+}
+
+function criarSalaOnline() {
+    if (modoDeJogo !== "batalha_online") return;
+
     salaId = gerarCodigoSala();
     jogadorTipo = "host";
     salaListenerAtivo = false;
     jogoListenerAtivo = false;
+    chatListenerAtivo = false;
 
-    database.ref("salas/" + salaId).set({
+    database.ref(`salas/${salaId}`).set({
         status: "esperando",
         host: {
             nome: "",
@@ -454,70 +783,186 @@ function iniciarSalaOnline() {
             j1Pontos: 0,
             j2Pontos: 0,
             perguntas: [],
-            iniciada: false
+            iniciada: false,
+            countdown: 0
         }
     }).then(() => {
-        linkSalaAtual = window.location.origin + window.location.pathname + "?sala=" + salaId;
+        linkSalaAtual = window.location.origin + window.location.pathname + `?sala=${salaId}`;
 
+        const badge = document.getElementById("online-badge-status");
+        const status = document.getElementById("online-status-text");
+        const blocoLink = document.getElementById("bloco-link-sala");
         const inputLink = document.getElementById("input-link-sala");
+        const btnZap = document.getElementById("btn-compartilhar-whatsapp");
+        const btnCopiar = document.getElementById("btn-copiar-link");
+
+        if (badge) badge.innerText = "Sala criada";
+        if (status) status.innerText = "Sala criada com sucesso. Compartilhe o link com seu amigo.";
+        if (blocoLink) blocoLink.classList.remove("escondido");
         if (inputLink) inputLink.value = linkSalaAtual;
+        if (btnZap) btnZap.classList.remove("escondido");
+        if (btnCopiar) btnCopiar.classList.remove("escondido");
 
         const modal = document.getElementById("modal-compartilhar");
+        const statusSala = document.getElementById("status-sala");
+        if (statusSala) statusSala.innerText = "Aguardando o amigo entrar...";
         if (modal) modal.classList.remove("escondido");
 
         ouvirSalaOnline();
+        ouvirChatSala();
+    }).catch((erro) => {
+        console.error("Erro ao criar sala online:", erro);
+        alert("Não foi possível criar a sala online.");
     });
 }
 
+function iniciarContagemSala() {
+    let valor = 3;
+
+    const intervalo = setInterval(() => {
+        valor--;
+
+        if (valor <= 0) {
+            clearInterval(intervalo);
+            database.ref(`salas/${salaId}`).update({
+                status: "pronta",
+                "jogo/iniciada": true,
+                "jogo/countdown": 0
+            });
+        } else {
+            database.ref(`salas/${salaId}/jogo`).update({
+                countdown: valor
+            });
+        }
+    }, 1000);
+}
+
 function verificarSePodeIniciarSala() {
-    database.ref("salas/" + salaId).once("value").then(snap => {
+    if (!salaId) return;
+
+    database.ref(`salas/${salaId}`).once("value").then(snap => {
         const data = snap.val();
         if (!data) return;
 
         const hostPronto = !!data.host?.pronto;
         const convidadoPronto = !!data.convidado?.pronto;
 
-        if (hostPronto && convidadoPronto && data.status !== "pronta") {
-            const perguntasSorteadas = shuffleArray(bancoDePerguntas).slice(0, 10);
+        if (hostPronto && convidadoPronto && data.status !== "contagem" && data.status !== "pronta") {
+            const perguntasSorteadas = gerarPerguntasAleatorias(10);
 
-            database.ref("salas/" + salaId).update({
-                status: "pronta",
+            database.ref(`salas/${salaId}`).update({
+                status: "contagem",
                 "jogo/perguntas": perguntasSorteadas,
                 "jogo/perguntaAtual": 0,
                 "jogo/turno": "host",
                 "jogo/j1Pontos": 0,
                 "jogo/j2Pontos": 0,
-                "jogo/iniciada": true
+                "jogo/iniciada": false,
+                "jogo/countdown": 3
             });
+
+            iniciarContagemSala();
         }
     });
+}
+
+function atualizarPainelSalaOnline(data) {
+    const roomNameHost = document.getElementById("room-name-host");
+    const roomNameConvidado = document.getElementById("room-name-convidado");
+    const roomReadyHost = document.getElementById("room-ready-host");
+    const roomReadyConvidado = document.getElementById("room-ready-convidado");
+    const roomAvatarHost = document.getElementById("room-avatar-host");
+    const roomAvatarConvidado = document.getElementById("room-avatar-convidado");
+    const badge = document.getElementById("online-badge-status");
+    const status = document.getElementById("online-status-text");
+
+    if (roomNameHost) roomNameHost.innerText = data.host?.nome || "Aguardando...";
+    if (roomNameConvidado) roomNameConvidado.innerText = data.convidado?.nome || "Aguardando entrada...";
+    if (roomAvatarHost) roomAvatarHost.src = data.host?.avatar || "img/1.jpg";
+    if (roomAvatarConvidado) roomAvatarConvidado.src = data.convidado?.avatar || "img/2.jpg";
+
+    if (roomReadyHost) {
+        roomReadyHost.innerText = data.host?.pronto ? "Pronto" : "Escolhendo dados";
+        roomReadyHost.className = `room-ready ${data.host?.pronto ? "ready" : "pending"}`;
+    }
+
+    if (roomReadyConvidado) {
+        roomReadyConvidado.innerText = data.convidado?.pronto
+            ? "Pronto"
+            : (data.convidado?.nome ? "Escolhendo dados" : "Ainda não entrou");
+        roomReadyConvidado.className = `room-ready ${data.convidado?.pronto ? "ready" : "pending"}`;
+    }
+
+    if (badge) {
+        if (data.status === "esperando") badge.innerText = "Aguardando";
+        if (data.status === "contagem") badge.innerText = `Começa em ${data.jogo?.countdown || 3}`;
+        if (data.status === "pronta") badge.innerText = "Valendo";
+    }
+
+    if (status) {
+        if (data.status === "esperando") {
+            if (!data.convidado?.nome) {
+                status.innerText = "Sala pronta. Compartilhe o link e aguarde seu amigo entrar.";
+            } else if (!data.convidado?.pronto) {
+                status.innerText = `${data.convidado.nome} entrou. Aguardando ficar pronto...`;
+            } else {
+                status.innerText = "Os dois estão quase prontos.";
+            }
+        }
+
+        if (data.status === "contagem") {
+            status.innerText = `Partida começa em ${data.jogo?.countdown || 3}...`;
+        }
+
+        if (data.status === "pronta") {
+            status.innerText = "Partida iniciada.";
+        }
+    }
 }
 
 function ouvirSalaOnline() {
     if (!salaId || salaListenerAtivo) return;
     salaListenerAtivo = true;
 
-    database.ref("salas/" + salaId).on("value", snap => {
+    database.ref(`salas/${salaId}`).on("value", snap => {
         const data = snap.val();
         if (!data) return;
 
         onlineDataAtual = data;
 
-        const hostNome = data.host?.nome || "";
-        const hostAvatar = data.host?.avatar || "";
-        const convidadoNome = data.convidado?.nome || "";
-        const convidadoAvatar = data.convidado?.avatar || "";
+        j1Nome = data.host?.nome || "";
+        j1Avatar = data.host?.avatar || "img/1.jpg";
+        j2Nome = data.convidado?.nome || "";
+        j2Avatar = data.convidado?.avatar || "img/2.jpg";
 
-        j1Nome = hostNome;
-        j1Avatar = hostAvatar || "img/1.jpg";
-        j2Nome = convidadoNome;
-        j2Avatar = convidadoAvatar || "img/2.jpg";
+        atualizarPainelSalaOnline(data);
+
+        const statusSala = document.getElementById("status-sala");
+        if (statusSala) {
+            if (data.status === "esperando" && !data.convidado?.nome) {
+                statusSala.innerText = "Aguardando o amigo entrar...";
+            } else if (data.status === "esperando" && data.convidado?.nome && !data.convidado?.pronto) {
+                statusSala.innerText = `${data.convidado.nome} entrou e está se preparando.`;
+            } else if (data.status === "contagem") {
+                statusSala.innerText = `Partida começa em ${data.jogo?.countdown || 3}...`;
+            } else if (data.status === "pronta") {
+                statusSala.innerText = "Partida iniciada.";
+            }
+        }
 
         if (data.status === "esperando") {
             const euPronto = jogadorTipo === "host" ? data.host?.pronto : data.convidado?.pronto;
             if (euPronto) {
-                mostrarTelaAguardandoOnline("Aguardando o outro jogador...");
+                const texto = data.convidado?.nome
+                    ? `${data.convidado.nome} entrou. Aguardando ficar pronto...`
+                    : "Aguardando o outro jogador...";
+                mostrarTelaAguardandoOnline(texto);
             }
+            return;
+        }
+
+        if (data.status === "contagem") {
+            mostrarTelaAguardandoOnline(`Partida começa em ${data.jogo?.countdown || 3}...`);
             return;
         }
 
@@ -559,7 +1004,7 @@ function sincronizarJogoOnline() {
     if (!salaId || jogoListenerAtivo) return;
     jogoListenerAtivo = true;
 
-    database.ref("salas/" + salaId + "/jogo").on("value", snap => {
+    database.ref(`salas/${salaId}/jogo`).on("value", snap => {
         const jogo = snap.val();
         if (!jogo) return;
 
@@ -594,24 +1039,43 @@ function podeResponder() {
 function validarComeco() {
     const nomeDigitado = document.getElementById("input-nome1").value.trim().toUpperCase();
 
-    if (!nomeDigitado || !j1Avatar) {
+    if (!nomeDigitado || !(jogadorTipo === "convidado" ? j2Avatar : j1Avatar)) {
         alert("Preencha o nome e escolha um avatar.");
         return;
     }
 
     if (modoDeJogo === "batalha_online") {
-        const caminhoJogador = jogadorTipo === "host" ? "host" : "convidado";
+        if (!salaId) {
+            alert("Crie a sala online primeiro.");
+            return;
+        }
 
-        database.ref("salas/" + salaId + "/" + caminhoJogador).update({
+        const caminhoJogador = jogadorTipo === "host" ? "host" : "convidado";
+        const avatarAtual = jogadorTipo === "host" ? j1Avatar : j2Avatar;
+
+        if (jogadorTipo === "host") j1Nome = nomeDigitado;
+        if (jogadorTipo === "convidado") j2Nome = nomeDigitado;
+
+        database.ref(`salas/${salaId}/${caminhoJogador}`).update({
             nome: nomeDigitado,
-            avatar: j1Avatar,
+            avatar: avatarAtual,
             pronto: true
         }).then(() => {
-            const telaInicial = document.getElementById("tela-inicial");
-            if (telaInicial) telaInicial.classList.add("escondido");
-
+            document.getElementById("tela-inicial").classList.add("escondido");
             mostrarTelaAguardandoOnline("Aguardando o outro jogador...");
-            verificarSePodeIniciarSala();
+            ouvirSalaOnline();
+            ouvirChatSala();
+
+            if (jogadorTipo === "host") {
+                verificarSePodeIniciarSala();
+            } else {
+                database.ref(`salas/${salaId}`).once("value").then((snap) => {
+                    const data = snap.val();
+                    if (data?.host?.pronto && data?.convidado?.pronto) {
+                        verificarSePodeIniciarSala();
+                    }
+                });
+            }
         });
 
         return;
@@ -639,7 +1103,7 @@ function validarComeco() {
 }
 
 function iniciarJogoLocal() {
-    perguntasDaRodada = shuffleArray(bancoDePerguntas).slice(0, 10);
+    perguntasDaRodada = gerarPerguntasAleatorias(10);
 
     document.getElementById("placar-nome-j1").innerText = j1Nome;
     document.getElementById("placar-nome-j2").innerText = j2Nome;
@@ -662,7 +1126,7 @@ function iniciarJogoLocal() {
 }
 
 // =========================
-// PERGUNTA / UI
+// QUIZ
 // =========================
 function mostrarPergunta() {
     if (!perguntasDaRodada || !perguntasDaRodada[perguntaAtual]) return;
@@ -671,8 +1135,21 @@ function mostrarPergunta() {
     const quizContainer = document.querySelector(".quiz-container");
 
     const avisoTurno = document.getElementById("aviso-turno-nome");
+    const onlineEsperaMsg = document.getElementById("online-espera-msg");
+
     if (avisoTurno) {
         avisoTurno.innerText = `VEZ DE: ${jogadorAtual === 1 ? j1Nome : j2Nome}`;
+    }
+
+    if (modoDeJogo === "batalha_online" && onlineEsperaMsg) {
+        if (podeResponder()) {
+            onlineEsperaMsg.classList.add("escondido");
+        } else {
+            onlineEsperaMsg.innerText = `Aguardando a resposta de ${jogadorAtual === 1 ? j1Nome : j2Nome}...`;
+            onlineEsperaMsg.classList.remove("escondido");
+        }
+    } else if (onlineEsperaMsg) {
+        onlineEsperaMsg.classList.add("escondido");
     }
 
     if (modoDeJogo === "batalha_local") {
@@ -733,12 +1210,9 @@ function atualizarTela() {
     atualizarBloqueioBotoes();
 }
 
-// =========================
-// TIMER
-// =========================
 function iniciarCronometro() {
     if (modoDeJogo === "batalha_online" && !podeResponder()) {
-        document.getElementById("timer-display").innerText = "Aguardando...";
+        document.getElementById("timer-display").innerText = `Aguardando ${jogadorAtual === 1 ? j1Nome : j2Nome}...`;
         clearInterval(controleCronometro);
         return;
     }
@@ -761,9 +1235,6 @@ function iniciarCronometro() {
     }, 1000);
 }
 
-// =========================
-// RESPOSTA
-// =========================
 function verificarResposta(idxSelecionado, botaoClicado) {
     if (modoDeJogo === "batalha_online" && !podeResponder()) return;
 
@@ -799,6 +1270,14 @@ function verificarResposta(idxSelecionado, botaoClicado) {
 
         if (bonus > 0) {
             document.getElementById("streak-popup").innerText = getStreakData(streak).msg;
+
+            if (typeof confetti !== "undefined") {
+                confetti({
+                    particleCount: 120,
+                    spread: 80,
+                    origin: { y: 0.6 }
+                });
+            }
         }
     } else {
         somErro.currentTime = 0;
@@ -833,7 +1312,7 @@ function avancarRodada() {
 
     if (perguntaAtual >= 10) {
         if (modoDeJogo === "batalha_online") {
-            database.ref("salas/" + salaId + "/jogo").update({
+            database.ref(`salas/${salaId}/jogo`).update({
                 perguntaAtual: 10,
                 j1Pontos,
                 j2Pontos
@@ -857,7 +1336,7 @@ function avancarRodada() {
     if (modoDeJogo === "batalha_online") {
         const proximoTurno = jogadorAtual === 1 ? "convidado" : "host";
 
-        database.ref("salas/" + salaId + "/jogo").update({
+        database.ref(`salas/${salaId}/jogo`).update({
             turno: proximoTurno,
             perguntaAtual,
             j1Pontos,
@@ -883,19 +1362,16 @@ function finalizarJogo() {
     let vencedor;
     let vAvatar;
     let vPontos;
-    let ganhouCopa = false;
 
     if (modoDeJogo === "solo") {
         vencedor = j1Nome;
         vAvatar = j1Avatar;
         vPontos = j1Pontos;
-        ganhouCopa = j1Pontos >= 6;
-        salvarNoRanking(j1Nome, j1Avatar, j1Pontos, ganhouCopa);
+        salvarNoRanking(j1Nome, j1Avatar, j1Pontos, j1Pontos >= 6);
     } else {
         vencedor = j1Pontos >= j2Pontos ? j1Nome : j2Nome;
         vAvatar = j1Pontos >= j2Pontos ? j1Avatar : j2Avatar;
         vPontos = Math.max(j1Pontos, j2Pontos);
-        ganhouCopa = j1Pontos !== j2Pontos;
 
         if (j1Pontos !== j2Pontos) {
             salvarNoRanking(vencedor, vAvatar, vPontos, true);
@@ -915,9 +1391,21 @@ function finalizarJogo() {
 
     salvarEstadoResultado();
 
-    if ((modoDeJogo === "solo" && vPontos >= 6) || (modoDeJogo !== "solo" && vPontos >= 10)) {
-        if (typeof confetti !== "undefined") {
-            confetti({ particleCount: 300, spread: 100 });
+    if (typeof confetti !== "undefined") {
+        if (modoDeJogo === "solo" && vPontos >= 6) {
+            confetti({
+                particleCount: 300,
+                spread: 100,
+                origin: { y: 0.6 }
+            });
+        }
+
+        if (modoDeJogo !== "solo" && j1Pontos !== j2Pontos) {
+            confetti({
+                particleCount: 300,
+                spread: 100,
+                origin: { y: 0.6 }
+            });
         }
     }
 }
@@ -986,7 +1474,7 @@ function salvarNoRanking(nome, avatar, pontos, ganhouCopa, tituloEspecial = null
     const nomeLimpo = (nome || "").trim().toUpperCase();
     if (!nomeLimpo) return;
 
-    const ref = database.ref("samininaRanking/" + nomeLimpo);
+    const ref = database.ref(`samininaRanking/${nomeLimpo}`);
 
     ref.once("value").then(s => {
         const data = s.exists() ? s.val() : {};
@@ -999,8 +1487,8 @@ function salvarNoRanking(nome, avatar, pontos, ganhouCopa, tituloEspecial = null
 
     database.ref("historicoPartidas").push({
         nome: nomeLimpo,
-        avatar: avatar,
-        pontos: pontos,
+        avatar,
+        pontos,
         titulo: tituloEspecial || calcularTitulo(pontos),
         timestamp: firebase.database.ServerValue.TIMESTAMP
     });
@@ -1058,6 +1546,7 @@ document.addEventListener("DOMContentLoaded", () => {
     gerarQRCodeInicial();
     aplicarEstadoAudio();
     mostrarBotaoMuteSePreciso();
+    iniciarFeedAoVivo();
 
     const params = new URLSearchParams(window.location.search);
 
@@ -1076,7 +1565,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
         document.getElementById("tela-modo").classList.add("escondido");
         document.getElementById("tela-inicial").classList.remove("escondido");
+        document.getElementById("painel-online")?.classList.remove("escondido");
+        document.getElementById("titulo-registro").innerText = "Entrar na Sala Online";
+        document.getElementById("online-badge-status").innerText = "Convidado";
+        document.getElementById("online-status-text").innerText = "Escolha seu nome e avatar para entrar na partida.";
+
+        document.getElementById("bloco-link-sala")?.classList.remove("escondido");
+        document.getElementById("input-link-sala").value = window.location.href;
+
+        document.getElementById("btn-compartilhar-whatsapp")?.classList.add("escondido");
+        document.getElementById("btn-copiar-link")?.classList.remove("escondido");
 
         ouvirSalaOnline();
+        ouvirChatSala();
     }
 });

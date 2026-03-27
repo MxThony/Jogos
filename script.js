@@ -560,9 +560,9 @@ function enviarMensagemSala() {
     const texto = input.value.trim();
     if (!texto) return;
 
-    const autor = jogadorTipo === "host"
-        ? (j1Nome || "Host")
-        : (jogadorTipo === "convidado" ? (j2Nome || "Convidado") : "Jogador");
+    let autor = "Jogador";
+    if (jogadorTipo === "host") autor = j1Nome || "Host";
+    else if (jogadorTipo === "convidado") autor = j2Nome || "Convidado";
 
     database.ref(`salas/${salaId}/chat`).push({
         autor,
@@ -576,9 +576,9 @@ function enviarMensagemSala() {
 function enviarMensagemRapida(texto) {
     if (!salaId || !texto) return;
 
-    const autor = jogadorTipo === "host"
-        ? (j1Nome || "Host")
-        : (jogadorTipo === "convidado" ? (j2Nome || "Convidado") : "Jogador");
+    let autor = "Jogador";
+    if (jogadorTipo === "host") autor = j1Nome || "Host";
+    else if (jogadorTipo === "convidado") autor = j2Nome || "Convidado";
 
     database.ref(`salas/${salaId}/chat`).push({
         autor,
@@ -633,7 +633,13 @@ function resetarEstadoPartida() {
     if (painelOnline) painelOnline.classList.add("escondido");
 
     const btnIniciar = document.getElementById("btn-iniciar-local");
-    if (btnIniciar) btnIniciar.classList.remove("escondido");
+    if (btnIniciar) {
+        btnIniciar.classList.remove("escondido");
+        btnIniciar.innerText = "Iniciar Partida";
+    }
+
+    const btnConfirmar = document.getElementById("btn-confirmar-online");
+    if (btnConfirmar) btnConfirmar.classList.add("escondido");
 
     const tituloRegistro = document.getElementById("titulo-registro");
     if (tituloRegistro) tituloRegistro.innerText = "Registro dos Craques";
@@ -649,8 +655,10 @@ function resetarEstadoPartida() {
 
     const btnZap = document.getElementById("btn-compartilhar-whatsapp");
     const btnCopiar = document.getElementById("btn-copiar-link");
+    const btnCriar = document.getElementById("btn-criar-sala");
     if (btnZap) btnZap.classList.add("escondido");
     if (btnCopiar) btnCopiar.classList.add("escondido");
+    if (btnCriar) btnCriar.classList.remove("escondido");
 
     const roomNameHost = document.getElementById("room-name-host");
     const roomNameConvidado = document.getElementById("room-name-convidado");
@@ -674,8 +682,10 @@ function resetarEstadoPartida() {
 
     const chatLista = document.getElementById("chat-online-lista");
     const chatInput = document.getElementById("chat-online-input");
+    const chatCard = document.getElementById("chat-card-online");
     if (chatLista) chatLista.innerHTML = "Sem mensagens ainda.";
     if (chatInput) chatInput.value = "";
+    if (chatCard) chatCard.classList.add("escondido");
 
     salaId = null;
     jogadorTipo = null;
@@ -700,9 +710,11 @@ function selecionarModo(modo) {
 
     if (modo === "batalha_online") {
         document.getElementById("painel-online")?.classList.remove("escondido");
-        document.getElementById("btn-iniciar-local")?.classList.remove("escondido");
-        document.getElementById("titulo-registro").innerText = "Registro da Sala Online";
-        document.getElementById("online-status-text").innerText = "Primeiro crie a sala, compartilhe o link e depois confirme seu nome e avatar.";
+        document.getElementById("btn-iniciar-local")?.classList.add("escondido");
+        document.getElementById("btn-confirmar-online")?.classList.remove("escondido");
+        document.getElementById("titulo-registro").innerText = "Entrar na Sala Online";
+        document.getElementById("online-status-text").innerText = "Crie a sala, compartilhe o link e depois confirme seu nome e avatar.";
+        document.getElementById("chat-card-online")?.classList.add("escondido");
     }
 }
 
@@ -758,6 +770,7 @@ function atualizarPainelSalaLocal() {
 
 function criarSalaOnline() {
     if (modoDeJogo !== "batalha_online") return;
+    if (jogadorTipo === "convidado") return;
 
     salaId = gerarCodigoSala();
     jogadorTipo = "host";
@@ -767,16 +780,8 @@ function criarSalaOnline() {
 
     database.ref(`salas/${salaId}`).set({
         status: "esperando",
-        host: {
-            nome: "",
-            avatar: "",
-            pronto: false
-        },
-        convidado: {
-            nome: "",
-            avatar: "",
-            pronto: false
-        },
+        host: { nome: "", avatar: "", pronto: false },
+        convidado: { nome: "", avatar: "", pronto: false },
         jogo: {
             turno: "host",
             perguntaAtual: 0,
@@ -787,7 +792,10 @@ function criarSalaOnline() {
             countdown: 0
         }
     }).then(() => {
-        linkSalaAtual = window.location.origin + window.location.pathname + `?sala=${salaId}`;
+        const urlSala = new URL(window.location.href);
+        urlSala.search = "";
+        urlSala.searchParams.set("sala", salaId);
+        linkSalaAtual = urlSala.toString();
 
         const badge = document.getElementById("online-badge-status");
         const status = document.getElementById("online-status-text");
@@ -797,7 +805,7 @@ function criarSalaOnline() {
         const btnCopiar = document.getElementById("btn-copiar-link");
 
         if (badge) badge.innerText = "Sala criada";
-        if (status) status.innerText = "Sala criada com sucesso. Compartilhe o link com seu amigo.";
+        if (status) status.innerText = "Sala criada com sucesso. Agora confirme seu nome e avatar e compartilhe o link.";
         if (blocoLink) blocoLink.classList.remove("escondido");
         if (inputLink) inputLink.value = linkSalaAtual;
         if (btnZap) btnZap.classList.remove("escondido");
@@ -809,7 +817,6 @@ function criarSalaOnline() {
         if (modal) modal.classList.remove("escondido");
 
         ouvirSalaOnline();
-        ouvirChatSala();
     }).catch((erro) => {
         console.error("Erro ao criar sala online:", erro);
         alert("Não foi possível criar a sala online.");
@@ -887,9 +894,7 @@ function atualizarPainelSalaOnline(data) {
     }
 
     if (roomReadyConvidado) {
-        roomReadyConvidado.innerText = data.convidado?.pronto
-            ? "Pronto"
-            : (data.convidado?.nome ? "Escolhendo dados" : "Ainda não entrou");
+        roomReadyConvidado.innerText = data.convidado?.pronto ? "Pronto" : (data.convidado?.nome ? "Escolhendo dados" : "Ainda não entrou");
         roomReadyConvidado.className = `room-ready ${data.convidado?.pronto ? "ready" : "pending"}`;
     }
 
@@ -904,19 +909,13 @@ function atualizarPainelSalaOnline(data) {
             if (!data.convidado?.nome) {
                 status.innerText = "Sala pronta. Compartilhe o link e aguarde seu amigo entrar.";
             } else if (!data.convidado?.pronto) {
-                status.innerText = `${data.convidado.nome} entrou. Aguardando ficar pronto...`;
+                status.innerText = `${data.convidado.nome} entrou. Aguardando confirmação do nome e avatar.`;
             } else {
                 status.innerText = "Os dois estão quase prontos.";
             }
         }
-
-        if (data.status === "contagem") {
-            status.innerText = `Partida começa em ${data.jogo?.countdown || 3}...`;
-        }
-
-        if (data.status === "pronta") {
-            status.innerText = "Partida iniciada.";
-        }
+        if (data.status === "contagem") status.innerText = `Partida começa em ${data.jogo?.countdown || 3}...`;
+        if (data.status === "pronta") status.innerText = "Partida iniciada.";
     }
 }
 
@@ -938,6 +937,24 @@ function ouvirSalaOnline() {
         atualizarPainelSalaOnline(data);
 
         const statusSala = document.getElementById("status-sala");
+        const chatCard = document.getElementById("chat-card-online");
+        const btnCriarSala = document.getElementById("btn-criar-sala");
+        const btnZap = document.getElementById("btn-compartilhar-whatsapp");
+        const btnCopiar = document.getElementById("btn-copiar-link");
+
+        if (jogadorTipo === "convidado") {
+            if (btnCriarSala) btnCriarSala.classList.add("escondido");
+            if (btnZap) btnZap.classList.add("escondido");
+            if (btnCopiar) btnCopiar.classList.remove("escondido");
+        }
+
+        if (data.host?.nome && data.convidado?.nome) {
+            if (chatCard) chatCard.classList.remove("escondido");
+            ouvirChatSala();
+        } else {
+            if (chatCard) chatCard.classList.add("escondido");
+        }
+
         if (statusSala) {
             if (data.status === "esperando" && !data.convidado?.nome) {
                 statusSala.innerText = "Aguardando o amigo entrar...";
@@ -1036,48 +1053,62 @@ function podeResponder() {
 // =========================
 // INICIAR PARTIDA
 // =========================
-function validarComeco() {
-    const nomeDigitado = document.getElementById("input-nome1").value.trim().toUpperCase();
+function confirmarEntradaOnline() {
+    if (modoDeJogo !== "batalha_online") return;
 
-    if (!nomeDigitado || !(jogadorTipo === "convidado" ? j2Avatar : j1Avatar)) {
+    const nomeDigitado = document.getElementById("input-nome1").value.trim().toUpperCase();
+    const avatarAtual = jogadorTipo === "convidado" ? j2Avatar : j1Avatar;
+
+    if (!nomeDigitado || !avatarAtual) {
         alert("Preencha o nome e escolha um avatar.");
         return;
     }
 
-    if (modoDeJogo === "batalha_online") {
-        if (!salaId) {
-            alert("Crie a sala online primeiro.");
-            return;
+    if (!salaId) {
+        alert("Crie a sala online primeiro.");
+        return;
+    }
+
+    const caminhoJogador = jogadorTipo === "convidado" ? "convidado" : "host";
+
+    if (jogadorTipo === "convidado") {
+        j2Nome = nomeDigitado;
+    } else {
+        j1Nome = nomeDigitado;
+    }
+
+    database.ref(`salas/${salaId}/${caminhoJogador}`).update({
+        nome: nomeDigitado,
+        avatar: avatarAtual,
+        pronto: true
+    }).then(() => {
+        document.getElementById("tela-inicial").classList.add("escondido");
+        mostrarTelaAguardandoOnline("Aguardando o outro jogador...");
+        ouvirSalaOnline();
+
+        if (jogadorTipo === "host") {
+            verificarSePodeIniciarSala();
+        } else {
+            database.ref(`salas/${salaId}`).once("value").then((snap) => {
+                const data = snap.val();
+                if (data?.host?.pronto && data?.convidado?.pronto) {
+                    verificarSePodeIniciarSala();
+                }
+            });
         }
+    });
+}
 
-        const caminhoJogador = jogadorTipo === "host" ? "host" : "convidado";
-        const avatarAtual = jogadorTipo === "host" ? j1Avatar : j2Avatar;
+function validarComeco() {
+    if (modoDeJogo === "batalha_online") {
+        confirmarEntradaOnline();
+        return;
+    }
 
-        if (jogadorTipo === "host") j1Nome = nomeDigitado;
-        if (jogadorTipo === "convidado") j2Nome = nomeDigitado;
+    const nomeDigitado = document.getElementById("input-nome1").value.trim().toUpperCase();
 
-        database.ref(`salas/${salaId}/${caminhoJogador}`).update({
-            nome: nomeDigitado,
-            avatar: avatarAtual,
-            pronto: true
-        }).then(() => {
-            document.getElementById("tela-inicial").classList.add("escondido");
-            mostrarTelaAguardandoOnline("Aguardando o outro jogador...");
-            ouvirSalaOnline();
-            ouvirChatSala();
-
-            if (jogadorTipo === "host") {
-                verificarSePodeIniciarSala();
-            } else {
-                database.ref(`salas/${salaId}`).once("value").then((snap) => {
-                    const data = snap.val();
-                    if (data?.host?.pronto && data?.convidado?.pronto) {
-                        verificarSePodeIniciarSala();
-                    }
-                });
-            }
-        });
-
+    if (!nomeDigitado || !j1Avatar) {
+        alert("Preencha o nome e escolha um avatar.");
         return;
     }
 
@@ -1348,6 +1379,119 @@ function avancarRodada() {
 // =========================
 // FIM DE JOGO
 // =========================
+function ajustarPontuacaoGlobal(nome, avatar, delta, tituloHistorico = "Ajuste de pontuação") {
+    const nomeLimpo = (nome || "").trim().toUpperCase();
+    if (!nomeLimpo || !delta) return;
+
+    const ref = database.ref(`samininaRanking/${nomeLimpo}`);
+    ref.once("value").then((snap) => {
+        const data = snap.exists() ? snap.val() : {
+            nome: nomeLimpo,
+            avatar: avatar || "img/1.jpg",
+            pontosTotais: 0,
+            copas: 0
+        };
+
+        const atual = Number(data.pontosTotais) || 0;
+        data.pontosTotais = Math.max(0, atual + delta);
+        data.avatar = avatar || data.avatar || "img/1.jpg";
+
+        ref.set(data);
+
+        database.ref("historicoPartidas").push({
+            nome: nomeLimpo,
+            avatar: data.avatar,
+            pontos: delta,
+            titulo: tituloHistorico,
+            timestamp: firebase.database.ServerValue.TIMESTAMP
+        });
+    });
+}
+
+function salvarPreferenciasReplay() {
+    const replayData = {
+        modo: modoDeJogo,
+        j1Nome,
+        j1Avatar,
+        j2Nome,
+        j2Avatar
+    };
+    localStorage.setItem("copaSamininaReplay", JSON.stringify(replayData));
+}
+
+function abrirModalRepetir() {
+    document.getElementById("modal-repetir")?.classList.remove("escondido");
+}
+
+function fecharModalRepetir() {
+    document.getElementById("modal-repetir")?.classList.add("escondido");
+}
+
+function repetirMesmoJogador(usandoMesmo) {
+    fecharModalRepetir();
+
+    if (!usandoMesmo) {
+        localStorage.removeItem("copaSamininaReplay");
+        location.href = "index.html";
+        return;
+    }
+
+    const salvo = localStorage.getItem("copaSamininaReplay");
+    if (!salvo) {
+        location.href = "index.html";
+        return;
+    }
+
+    try {
+        const replayData = JSON.parse(salvo);
+
+        resetarEstadoPartida();
+        modoDeJogo = replayData.modo || "solo";
+
+        esconderTodasAsTelas();
+        document.getElementById("tela-inicial").classList.remove("escondido");
+
+        if (modoDeJogo === "batalha_local") {
+            document.getElementById("container-avatar2")?.classList.remove("escondido");
+        }
+
+        if (modoDeJogo === "batalha_online") {
+            document.getElementById("painel-online")?.classList.remove("escondido");
+            document.getElementById("btn-iniciar-local")?.classList.add("escondido");
+            document.getElementById("btn-confirmar-online")?.classList.remove("escondido");
+        }
+
+        document.getElementById("input-nome1").value = replayData.j1Nome || "";
+        j1Nome = replayData.j1Nome || "";
+        j1Avatar = replayData.j1Avatar || "";
+
+        if (modoDeJogo === "batalha_local") {
+            document.getElementById("input-nome2").value = replayData.j2Nome || "";
+            j2Nome = replayData.j2Nome || "";
+            j2Avatar = replayData.j2Avatar || "";
+        }
+
+        if (j1Avatar) {
+            const idx1 = listaAvatares.indexOf(j1Avatar);
+            if (idx1 >= 0) {
+                const el1 = document.querySelectorAll("#avatar-j1 .img-avatar-opcao")[idx1];
+                if (el1) el1.classList.add("selecionado");
+            }
+        }
+
+        if (j2Avatar) {
+            const idx2 = listaAvatares.indexOf(j2Avatar);
+            if (idx2 >= 0) {
+                const el2 = document.querySelectorAll("#avatar-j2 .img-avatar-opcao")[idx2];
+                if (el2) el2.classList.add("selecionado");
+            }
+        }
+    } catch (e) {
+        console.error("Erro ao repetir jogador:", e);
+        location.href = "index.html";
+    }
+}
+
 function finalizarJogo() {
     musicaFundo.pause();
     mostrarBotaoMuteSePreciso();
@@ -1362,19 +1506,30 @@ function finalizarJogo() {
     let vencedor;
     let vAvatar;
     let vPontos;
+    let perdedor = "";
+    let perdedorAvatar = "";
 
     if (modoDeJogo === "solo") {
         vencedor = j1Nome;
         vAvatar = j1Avatar;
         vPontos = j1Pontos;
-        salvarNoRanking(j1Nome, j1Avatar, j1Pontos, j1Pontos >= 6);
+
+        if (j1Pontos >= 6) {
+            salvarNoRanking(j1Nome, j1Avatar, j1Pontos, true);
+        } else {
+            ajustarPontuacaoGlobal(j1Nome, j1Avatar, -6, "Perdeu 6 pontos");
+        }
     } else {
         vencedor = j1Pontos >= j2Pontos ? j1Nome : j2Nome;
         vAvatar = j1Pontos >= j2Pontos ? j1Avatar : j2Avatar;
         vPontos = Math.max(j1Pontos, j2Pontos);
 
         if (j1Pontos !== j2Pontos) {
+            perdedor = j1Pontos < j2Pontos ? j1Nome : j2Nome;
+            perdedorAvatar = j1Pontos < j2Pontos ? j1Avatar : j2Avatar;
+
             salvarNoRanking(vencedor, vAvatar, vPontos, true);
+            ajustarPontuacaoGlobal(perdedor, perdedorAvatar, -6, "Perdeu 6 pontos");
         } else {
             salvarNoRanking(vencedor, vAvatar, vPontos, false);
         }
@@ -1390,22 +1545,15 @@ function finalizarJogo() {
     document.getElementById("mensagem-final").innerText = `${vPontos} Pontos\n${calcularTitulo(vPontos)}`;
 
     salvarEstadoResultado();
+    salvarPreferenciasReplay();
 
     if (typeof confetti !== "undefined") {
         if (modoDeJogo === "solo" && vPontos >= 6) {
-            confetti({
-                particleCount: 300,
-                spread: 100,
-                origin: { y: 0.6 }
-            });
+            confetti({ particleCount: 300, spread: 100, origin: { y: 0.6 } });
         }
 
         if (modoDeJogo !== "solo" && j1Pontos !== j2Pontos) {
-            confetti({
-                particleCount: 300,
-                spread: 100,
-                origin: { y: 0.6 }
-            });
+            confetti({ particleCount: 300, spread: 100, origin: { y: 0.6 } });
         }
     }
 }
@@ -1436,16 +1584,19 @@ function confirmarDesistencia() {
 
     if (modoDeJogo === "solo") {
         msg = `${j1Nome} desistiu.\nTítulo: Perna de Pau`;
-        salvarNoRanking(j1Nome, j1Avatar, 0, false, "Arregou");
+        ajustarPontuacaoGlobal(j1Nome, j1Avatar, -6, "Arregou");
     } else {
         const vNome = jogadorAtual === 1 ? j2Nome : j1Nome;
         const vAv = jogadorAtual === 1 ? j2Avatar : j1Avatar;
+        const pNome = jogadorAtual === 1 ? j1Nome : j2Nome;
+        const pAv = jogadorAtual === 1 ? j1Avatar : j2Avatar;
 
         tit = `${vNome} VENCEU POR W.O.!`;
         msg = `${nome} desistiu!\n${vNome} ganha uma copa automática.`;
         winAv = vAv;
 
         salvarNoRanking(vNome, vAv, 6, true, "Venceu por W.O.");
+        ajustarPontuacaoGlobal(pNome, pAv, -6, "Arregou");
     }
 
     document.getElementById("titulo-vencedor").innerText = tit;
@@ -1465,6 +1616,7 @@ function confirmarDesistencia() {
     document.getElementById("secao-pesquisa")?.classList.add("escondido");
 
     salvarEstadoResultado();
+    salvarPreferenciasReplay();
 }
 
 // =========================
@@ -1573,10 +1725,12 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById("bloco-link-sala")?.classList.remove("escondido");
         document.getElementById("input-link-sala").value = window.location.href;
 
+        document.getElementById("btn-criar-sala")?.classList.add("escondido");
         document.getElementById("btn-compartilhar-whatsapp")?.classList.add("escondido");
         document.getElementById("btn-copiar-link")?.classList.remove("escondido");
+        document.getElementById("btn-iniciar-local")?.classList.add("escondido");
+        document.getElementById("btn-confirmar-online")?.classList.remove("escondido");
 
         ouvirSalaOnline();
-        ouvirChatSala();
     }
 });

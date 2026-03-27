@@ -112,7 +112,7 @@
                         </div>
                     </div>
 
-                    <div class="feed-card compact-card">
+                    <div id="chat-card-online" class="feed-card compact-card escondido">
                         <div class="feed-header between">
                             <h3>Mensagens rápidas</h3>
                             <span class="mini-title">até 40 caracteres</span>
@@ -134,6 +134,7 @@
                     </div>
                 </div>
 
+                <button id="btn-confirmar-online" class="escondido" onclick="confirmarEntradaOnline()">Confirmar nome e avatar</button>
                 <button id="btn-iniciar-local" onclick="validarComeco()">Iniciar Partida</button>
             </div>
 
@@ -190,7 +191,7 @@
 
                 <button onclick="gerarDesafio()" class="btn-desafio">Desafiar amigo</button>
                 <button onclick="abrirRankingMestreResultado()" class="btn-ranking">Ranking completo</button>
-                <button onclick="location.href='index.html'">Novo jogo</button>
+                <button onclick="abrirModalRepetir()">Novo jogo</button>
             </div>
         </div>
 
@@ -229,6 +230,17 @@
     <button id="btn-fullscreen" onclick="toggleFullscreen()">
         <span>↕️</span>
     </button>
+
+
+    <div id="modal-repetir" class="escondido modal-overlay" onclick="fecharModalRepetir()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <span class="fechar-modal" onclick="fecharModalRepetir()">×</span>
+            <h3>Jogar novamente?</h3>
+            <p>Deseja jogar com o mesmo nickname e avatar?</p>
+            <button onclick="repetirMesmoJogador(true)" class="btn-modo">Sim</button>
+            <button onclick="repetirMesmoJogador(false)" class="btn-ranking">Não</button>
+        </div>
+    </div>
 
     <script src="script.js"></script>
 </body>
